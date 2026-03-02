@@ -1,0 +1,69 @@
+name: dental_notes
+description: Chairside AI dental note-taking — SOAP notes, perio charts, odontogram.
+version: 0.1.0+1
+publish_to: "none"
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management
+  flutter_riverpod: ^2.5.1
+  riverpod_annotation: ^2.3.5
+
+  # Navigation
+  go_router: ^13.2.1
+
+  # Local database — encrypted SQLite
+  drift: ^2.18.0
+  sqlcipher_flutter_libs: ^0.6.2
+  sqlite3_flutter_libs: ^0.5.24
+  path_provider: ^2.1.3
+  path: ^1.9.0
+
+  # Secure storage — API key + DB encryption key
+  flutter_secure_storage: ^9.2.2
+
+  # Audio recording
+  record: ^5.1.2
+
+  # HTTP
+  dio: ^5.4.3
+
+  # Data models
+  freezed_annotation: ^2.4.1
+  json_annotation: ^4.9.0
+
+  # PDF generation
+  pdf: ^3.11.0
+  printing: ^5.13.1
+
+  # Biometric lock
+  local_auth: ^2.3.0
+
+  # Permissions
+  permission_handler: ^11.3.1
+
+  # UI utilities
+  intl: ^0.19.0
+  gap: ^3.0.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  build_runner: ^2.4.10
+  drift_dev: ^2.18.0
+  freezed: ^2.5.2
+  json_serializable: ^6.8.0
+  riverpod_generator: ^2.4.2
+  custom_lint: ^0.6.4
+  riverpod_lint: ^2.3.13
+  mockito: ^5.4.4
+  build_test: ^2.2.1
+
+flutter:
+  uses-material-design: true

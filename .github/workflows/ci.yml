@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend — lint, typecheck, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: pip install -e ".[dev]"
+
+      - name: ruff lint
+        working-directory: backend
+        run: ruff check src/ tests/
+
+      - name: ruff format check
+        working-directory: backend
+        run: ruff format --check src/ tests/
+
+      - name: mypy typecheck
+        working-directory: backend
+        run: mypy src/
+
+      - name: pytest
+        working-directory: backend
+        # WHISPER_DEVICE=cpu so CI doesn't need a GPU; tests mock Claude
+        env:
+          DENTAL_API_KEY: test-key
+          ANTHROPIC_API_KEY: test-key
+          WHISPER_MODEL_SIZE: tiny
+          WHISPER_DEVICE: cpu
+          WHISPER_COMPUTE_TYPE: int8
+        run: pytest tests/ --cov=dental_notes_backend --cov-report=term-missing
+
+  flutter:
+    name: Flutter — analyze, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.19.x"
+          channel: stable
+
+      - name: Install dependencies
+        working-directory: app
+        run: flutter pub get
+
+      - name: dart analyze
+        working-directory: app
+        run: flutter analyze
+
+      - name: flutter test
+        working-directory: app
+        run: flutter test
