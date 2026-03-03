@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
@@ -6,7 +7,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqlcipher_flutter_libs/sqlcipher_flutter_libs.dart';
-import 'package:sqlite3/open.dart';
+import 'package:sqlite3/open.dart' as sqlite3_open;
 
 import 'tables.dart';
 
@@ -33,10 +34,14 @@ class AppDatabase extends _$AppDatabase {
 
   /// Opens the encrypted database, generating or retrieving the key from
   /// the platform keychain.
-  static Future<AppDatabase> open() async {
+  static Future<AppDatabase> openEncrypted() async {
     // Use SQLCipher instead of the default sqlite3
-    open.overrideFor(OperatingSystem.android, openCipherOnAndroid);
-    open.overrideFor(OperatingSystem.iOS, openCipherOnIOS);
+    if (Platform.isAndroid) {
+      sqlite3_open.open.overrideFor(
+        sqlite3_open.OperatingSystem.android,
+        openCipherOnAndroid,
+      );
+    }
 
     const storage = FlutterSecureStorage();
     var key = await storage.read(key: _keyStorageKey);
@@ -51,11 +56,7 @@ class AppDatabase extends _$AppDatabase {
     final executor = NativeDatabase(
       dbFile,
       setup: (db) {
-        // Configure SQLCipher encryption key
         db.execute("PRAGMA key = '$key';");
-        db.execute("PRAGMA cipher_page_size = 4096;");
-        db.execute("PRAGMA kdf_iter = 64000;");
-        db.execute("PRAGMA cipher_hmac_algorithm = HMAC_SHA512;");
       },
     );
 
@@ -63,27 +64,8 @@ class AppDatabase extends _$AppDatabase {
   }
 
   static String _generateKey() {
-    // Generate 32 random bytes → hex string
-    final bytes = List<int>.generate(_keyLength, (_) => _random());
+    final rng = math.Random.secure();
+    final bytes = List<int>.generate(_keyLength, (_) => rng.nextInt(256));
     return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
-  }
-
-  static int _random() {
-    // dart:math is not cryptographically secure; use platform RNG via dart:io
-    final rng = Platform.isWindows ? _windowsRandom : _posixRandom;
-    return rng();
-  }
-
-  static int _posixRandom() {
-    final f = File('/dev/urandom').openSync();
-    final byte = f.readByteSync();
-    f.closeSync();
-    return byte;
-  }
-
-  // Windows: fall back to Dart's pseudo-RNG seeded with clock — acceptable
-  // for key bootstrapping since the key is immediately persisted in keychain.
-  static int _windowsRandom() {
-    return DateTime.now().microsecondsSinceEpoch & 0xFF;
   }
 }

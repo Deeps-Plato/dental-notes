@@ -5,18 +5,18 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('OdontogramLogic.suggestCdtCodes', () {
     test('empty odontogram → no codes', () {
-      final odontogram = Odontogram(visitId: 1, teeth: {});
+      const odontogram = Odontogram(visitId: 1, teeth: {});
       expect(OdontogramLogic.suggestCdtCodes(odontogram), isEmpty);
     });
 
     test('posterior composite → D2391', () {
-      final odontogram = Odontogram(
+      const odontogram = Odontogram(
         visitId: 1,
         teeth: {
           14: ToothRecord(
             toothNumber: 14,
             surfaces: [
-              const SurfaceCondition(
+              SurfaceCondition(
                 surface: ToothSurface.occlusal,
                 condition: ConditionType.proposedRestoration,
                 material: RestorativeMaterial.composite,
@@ -30,13 +30,13 @@ void main() {
     });
 
     test('anterior composite → D2330', () {
-      final odontogram = Odontogram(
+      const odontogram = Odontogram(
         visitId: 1,
         teeth: {
           8: ToothRecord(
             toothNumber: 8,
             surfaces: [
-              const SurfaceCondition(
+              SurfaceCondition(
                 surface: ToothSurface.facial,
                 condition: ConditionType.proposedRestoration,
                 material: RestorativeMaterial.composite,
@@ -50,13 +50,13 @@ void main() {
     });
 
     test('missing tooth → no code', () {
-      final odontogram = Odontogram(
+      const odontogram = Odontogram(
         visitId: 1,
         teeth: {
           1: ToothRecord(
             toothNumber: 1,
             surfaces: [
-              const SurfaceCondition(
+              SurfaceCondition(
                 surface: ToothSurface.occlusal,
                 condition: ConditionType.missing,
               ),

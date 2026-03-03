@@ -86,7 +86,7 @@ class _AudioRecorderButtonState extends State<AudioRecorderButton> {
         shape: BoxShape.circle,
         color: _isRecording ? colorScheme.error : colorScheme.primary,
         boxShadow: _isRecording
-            ? [BoxShadow(color: colorScheme.error.withOpacity(0.4), blurRadius: 16)]
+            ? [BoxShadow(color: colorScheme.error.withValues(alpha: 0.4), blurRadius: 16)]
             : null,
       ),
       child: IconButton(

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../data/models/patient.dart';
+import '../../data/database/app_database.dart';
+import 'patients_notifier.dart';
 
 class PatientsScreen extends ConsumerWidget {
   const PatientsScreen({super.key});
@@ -16,7 +17,7 @@ class PatientsScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
-              // TODO: showSearch
+              // TODO: showSearch delegate
             },
           ),
         ],
@@ -43,22 +44,39 @@ class _PatientList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // TODO: wire to PatientRepository provider
-    return const Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        spacing: 16,
-        children: [
-          Icon(Icons.people_outline, size: 64, color: Colors.grey),
-          Text('No patients yet.\nTap + to add your first patient.', textAlign: TextAlign.center),
-        ],
-      ),
+    final patientsAsync = ref.watch(patientListProvider);
+
+    return patientsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Error: $e')),
+      data: (patients) {
+        if (patients.isEmpty) {
+          return const Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 16,
+              children: [
+                Icon(Icons.people_outline, size: 64, color: Colors.grey),
+                Text(
+                  'No patients yet.\nTap + to add your first patient.',
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          );
+        }
+        return ListView.builder(
+          itemCount: patients.length,
+          itemBuilder: (context, index) =>
+              _PatientListTile(patient: patients[index]),
+        );
+      },
     );
   }
 }
 
-class PatientListTile extends StatelessWidget {
-  const PatientListTile({super.key, required this.patient});
+class _PatientListTile extends StatelessWidget {
+  const _PatientListTile({required this.patient});
 
   final Patient patient;
 
@@ -66,9 +84,11 @@ class PatientListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: CircleAvatar(
-        child: Text(patient.firstName[0] + patient.lastName[0]),
+        child: Text(
+          '${patient.firstName[0]}${patient.lastName[0]}'.toUpperCase(),
+        ),
       ),
-      title: Text('${patient.firstName} ${patient.lastName}'),
+      title: Text('${patient.lastName}, ${patient.firstName}'),
       subtitle: Text(
         'DOB: ${patient.dateOfBirth.year}-'
         '${patient.dateOfBirth.month.toString().padLeft(2, '0')}-'
@@ -80,18 +100,19 @@ class PatientListTile extends StatelessWidget {
   }
 }
 
-class _AddPatientDialog extends StatefulWidget {
+class _AddPatientDialog extends ConsumerStatefulWidget {
   const _AddPatientDialog();
 
   @override
-  State<_AddPatientDialog> createState() => _AddPatientDialogState();
+  ConsumerState<_AddPatientDialog> createState() => _AddPatientDialogState();
 }
 
-class _AddPatientDialogState extends State<_AddPatientDialog> {
+class _AddPatientDialogState extends ConsumerState<_AddPatientDialog> {
   final _formKey = GlobalKey<FormState>();
   final _firstNameCtrl = TextEditingController();
   final _lastNameCtrl = TextEditingController();
   DateTime? _dob;
+  bool _isSaving = false;
 
   @override
   void dispose() {
@@ -113,11 +134,13 @@ class _AddPatientDialogState extends State<_AddPatientDialog> {
             TextFormField(
               controller: _firstNameCtrl,
               decoration: const InputDecoration(labelText: 'First Name'),
+              textCapitalization: TextCapitalization.words,
               validator: (v) => (v?.isEmpty ?? true) ? 'Required' : null,
             ),
             TextFormField(
               controller: _lastNameCtrl,
               decoration: const InputDecoration(labelText: 'Last Name'),
+              textCapitalization: TextCapitalization.words,
               validator: (v) => (v?.isEmpty ?? true) ? 'Required' : null,
             ),
             ListTile(
@@ -125,7 +148,9 @@ class _AddPatientDialogState extends State<_AddPatientDialog> {
               title: Text(
                 _dob == null
                     ? 'Select Date of Birth'
-                    : 'DOB: ${_dob!.year}-${_dob!.month.toString().padLeft(2, '0')}-${_dob!.day.toString().padLeft(2, '0')}',
+                    : 'DOB: ${_dob!.year}-'
+                        '${_dob!.month.toString().padLeft(2, '0')}-'
+                        '${_dob!.day.toString().padLeft(2, '0')}',
               ),
               trailing: const Icon(Icons.calendar_today),
               onTap: () async {
@@ -142,17 +167,52 @@ class _AddPatientDialogState extends State<_AddPatientDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(
+          onPressed: _isSaving ? null : () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
         FilledButton(
-          onPressed: () {
-            if (_formKey.currentState!.validate() && _dob != null) {
-              // TODO: save via PatientRepository
-              Navigator.pop(context);
-            }
-          },
-          child: const Text('Save'),
+          onPressed: _isSaving ? null : _save,
+          child: _isSaving
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Save'),
         ),
       ],
     );
+  }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (_dob == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a date of birth')),
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    try {
+      final actions = ref.read(patientActionsProvider);
+      final id = await actions.create(
+        firstName: _firstNameCtrl.text.trim(),
+        lastName: _lastNameCtrl.text.trim(),
+        dateOfBirth: _dob!,
+      );
+      if (mounted) {
+        Navigator.pop(context);
+        context.go('/patients/$id');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save: $e')),
+        );
+      }
+    }
   }
 }

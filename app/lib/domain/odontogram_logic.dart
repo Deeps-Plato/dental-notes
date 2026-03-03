@@ -1,4 +1,3 @@
-import '../core/constants.dart';
 import '../data/models/odontogram.dart';
 
 /// Business logic for odontogram — CDT code suggestions, surface notation.

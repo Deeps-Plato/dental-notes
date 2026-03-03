@@ -9,7 +9,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Open encrypted database before the widget tree is built.
-  final db = await AppDatabase.open();
+  final db = await AppDatabase.openEncrypted();
 
   runApp(
     ProviderScope(

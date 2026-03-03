@@ -17,10 +17,8 @@ class OdontogramScreen extends ConsumerStatefulWidget {
 
 class _OdontogramScreenState extends ConsumerState<OdontogramScreen> {
   final Map<int, ToothRecord> _teeth = {};
-  int? _selectedTooth;
 
   void _onToothTap(int toothNumber) {
-    setState(() => _selectedTooth = toothNumber);
     showModalBottomSheet<void>(
       context: context,
       builder: (ctx) => _ConditionPickerSheet(
@@ -29,7 +27,6 @@ class _OdontogramScreenState extends ConsumerState<OdontogramScreen> {
         onSave: (record) {
           setState(() {
             _teeth[toothNumber] = record;
-            _selectedTooth = null;
           });
         },
       ),
@@ -114,7 +111,7 @@ class _ToothRow extends StatelessWidget {
               toothNumber: t,
               record: records[t],
               onTap: () => onTap(t),
-            )).toList(),
+            ),).toList(),
           ),
         ),
       ],
