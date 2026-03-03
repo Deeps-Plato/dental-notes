@@ -5,24 +5,48 @@ import 'package:go_router/go_router.dart';
 import '../../data/database/app_database.dart';
 import 'patients_notifier.dart';
 
-class PatientsScreen extends ConsumerWidget {
+class PatientsScreen extends ConsumerStatefulWidget {
   const PatientsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PatientsScreen> createState() => _PatientsScreenState();
+}
+
+class _PatientsScreenState extends ConsumerState<PatientsScreen> {
+  String _searchQuery = '';
+  bool _isSearching = false;
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Patients'),
+        title: _isSearching
+            ? TextField(
+                autofocus: true,
+                decoration: const InputDecoration(
+                  hintText: 'Search patients...',
+                  border: InputBorder.none,
+                ),
+                onChanged: (v) => setState(() => _searchQuery = v),
+              )
+            : const Text('Patients'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search),
+            icon: Icon(_isSearching ? Icons.close : Icons.search),
             onPressed: () {
-              // TODO: showSearch delegate
+              setState(() {
+                _isSearching = !_isSearching;
+                if (!_isSearching) _searchQuery = '';
+              });
             },
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () => context.go('/settings'),
           ),
         ],
       ),
-      body: const _PatientList(),
+      body: _PatientList(searchQuery: _searchQuery),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddPatientDialog(context),
         icon: const Icon(Icons.person_add),
@@ -40,11 +64,15 @@ class PatientsScreen extends ConsumerWidget {
 }
 
 class _PatientList extends ConsumerWidget {
-  const _PatientList();
+  const _PatientList({this.searchQuery = ''});
+
+  final String searchQuery;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final patientsAsync = ref.watch(patientListProvider);
+    final patientsAsync = searchQuery.isEmpty
+        ? ref.watch(patientListProvider)
+        : ref.watch(patientSearchProvider(searchQuery));
 
     return patientsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
 import 'data/database/app_database.dart';
+import 'features/auth/auth_gate.dart';
 import 'shared/providers/database_provider.dart';
 
 void main() async {
@@ -16,7 +17,9 @@ void main() async {
       overrides: [
         databaseProvider.overrideWithValue(db),
       ],
-      child: const DentalNotesApp(),
+      child: const AuthGate(
+        child: DentalNotesApp(),
+      ),
     ),
   );
 }

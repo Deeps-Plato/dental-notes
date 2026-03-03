@@ -22,14 +22,27 @@ def _patch_whisper(monkeypatch):
 
 @pytest.fixture()
 def client():
-    """TestClient with Whisper loading mocked out."""
-    with patch("dental_notes_backend.services.whisper_service.load_model"):
-        with patch("dental_notes_backend.services.whisper_service.unload_model"):
-            from dental_notes_backend.main import create_app
+    """TestClient with Whisper loading mocked out and auth key aligned."""
+    mock_settings = MagicMock()
+    mock_settings.dental_api_key = "test-key"
+    mock_settings.log_level = "WARNING"
+    mock_settings.whisper_model_size = "base"
+    mock_settings.whisper_device = "cpu"
+    mock_settings.whisper_compute_type = "int8"
+    mock_settings.backend_host = "127.0.0.1"
+    mock_settings.backend_port = 8765
 
-            app = create_app()
-            with TestClient(app, headers={"X-API-Key": "test-key"}) as c:
-                yield c
+    with (
+        patch("dental_notes_backend.services.whisper_service.load_model"),
+        patch("dental_notes_backend.services.whisper_service.unload_model"),
+        patch("dental_notes_backend.auth.settings", mock_settings),
+        patch("dental_notes_backend.main.settings", mock_settings),
+    ):
+        from dental_notes_backend.main import create_app
+
+        app = create_app()
+        with TestClient(app, headers={"X-API-Key": "test-key"}) as c:
+            yield c
 
 
 @pytest.fixture()

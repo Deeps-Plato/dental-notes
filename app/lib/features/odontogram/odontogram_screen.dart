@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants.dart';
 import '../../data/models/odontogram.dart';
+import '../../domain/odontogram_logic.dart';
 
 class OdontogramScreen extends ConsumerStatefulWidget {
   const OdontogramScreen({super.key, required this.visitId});
@@ -40,9 +41,18 @@ class _OdontogramScreenState extends ConsumerState<OdontogramScreen> {
         title: const Text('Odontogram'),
         actions: [
           TextButton.icon(
-            onPressed: () {
-              // TODO: save odontogram
-            },
+            onPressed: _teeth.isEmpty
+                ? null
+                : () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          '${_teeth.length} teeth recorded for this visit.',
+                        ),
+                      ),
+                    );
+                    Navigator.of(context).pop();
+                  },
             icon: const Icon(Icons.save),
             label: const Text('Save'),
           ),
@@ -280,11 +290,28 @@ class _CdtCodeBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: compute CDT codes from OdontogramLogic
+    final odontogram = Odontogram(visitId: 0, teeth: teeth);
+    final codes = OdontogramLogic.suggestCdtCodes(odontogram);
+
     return Container(
       color: Theme.of(context).colorScheme.surfaceContainerLow,
       padding: const EdgeInsets.all(8),
-      child: const Text('CDT codes will appear here…', style: TextStyle(fontSize: 12)),
+      child: codes.isEmpty
+          ? const Text(
+              'No CDT codes suggested yet.',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            )
+          : Wrap(
+              spacing: 6,
+              children: codes
+                  .map(
+                    (code) => Chip(
+                      label: Text(code, style: const TextStyle(fontSize: 11)),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  )
+                  .toList(),
+            ),
     );
   }
 }

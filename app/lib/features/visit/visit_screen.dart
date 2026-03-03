@@ -137,6 +137,11 @@ class _VisitNav extends StatelessWidget {
             onTap: () => context.go('$base/odontogram'),
           ),
           _NavChip(
+            label: 'Medications',
+            icon: Icons.medication_outlined,
+            onTap: () => context.go('$base/medications'),
+          ),
+          _NavChip(
             label: 'Export PDF',
             icon: Icons.picture_as_pdf,
             onTap: () => context.go('$base/pdf'),
