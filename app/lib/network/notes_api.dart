@@ -72,7 +72,7 @@ class NotesApi {
     );
     final body = response.data!;
     final changes = (body['changes'] as List).cast<Map<String, dynamic>>();
-    return changes.map(MedicationChange.fromJson).toList();
+    return changes.map(_parseMedChange).toList();
   }
 
   SoapNote _parseSoapResponse(Map<String, dynamic> body, int visitId) {
@@ -80,7 +80,7 @@ class NotesApi {
     final plan = body['plan'] as Map<String, dynamic>;
     final meds = (body['medication_changes'] as List? ?? [])
         .cast<Map<String, dynamic>>()
-        .map(MedicationChange.fromJson)
+        .map(_parseMedChange)
         .toList();
 
     return SoapNote(
@@ -103,4 +103,14 @@ class NotesApi {
 
   List<String> _toStringList(dynamic value) =>
       (value as List? ?? []).cast<String>();
+
+  /// Parse a medication change from the API's snake_case JSON keys.
+  MedicationChange _parseMedChange(Map<String, dynamic> json) =>
+      MedicationChange(
+        drugName: json['drug_name'] as String,
+        dose: json['dose'] as String,
+        frequency: json['frequency'] as String,
+        changeType: json['change_type'] as String,
+        prescribingNote: json['prescribing_note'] as String?,
+      );
 }
