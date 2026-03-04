@@ -19,11 +19,11 @@ void main() {
       firstName: 'Test',
       lastName: 'Patient',
       dateOfBirth: DateTime(1990, 1, 1),
-    ));
+    ),);
     await db.into(db.visits).insert(VisitsCompanion.insert(
       patientId: 1,
       visitDate: DateTime(2024, 6, 15),
-    ));
+    ),);
   });
 
   tearDown(() => db.close());
@@ -34,10 +34,10 @@ void main() {
   });
 
   test('save creates and getForVisit retrieves odontogram', () async {
-    final odontogram = models.Odontogram(
+    const odontogram = models.Odontogram(
       visitId: 1,
       teeth: {
-        14: const models.ToothRecord(
+        14: models.ToothRecord(
           toothNumber: 14,
           surfaces: [
             models.SurfaceCondition(
@@ -64,10 +64,10 @@ void main() {
 
   test('save updates existing odontogram', () async {
     // Create initial.
-    await repo.save(models.Odontogram(
+    await repo.save(const models.Odontogram(
       visitId: 1,
       teeth: {
-        14: const models.ToothRecord(
+        14: models.ToothRecord(
           toothNumber: 14,
           surfaces: [
             models.SurfaceCondition(
@@ -77,13 +77,13 @@ void main() {
           ],
         ),
       },
-    ));
+    ),);
 
     // Update with additional tooth.
-    await repo.save(models.Odontogram(
+    await repo.save(const models.Odontogram(
       visitId: 1,
       teeth: {
-        14: const models.ToothRecord(
+        14: models.ToothRecord(
           toothNumber: 14,
           surfaces: [
             models.SurfaceCondition(
@@ -93,7 +93,7 @@ void main() {
             ),
           ],
         ),
-        19: const models.ToothRecord(
+        19: models.ToothRecord(
           toothNumber: 19,
           surfaces: [
             models.SurfaceCondition(
@@ -103,7 +103,7 @@ void main() {
           ],
         ),
       },
-    ));
+    ),);
 
     final retrieved = await repo.getForVisit(1);
     expect(retrieved!.teeth.length, 2);

@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+import '../../network/api_client.dart';
 
 const _baseUrlKey = 'backend_base_url';
 const _apiKeyKey = 'backend_api_key';
 const _defaultBaseUrl = 'http://localhost:8765';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final _storage = const FlutterSecureStorage();
   final _urlCtrl = TextEditingController();
   final _keyCtrl = TextEditingController();
@@ -38,10 +41,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() => _isSaving = true);
     await _storage.write(key: _baseUrlKey, value: _urlCtrl.text.trim());
     await _storage.write(key: _apiKeyKey, value: _keyCtrl.text.trim());
+
+    // Invalidate the API client so it rebuilds with the new URL/key.
+    ref.invalidate(apiClientProvider);
+
     setState(() => _isSaving = false);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Settings saved. Restart app to apply.')),
+        const SnackBar(content: Text('Settings saved.')),
       );
     }
   }

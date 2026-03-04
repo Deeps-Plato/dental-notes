@@ -46,6 +46,10 @@ async def generate_note(
                 result = await asyncio.to_thread(
                     claude_service.generate_medication_extract, req,
                 )
+            case _:
+                raise HTTPException(
+                    status_code=422, detail=f"Unknown note type: {req.note_type}",
+                )
         logger.info("Note generation complete: type=%s", req.note_type)
         return result
     except ValueError as exc:

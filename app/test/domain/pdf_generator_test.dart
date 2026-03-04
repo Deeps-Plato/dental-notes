@@ -6,10 +6,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('PdfGenerator', () {
-    late Visit _visit;
+    late Visit visit;
 
     setUp(() {
-      _visit = Visit(
+      visit = Visit(
         id: 1,
         patientId: 1,
         visitDate: DateTime(2024, 6, 15),
@@ -30,7 +30,7 @@ void main() {
     });
 
     test('generateVisitPdf with no data returns fallback page', () async {
-      final bytes = await PdfGenerator.generateVisitPdf(visit: _visit);
+      final bytes = await PdfGenerator.generateVisitPdf(visit: visit);
       expect(bytes.length, greaterThan(100));
       expect(String.fromCharCodes(bytes.sublist(0, 4)), '%PDF');
     });
@@ -62,7 +62,7 @@ void main() {
       );
 
       final bytes = await PdfGenerator.generateVisitPdf(
-        visit: _visit,
+        visit: visit,
         soapNote: soapNote,
       );
       expect(bytes.length, greaterThan(500));

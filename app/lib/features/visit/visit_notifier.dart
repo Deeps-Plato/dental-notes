@@ -94,12 +94,12 @@ class VisitNotifier extends _$VisitNotifier {
         placeholderVisitId: visitId,
       );
 
-      // Persist to DB
+      // Persist to DB — save() returns the real DB id
       final noteRepo = ref.read(soapNoteRepositoryProvider);
-      await noteRepo.save(visitId: visitId, note: note);
+      final dbId = await noteRepo.save(visitId: visitId, note: note);
 
       state = state.copyWith(
-        soapNote: note,
+        soapNote: note.copyWith(id: dbId),
         isGeneratingNote: false,
       );
     } catch (e) {
