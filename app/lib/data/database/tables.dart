@@ -77,6 +77,17 @@ class PerioReadings extends Table {
   IntColumn get recession => integer().withDefault(const Constant(0))();
 }
 
+// ── Odontograms — one per visit, tooth data stored as JSON ────────────────
+
+class Odontograms extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get visitId => integer().references(Visits, #id)();
+  // JSON-encoded Map<int, ToothRecord> (see data/models/odontogram.dart)
+  TextColumn get teethJson => text().withDefault(const Constant('{}'))();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+}
+
 // ── Audit Log ─────────────────────────────────────────────────────────────────
 
 class AuditLogs extends Table {

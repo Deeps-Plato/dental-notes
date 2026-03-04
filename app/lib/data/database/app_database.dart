@@ -17,18 +17,22 @@ const _dbName = 'dental_notes.db';
 const _keyStorageKey = 'db_encryption_key';
 const _keyLength = 32; // 256-bit AES key
 
-@DriftDatabase(tables: [Patients, Visits, SoapNotes, PerioCharts, PerioReadings, AuditLogs])
+@DriftDatabase(tables: [
+  Patients, Visits, SoapNotes, PerioCharts, PerioReadings, Odontograms, AuditLogs,
+],)
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
     onUpgrade: (m, from, to) async {
-      // Future migrations go here
+      if (from < 2) {
+        await m.createTable(odontograms);
+      }
     },
   );
 

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants.dart';
 import '../../data/models/odontogram.dart';
+import '../../data/repositories/odontogram_repository.dart';
 import '../../domain/odontogram_logic.dart';
 
 class OdontogramScreen extends ConsumerStatefulWidget {
@@ -18,6 +19,31 @@ class OdontogramScreen extends ConsumerStatefulWidget {
 
 class _OdontogramScreenState extends ConsumerState<OdontogramScreen> {
   final Map<int, ToothRecord> _teeth = {};
+  bool _loaded = false;
+
+  int get _visitId => int.parse(widget.visitId);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFromDb();
+  }
+
+  Future<void> _loadFromDb() async {
+    final repo = ref.read(odontogramRepositoryProvider);
+    final existing = await repo.getForVisit(_visitId);
+    if (existing != null && mounted) {
+      setState(() {
+        _teeth.addAll(existing.teeth);
+      });
+    }
+    if (mounted) setState(() => _loaded = true);
+  }
+
+  Future<void> _saveToDb() async {
+    final repo = ref.read(odontogramRepositoryProvider);
+    await repo.save(Odontogram(visitId: _visitId, teeth: _teeth));
+  }
 
   void _onToothTap(int toothNumber) {
     showModalBottomSheet<void>(
@@ -36,6 +62,13 @@ class _OdontogramScreenState extends ConsumerState<OdontogramScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_loaded) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Odontogram')),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Odontogram'),
@@ -43,11 +76,13 @@ class _OdontogramScreenState extends ConsumerState<OdontogramScreen> {
           TextButton.icon(
             onPressed: _teeth.isEmpty
                 ? null
-                : () {
+                : () async {
+                    await _saveToDb();
+                    if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          '${_teeth.length} teeth recorded for this visit.',
+                          '${_teeth.length} teeth saved.',
                         ),
                       ),
                     );

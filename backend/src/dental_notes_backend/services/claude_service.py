@@ -18,6 +18,7 @@ from dental_notes_backend.models.api_models import (
     PerioParseResponse,
     SoapNoteResponse,
 )
+from dental_notes_backend.prompts.medication_extract import MEDICATION_SYSTEM_PROMPT
 from dental_notes_backend.prompts.perio_parse import PERIO_SYSTEM_PROMPT
 from dental_notes_backend.prompts.soap_note import SOAP_SYSTEM_PROMPT
 
@@ -68,19 +69,10 @@ def generate_perio_parse(req: GenerateNoteRequest) -> PerioParseResponse:
 
 def generate_medication_extract(req: GenerateNoteRequest) -> MedicationExtractResponse:
     """Extract medication changes from a transcript."""
-    system = (
-        "You are a dental clinical assistant. Extract all medication prescriptions, "
-        "discontinuations, modifications, and refills from the transcript. "
-        "Return ONLY valid JSON matching this schema:\n"
-        '{"changes": [{"drug_name": str, "dose": str, "frequency": str, '
-        '"change_type": "prescribed"|"discontinued"|"modified"|"refilled", '
-        '"prescribing_note": str|null}]}\n'
-        'If no medications are mentioned, return {"changes": []}.'
-    )
     message = get_client().messages.create(
         model=MODEL,
         max_tokens=1024,
-        system=system,
+        system=MEDICATION_SYSTEM_PROMPT,
         messages=[{"role": "user", "content": req.transcript}],
     )
     raw = _extract_text(message)
