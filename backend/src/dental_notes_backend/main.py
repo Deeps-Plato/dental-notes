@@ -8,12 +8,14 @@ import sys
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
+from pathlib import Path
 
 from fastapi import FastAPI, Request, Response
+from fastapi.staticfiles import StaticFiles
 from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
-from starlette.responses import JSONResponse
+from starlette.responses import FileResponse, JSONResponse
 
 from dental_notes_backend.auth import APIKeyMiddleware
 from dental_notes_backend.config import settings
@@ -104,6 +106,15 @@ def create_app() -> FastAPI:
     app.include_router(health_router)
     app.include_router(transcribe_router)
     app.include_router(notes_router)
+
+    # Static web UI
+    static_dir = Path(__file__).resolve().parent.parent.parent / "static"
+    if static_dir.is_dir():
+        app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+
+        @app.get("/")
+        async def root() -> Response:
+            return FileResponse(str(static_dir / "index.html"))
 
     return app
 

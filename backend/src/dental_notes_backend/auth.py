@@ -12,6 +12,7 @@ from starlette.responses import JSONResponse, Response
 from dental_notes_backend.config import settings
 
 _OPEN_PATHS = {"/health", "/"}
+_OPEN_PREFIXES = ("/static/",)
 
 
 class APIKeyMiddleware(BaseHTTPMiddleware):
@@ -26,7 +27,8 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
         request: Request,
         call_next: Callable[[Request], Awaitable[Response]],
     ) -> Response:
-        if request.url.path in _OPEN_PATHS:
+        path = request.url.path
+        if path in _OPEN_PATHS or any(path.startswith(p) for p in _OPEN_PREFIXES):
             return await call_next(request)
 
         key = request.headers.get("X-API-Key", "")

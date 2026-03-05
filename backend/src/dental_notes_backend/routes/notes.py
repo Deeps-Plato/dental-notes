@@ -34,6 +34,8 @@ async def generate_note(
     Runs the synchronous Claude SDK call in a threadpool to avoid blocking
     the event loop.
     """
+    if not req.transcript.strip():
+        raise HTTPException(status_code=422, detail="Transcript cannot be empty")
     logger.info("Generating %s note", req.note_type)
     result: SoapNoteResponse | PerioParseResponse | MedicationExtractResponse
     try:

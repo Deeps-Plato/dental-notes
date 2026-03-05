@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dental Notes</title>
+<style>
+  :root {
+    --bg: #f8f9fa; --surface: #fff; --border: #dee2e6;
+    --primary: #2563eb; --primary-hover: #1d4ed8;
+    --text: #1a1a2e; --text-muted: #6b7280;
+    --success: #16a34a; --danger: #dc2626;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.5;
+    max-width: 900px; margin: 0 auto; padding: 16px;
+  }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 0; border-bottom: 2px solid var(--primary); margin-bottom: 20px;
+  }
+  header h1 { font-size: 1.4rem; color: var(--primary); }
+  .status-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    display: inline-block; margin-right: 6px;
+  }
+  .status-dot.ok { background: var(--success); }
+  .status-dot.err { background: var(--danger); }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px; margin-bottom: 16px;
+  }
+  .card h2 {
+    font-size: 1rem; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.05em; margin-bottom: 12px;
+  }
+
+  button {
+    border: none; border-radius: var(--radius); padding: 10px 20px;
+    font-size: 0.95rem; cursor: pointer; font-weight: 600;
+    transition: background 0.15s;
+  }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: var(--primary-hover); }
+  .btn-primary:disabled { background: #93c5fd; cursor: not-allowed; }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { background: #b91c1c; }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-success:hover { background: #15803d; }
+  .btn-outline {
+    background: transparent; border: 1px solid var(--border); color: var(--text);
+  }
+  .btn-outline:hover { background: var(--bg); }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+  textarea, input[type="text"] {
+    width: 100%; border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 10px; font-size: 0.95rem; font-family: inherit;
+    resize: vertical; line-height: 1.5;
+  }
+  textarea:focus, input[type="text"]:focus {
+    outline: none; border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+  }
+  label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 0.9rem; }
+  .field { margin-bottom: 14px; }
+
+  .recording-indicator {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--danger); font-weight: 600;
+  }
+  .recording-indicator .pulse {
+    width: 12px; height: 12px; border-radius: 50%; background: var(--danger);
+    animation: pulse 1s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  .spinner {
+    display: inline-block; width: 16px; height: 16px;
+    border: 2px solid #fff; border-top-color: transparent;
+    border-radius: 50%; animation: spin 0.6s linear infinite;
+    vertical-align: middle; margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .toast {
+    position: fixed; bottom: 20px; right: 20px;
+    background: #1a1a2e; color: #fff; padding: 12px 20px;
+    border-radius: var(--radius); font-size: 0.9rem;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 100;
+  }
+  .toast.show { opacity: 1; }
+
+  .hidden { display: none !important; }
+
+  .timer { font-size: 1.8rem; font-weight: 700; color: var(--danger); font-variant-numeric: tabular-nums; }
+
+  .list-edit { margin-top: 6px; }
+  .list-edit .list-item {
+    display: flex; gap: 6px; margin-bottom: 4px; align-items: center;
+  }
+  .list-edit .list-item input { flex: 1; }
+  .list-edit .list-item button { padding: 4px 10px; font-size: 0.85rem; }
+  .add-item-btn { font-size: 0.85rem; color: var(--primary); cursor: pointer; background: none; border: none; padding: 4px 0; }
+
+  #settingsPanel {
+    position: fixed; top: 0; right: -400px; width: 380px; height: 100%;
+    background: var(--surface); box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+    padding: 20px; transition: right 0.3s; z-index: 50; overflow-y: auto;
+  }
+  #settingsPanel.open { right: 0; }
+  #settingsOverlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.3); z-index: 40; display: none;
+  }
+  #settingsOverlay.open { display: block; }
+
+  #setupModal {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center; z-index: 60;
+  }
+  #setupModal .modal-body {
+    background: var(--surface); border-radius: 12px; padding: 28px;
+    width: 400px; max-width: 90vw;
+  }
+  #setupModal h2 { font-size: 1.2rem; margin-bottom: 4px; color: var(--primary); }
+  #setupModal p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 16px; }
+
+  .copy-all-section {
+    border-top: 2px solid var(--primary); padding-top: 16px; margin-top: 8px;
+  }
+  #copyPreview {
+    background: #f1f5f9; border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 12px; font-size: 0.85rem; white-space: pre-wrap; max-height: 300px;
+    overflow-y: auto; margin-bottom: 12px; font-family: 'Segoe UI', sans-serif;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Dental Notes</h1>
+  <div style="display: flex; align-items: center; gap: 12px;">
+    <span id="connStatus"><span class="status-dot err"></span>Connecting...</span>
+    <button class="btn-outline" onclick="toggleSettings()" style="padding: 6px 12px;">Settings</button>
+  </div>
+</header>
+
+<!-- Step 1: Record -->
+<div class="card" id="recordCard">
+  <h2>1. Record</h2>
+  <p style="color: var(--text-muted); margin-bottom: 12px;">
+    Dictate your findings after the exam, or type directly in the transcript box below.
+  </p>
+  <div style="display: flex; align-items: center; gap: 16px;">
+    <button id="recordBtn" class="btn-primary" onclick="toggleRecording()" disabled>
+      Start Recording
+    </button>
+    <span id="recordingIndicator" class="recording-indicator hidden">
+      <span class="pulse"></span> Recording <span id="recordTimer" class="timer">0:00</span>
+    </span>
+  </div>
+</div>
+
+<!-- Step 2: Transcript -->
+<div class="card" id="transcriptCard">
+  <h2>2. Transcript</h2>
+  <div class="field">
+    <label for="transcript">Raw Transcript (editable)</label>
+    <textarea id="transcript" rows="6" placeholder="Transcript will appear here after recording, or type/paste your notes directly..."></textarea>
+  </div>
+  <div class="btn-row">
+    <button class="btn-primary" onclick="generateSoap()" id="generateBtn" disabled>
+      Generate SOAP Note
+    </button>
+    <button class="btn-outline" onclick="copyText('transcript')">Copy Transcript</button>
+  </div>
+</div>
+
+<!-- Step 3: SOAP Note -->
+<div class="card hidden" id="soapCard">
+  <h2>3. SOAP Note (Editable)</h2>
+
+  <div class="field">
+    <label for="subjective">Subjective</label>
+    <textarea id="subjective" rows="3"></textarea>
+  </div>
+
+  <div class="field">
+    <label for="objective_clinical">Objective - Clinical Findings</label>
+    <textarea id="objective_clinical" rows="3"></textarea>
+  </div>
+
+  <div class="field">
+    <label for="objective_radiographic">Objective - Radiographic Findings</label>
+    <textarea id="objective_radiographic" rows="2"></textarea>
+  </div>
+
+  <div class="field">
+    <label for="assessment">Assessment</label>
+    <textarea id="assessment" rows="3"></textarea>
+  </div>
+
+  <div class="field">
+    <label>Plan - Today</label>
+    <div id="planToday" class="list-edit"></div>
+  </div>
+
+  <div class="field">
+    <label>Plan - Next Visit</label>
+    <div id="planNextVisit" class="list-edit"></div>
+  </div>
+
+  <div class="field">
+    <label>Patient Instructions</label>
+    <div id="patientInstructions" class="list-edit"></div>
+  </div>
+
+  <div class="field">
+    <label>CDT Codes</label>
+    <div id="cdtCodes" class="list-edit"></div>
+  </div>
+
+  <div class="field">
+    <label>Medication Changes</label>
+    <div id="medChanges" class="list-edit"></div>
+  </div>
+
+  <div class="btn-row" style="margin-bottom: 16px;">
+    <button class="btn-outline" onclick="regenerateSoap()">Regenerate SOAP Note</button>
+  </div>
+
+  <!-- Copy for Dentrix -->
+  <div class="copy-all-section">
+    <h2>Copy for Dentrix</h2>
+    <div id="copyPreview"></div>
+    <div class="btn-row">
+      <button class="btn-success" onclick="copyForDentrix()" style="font-size: 1.1rem; padding: 12px 32px;">
+        Copy to Clipboard
+      </button>
+      <button class="btn-outline" onclick="startNewNote()">New Note</button>
+    </div>
+  </div>
+</div>
+
+<!-- First-run Setup Modal -->
+<div id="setupModal" class="hidden">
+  <div class="modal-body">
+    <h2>Welcome to Dental Notes</h2>
+    <p>Enter your API key to get started. You can find this in your backend .env file.</p>
+    <div class="field">
+      <label for="setupApiKey">API Key</label>
+      <input type="text" id="setupApiKey" placeholder="Paste your DENTAL_API_KEY here">
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="completeSetup()">Get Started</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Panel -->
+<div id="settingsOverlay" onclick="toggleSettings()"></div>
+<div id="settingsPanel">
+  <h2 style="margin-bottom: 16px;">Settings</h2>
+  <div class="field">
+    <label for="apiKeyInput">API Key</label>
+    <input type="text" id="apiKeyInput" placeholder="Your DENTAL_API_KEY">
+  </div>
+  <div class="field">
+    <label for="backendUrl">Backend URL</label>
+    <input type="text" id="backendUrl" placeholder="http://localhost:8765">
+  </div>
+  <div class="btn-row">
+    <button class="btn-primary" onclick="saveSettings()">Save</button>
+    <button class="btn-outline" onclick="toggleSettings()">Close</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let mediaRecorder = null;
+let audioChunks = [];
+let recordingStart = null;
+let timerInterval = null;
+let soapData = null;
+
+// ── Settings ───────────────────────────────────────────────────────────────
+function getApiKey() {
+  return localStorage.getItem('dental_api_key') || '';
+}
+function getBackendUrl() {
+  return (localStorage.getItem('dental_backend_url') || window.location.origin).replace(/\/$/, '');
+}
+function saveSettings() {
+  localStorage.setItem('dental_api_key', document.getElementById('apiKeyInput').value.trim());
+  localStorage.setItem('dental_backend_url', document.getElementById('backendUrl').value.trim());
+  toggleSettings();
+  checkConnection();
+  toast('Settings saved');
+}
+function toggleSettings() {
+  document.getElementById('settingsPanel').classList.toggle('open');
+  document.getElementById('settingsOverlay').classList.toggle('open');
+}
+
+// ── Connection check ───────────────────────────────────────────────────────
+async function checkConnection() {
+  const el = document.getElementById('connStatus');
+  try {
+    const res = await fetch(getBackendUrl() + '/health');
+    const data = await res.json();
+    if (data.status === 'ok' && data.whisper_loaded) {
+      el.innerHTML = '<span class="status-dot ok"></span>Connected';
+      document.getElementById('recordBtn').disabled = false;
+    } else {
+      el.innerHTML = '<span class="status-dot err"></span>Whisper not loaded';
+    }
+  } catch {
+    el.innerHTML = '<span class="status-dot err"></span>Disconnected';
+  }
+}
+
+// ── Recording ──────────────────────────────────────────────────────────────
+async function toggleRecording() {
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    stopRecording();
+  } else {
+    await startRecording();
+  }
+}
+
+async function startRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioChunks = [];
+
+    // Prefer webm/opus for broad browser support, fall back to default
+    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+      ? 'audio/webm;codecs=opus'
+      : '';
+    mediaRecorder = mimeType
+      ? new MediaRecorder(stream, { mimeType })
+      : new MediaRecorder(stream);
+
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) audioChunks.push(e.data);
+    };
+
+    mediaRecorder.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      clearInterval(timerInterval);
+      document.getElementById('recordBtn').textContent = 'Start Recording';
+      document.getElementById('recordBtn').classList.remove('btn-danger');
+      document.getElementById('recordBtn').classList.add('btn-primary');
+      document.getElementById('recordingIndicator').classList.add('hidden');
+      await transcribeAudio();
+    };
+
+    mediaRecorder.start(1000); // collect chunks every 1s
+    recordingStart = Date.now();
+    updateTimer();
+    timerInterval = setInterval(updateTimer, 1000);
+
+    document.getElementById('recordBtn').textContent = 'Stop Recording';
+    document.getElementById('recordBtn').classList.remove('btn-primary');
+    document.getElementById('recordBtn').classList.add('btn-danger');
+    document.getElementById('recordingIndicator').classList.remove('hidden');
+  } catch (err) {
+    toast('Microphone access denied: ' + err.message);
+  }
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+  }
+}
+
+function updateTimer() {
+  const elapsed = Math.floor((Date.now() - recordingStart) / 1000);
+  const mins = Math.floor(elapsed / 60);
+  const secs = elapsed % 60;
+  document.getElementById('recordTimer').textContent =
+    mins + ':' + String(secs).padStart(2, '0');
+}
+
+// ── Transcription ──────────────────────────────────────────────────────────
+async function transcribeAudio() {
+  const btn = document.getElementById('recordBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Transcribing...';
+
+  const ext = (mediaRecorder && mediaRecorder.mimeType.includes('webm')) ? 'webm' : 'wav';
+  const blob = new Blob(audioChunks, { type: mediaRecorder ? mediaRecorder.mimeType : 'audio/wav' });
+  const formData = new FormData();
+  formData.append('audio_file', blob, 'recording.' + ext);
+
+  try {
+    const res = await fetch(getBackendUrl() + '/transcribe', {
+      method: 'POST',
+      headers: { 'X-API-Key': getApiKey() },
+      body: formData,
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || res.statusText);
+    }
+    const data = await res.json();
+    const el = document.getElementById('transcript');
+    // Append to existing transcript (support multiple recordings per note)
+    el.value = el.value ? el.value + '\n\n' + data.transcript : data.transcript;
+    document.getElementById('generateBtn').disabled = !el.value.trim();
+    toast(`Transcribed ${data.duration_seconds}s of audio`);
+  } catch (err) {
+    toast('Transcription failed: ' + err.message);
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Start Recording';
+}
+
+// ── SOAP generation ────────────────────────────────────────────────────────
+async function generateSoap() {
+  const transcript = document.getElementById('transcript').value.trim();
+  if (!transcript) return;
+
+  const btn = document.getElementById('generateBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Generating SOAP...';
+
+  try {
+    const res = await fetch(getBackendUrl() + '/generate-note', {
+      method: 'POST',
+      headers: {
+        'X-API-Key': getApiKey(),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ note_type: 'soap', transcript }),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || res.statusText);
+    }
+    soapData = await res.json();
+    populateSoap(soapData);
+    document.getElementById('soapCard').classList.remove('hidden');
+    document.getElementById('soapCard').scrollIntoView({ behavior: 'smooth' });
+    toast('SOAP note generated');
+  } catch (err) {
+    toast('Generation failed: ' + err.message);
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Generate SOAP Note';
+}
+
+// ── Populate SOAP fields ───────────────────────────────────────────────────
+function populateSoap(data) {
+  document.getElementById('subjective').value = data.subjective || '';
+  document.getElementById('objective_clinical').value =
+    data.objective?.clinical_findings || '';
+  document.getElementById('objective_radiographic').value =
+    data.objective?.radiographic_findings || '';
+  document.getElementById('assessment').value = data.assessment || '';
+
+  populateList('planToday', data.plan?.today || []);
+  populateList('planNextVisit', data.plan?.next_visit || []);
+  populateList('patientInstructions', data.plan?.patient_instructions || []);
+  populateList('cdtCodes', data.plan?.cdt_codes || []);
+
+  const meds = (data.medication_changes || []).map(
+    m => `${m.change_type}: ${m.drug_name} ${m.dose} ${m.frequency}${m.prescribing_note ? ' (' + m.prescribing_note + ')' : ''}`
+  );
+  populateList('medChanges', meds);
+
+  updateCopyPreview();
+
+  // Listen for edits to update preview
+  document.querySelectorAll('#soapCard textarea').forEach(ta => {
+    ta.removeEventListener('input', updateCopyPreview);
+    ta.addEventListener('input', updateCopyPreview);
+  });
+}
+
+function populateList(containerId, items) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  items.forEach(item => addListItem(container, item));
+  addAddButton(container);
+}
+
+function addListItem(container, value) {
+  const div = document.createElement('div');
+  div.className = 'list-item';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = value;
+  input.addEventListener('input', updateCopyPreview);
+  const removeBtn = document.createElement('button');
+  removeBtn.className = 'btn-outline';
+  removeBtn.textContent = 'X';
+  removeBtn.onclick = () => { div.remove(); updateCopyPreview(); };
+  div.appendChild(input);
+  div.appendChild(removeBtn);
+  // Insert before the "Add" button if it exists
+  const addBtn = container.querySelector('.add-item-btn');
+  if (addBtn) {
+    container.insertBefore(div, addBtn);
+  } else {
+    container.appendChild(div);
+  }
+}
+
+function addAddButton(container) {
+  const btn = document.createElement('button');
+  btn.className = 'add-item-btn';
+  btn.textContent = '+ Add item';
+  btn.onclick = () => { addListItem(container, ''); updateCopyPreview(); };
+  container.appendChild(btn);
+}
+
+function getListValues(containerId) {
+  return Array.from(document.querySelectorAll('#' + containerId + ' .list-item input'))
+    .map(i => i.value.trim())
+    .filter(Boolean);
+}
+
+// ── Copy Preview ───────────────────────────────────────────────────────────
+function updateCopyPreview() {
+  const text = buildDentrixText();
+  document.getElementById('copyPreview').textContent = text;
+}
+
+function buildDentrixText() {
+  const s = document.getElementById('subjective').value.trim();
+  const oc = document.getElementById('objective_clinical').value.trim();
+  const or_ = document.getElementById('objective_radiographic').value.trim();
+  const a = document.getElementById('assessment').value.trim();
+  const today = getListValues('planToday');
+  const next = getListValues('planNextVisit');
+  const instructions = getListValues('patientInstructions');
+  const cdt = getListValues('cdtCodes');
+  const meds = getListValues('medChanges');
+
+  let lines = [];
+  lines.push('SUBJECTIVE:');
+  lines.push(s);
+  lines.push('');
+  lines.push('OBJECTIVE:');
+  lines.push('Clinical: ' + oc);
+  if (or_) lines.push('Radiographic: ' + or_);
+  lines.push('');
+  lines.push('ASSESSMENT:');
+  lines.push(a);
+  lines.push('');
+  lines.push('PLAN:');
+  if (today.length) {
+    lines.push('Today:');
+    today.forEach(t => lines.push('  - ' + t));
+  }
+  if (next.length) {
+    lines.push('Next Visit:');
+    next.forEach(t => lines.push('  - ' + t));
+  }
+  if (instructions.length) {
+    lines.push('Patient Instructions:');
+    instructions.forEach(t => lines.push('  - ' + t));
+  }
+  if (cdt.length) {
+    lines.push('');
+    lines.push('CDT CODES:');
+    cdt.forEach(c => lines.push('  - ' + c));
+  }
+  if (meds.length) {
+    lines.push('');
+    lines.push('MEDICATION CHANGES:');
+    meds.forEach(m => lines.push('  - ' + m));
+  }
+  return lines.join('\n');
+}
+
+// ── Clipboard ──────────────────────────────────────────────────────────────
+async function copyForDentrix() {
+  const text = buildDentrixText();
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('Copied to clipboard - paste into Dentrix');
+  } catch {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+    toast('Copied to clipboard - paste into Dentrix');
+  }
+}
+
+function copyText(id) {
+  const text = document.getElementById(id).value;
+  navigator.clipboard.writeText(text).then(() => toast('Copied'));
+}
+
+// ── New note ───────────────────────────────────────────────────────────────
+function startNewNote() {
+  document.getElementById('transcript').value = '';
+  document.getElementById('soapCard').classList.add('hidden');
+  document.getElementById('generateBtn').disabled = true;
+  soapData = null;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  toast('Ready for new note');
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ── Setup ──────────────────────────────────────────────────────────────────
+function completeSetup() {
+  const key = document.getElementById('setupApiKey').value.trim();
+  if (!key) { toast('Please enter an API key'); return; }
+  localStorage.setItem('dental_api_key', key);
+  document.getElementById('apiKeyInput').value = key;
+  document.getElementById('setupModal').classList.add('hidden');
+  checkConnection();
+  toast('Setup complete');
+}
+
+// ── Regenerate ─────────────────────────────────────────────────────────────
+function regenerateSoap() {
+  document.getElementById('soapCard').classList.add('hidden');
+  generateSoap();
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('apiKeyInput').value = getApiKey();
+  document.getElementById('backendUrl').value =
+    localStorage.getItem('dental_backend_url') || '';
+
+  // Show setup modal if no API key configured
+  if (!getApiKey()) {
+    document.getElementById('setupModal').classList.remove('hidden');
+  }
+
+  checkConnection();
+
+  // Enable generate button when transcript has content
+  document.getElementById('transcript').addEventListener('input', () => {
+    document.getElementById('generateBtn').disabled =
+      !document.getElementById('transcript').value.trim();
+  });
+});
+</script>
+</body>
+</html>
