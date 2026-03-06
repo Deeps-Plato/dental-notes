@@ -1,0 +1,41 @@
+"""Application configuration via pydantic-settings.
+
+All settings can be overridden via environment variables prefixed with DENTAL_.
+Example: DENTAL_WHISPER_MODEL=base overrides whisper_model.
+"""
+
+from pathlib import Path
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    """Dental-notes application settings.
+
+    Defaults are tuned for GTX 1050 (4GB VRAM) with int8 quantization.
+    Host defaults to 127.0.0.1 to ensure no network exposure (PRV-01).
+    """
+
+    model_config = SettingsConfigDict(env_prefix="DENTAL_")
+
+    # Whisper model
+    whisper_model: str = "small"
+    compute_type: str = "int8"
+
+    # Audio capture
+    sample_rate: int = 16000
+
+    # VAD
+    vad_threshold: float = 0.5
+
+    # Chunking
+    max_chunk_duration_secs: int = 20
+    silence_gap_secs: float = 1.5
+    overlap_secs: float = 1.0
+
+    # Storage
+    storage_dir: Path = Path("transcripts")
+
+    # Server (PRV-01: localhost only)
+    host: str = "127.0.0.1"
+    port: int = 8000
