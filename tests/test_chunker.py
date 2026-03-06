@@ -47,8 +47,11 @@ class TestAudioChunker:
         """Silence gap >= silence_gap_secs triggers chunk finalization."""
         from dental_notes.transcription.chunker import AudioChunker
 
-        # 200 speech probs, then 200 silence probs
-        probs = [0.9] * 200 + [0.1] * 200
+        # Each 1600-sample block (0.1s) produces 3 VAD sub-chunks of 512 samples.
+        # 10 speech blocks = 30 probs, 20 silence blocks = 60 probs.
+        speech_probs = 10 * 3  # 30 probs for speech phase
+        silence_probs = 20 * 3  # 60 probs for silence phase
+        probs = [0.9] * speech_probs + [0.1] * silence_probs
         vad = _make_vad_detector(probs)
         chunker = AudioChunker(settings=test_settings, vad=vad)
 
@@ -96,18 +99,21 @@ class TestAudioChunker:
         """Overlap is preserved between consecutive chunks."""
         from dental_notes.transcription.chunker import AudioChunker
 
-        # Speech then silence, repeated twice
-        probs = [0.9] * 200 + [0.1] * 200 + [0.9] * 200 + [0.1] * 200
+        # Each 1600-sample block (0.1s) produces 3 VAD sub-chunks of 512 samples.
+        # 10 speech blocks = 30 probs, 20 silence blocks = 60 probs.
+        speech_probs = 10 * 3  # 30 probs for speech phase
+        silence_probs = 20 * 3  # 60 probs for silence phase
+        probs = [0.9] * speech_probs + [0.1] * silence_probs
         vad = _make_vad_detector(probs)
         chunker = AudioChunker(settings=test_settings, vad=vad)
 
         block = _make_audio_block(0.1)
 
-        # First: feed speech
+        # First: feed speech blocks (10 blocks = 1.0s)
         for _ in range(10):
             chunker.feed(block)
 
-        # Then silence to trigger chunk
+        # Then silence to trigger chunk finalization
         chunk1 = None
         for _ in range(20):
             chunk1 = chunker.feed(block)
@@ -116,10 +122,9 @@ class TestAudioChunker:
 
         assert chunk1 is not None
 
-        # After first chunk, the overlap should be seeded in the buffer
-        # Verify by checking the internal state has overlap content
+        # After finalization, overlap should be seeded in the buffer
         overlap_samples = int(test_settings.overlap_secs * SAMPLE_RATE)
-        assert chunker._total_samples >= overlap_samples or chunker._total_samples == 0
+        assert chunker._total_samples == overlap_samples
 
     def test_flush_returns_remaining_buffer(self, test_settings):
         """flush() returns whatever is in the buffer."""
