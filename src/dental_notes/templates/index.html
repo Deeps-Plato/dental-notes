@@ -4,15 +4,98 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dental Notes - Session</title>
+    <!-- HTMX 2.x from CDN. These are UI framework scripts, not patient data.
+         CDN loading does not violate PRV-01 (which concerns patient data transmission).
+         For fully air-gapped deployments, vendor these files locally. -->
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <h1>Dental Notes</h1>
-    <div id="session-controls">
-        {% include "_session.html" %}
-    </div>
-    <div id="transcript-container">
-        {% include "_transcript.html" %}
-    </div>
+    <header>
+        <h1>Dental Notes</h1>
+        <div class="status-bar">
+            <span class="status-indicator" id="model-status">
+                {% if state != "idle" %}Model: Active{% else %}Model: Ready{% endif %}
+            </span>
+        </div>
+    </header>
+
+    <main>
+        <!-- Microphone Selector -->
+        <section class="mic-section" id="mic-section">
+            <label for="mic-select">Microphone:</label>
+            <select id="mic-select" name="device">
+                <option value="">Default device</option>
+                {% for device in devices %}
+                <option value="{{ device.index }}">{{ device.name }}</option>
+                {% endfor %}
+            </select>
+        </section>
+
+        <!-- Session Controls -->
+        <section class="controls-section" id="session-controls">
+            {% include "_session.html" %}
+        </section>
+
+        <!-- Audio Level Indicator -->
+        <section class="level-section">
+            <label>Audio Level:</label>
+            <div class="level-bar-container">
+                <div class="level-bar" id="level-bar" style="width: 0%"></div>
+            </div>
+        </section>
+
+        <!-- Transcript Display -->
+        <section class="transcript-section">
+            <h2>Transcript</h2>
+            {% include "_transcript.html" %}
+        </section>
+
+        <!-- Transcript File Path (shown after stop) -->
+        <section class="footer-info" id="footer-info">
+            <p id="transcript-path"></p>
+        </section>
+    </main>
+
+    <footer>
+        <div class="shortcuts">
+            <strong>Keyboard Shortcuts:</strong>
+            <kbd>F9</kbd> Start / Stop &nbsp;
+            <kbd>F8</kbd> Pause / Resume
+        </div>
+    </footer>
+
+    <script>
+        // Listen for SSE level events to update the level bar
+        document.body.addEventListener("level", function(event) {
+            var bar = document.getElementById("level-bar");
+            if (bar) {
+                var level = parseFloat(event.detail.data) || 0;
+                // Scale level for visibility (raw RMS is typically 0-10%)
+                var width = Math.min(level * 5, 100);
+                bar.style.width = width + "%";
+            }
+        });
+
+        // Listen for session_end events
+        document.body.addEventListener("session_end", function(event) {
+            var bar = document.getElementById("level-bar");
+            if (bar) {
+                bar.style.width = "0%";
+                bar.classList.remove("active");
+            }
+        });
+
+        // Include mic device in start request
+        document.body.addEventListener("htmx:configRequest", function(event) {
+            if (event.detail.path === "/session/start") {
+                var mic = document.getElementById("mic-select");
+                if (mic && mic.value) {
+                    event.detail.parameters["device"] = mic.value;
+                }
+            }
+        });
+    </script>
 </body>
 </html>

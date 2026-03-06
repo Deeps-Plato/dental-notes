@@ -1,2 +1,327 @@
-/* Minimal placeholder -- full styling in Task 2 */
-body { font-family: sans-serif; margin: 2rem; }
+/* Dental Notes - Session UI
+   Clean, professional styling for dental office use.
+   Large targets for gloved hands. Readable at arm's length. */
+
+:root {
+    --bg: #f8f9fa;
+    --text: #212529;
+    --text-muted: #6c757d;
+    --border: #dee2e6;
+    --primary: #2d7a4f;
+    --primary-hover: #236340;
+    --warning: #d4a017;
+    --warning-hover: #b8860b;
+    --danger: #c0392b;
+    --danger-hover: #a93226;
+    --recording: #e74c3c;
+    --paused: #f39c12;
+    --level-active: #27ae60;
+    --level-bg: #e0e0e0;
+    --transcript-bg: #ffffff;
+    --card-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--text);
+    background: var(--bg);
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+/* Header */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 1.5rem;
+}
+
+header h1 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.status-bar {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.status-indicator {
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    background: #e8f5e9;
+    color: var(--primary);
+    font-weight: 500;
+}
+
+/* Microphone Section */
+.mic-section {
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.mic-section label {
+    font-weight: 600;
+    font-size: 1rem;
+    white-space: nowrap;
+}
+
+.mic-section select {
+    flex: 1;
+    padding: 0.6rem 1rem;
+    font-size: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: white;
+    max-width: 500px;
+}
+
+/* Controls Section */
+.controls-section {
+    margin-bottom: 1.5rem;
+}
+
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 0.9rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    min-width: 160px;
+    text-align: center;
+    transition: background-color 0.15s;
+}
+
+.btn-start {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-start:hover {
+    background: var(--primary-hover);
+}
+
+.btn-pause {
+    background: var(--warning);
+    color: white;
+}
+
+.btn-pause:hover {
+    background: var(--warning-hover);
+}
+
+.btn-resume {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-resume:hover {
+    background: var(--primary-hover);
+}
+
+.btn-stop {
+    background: var(--danger);
+    color: white;
+}
+
+.btn-stop:hover {
+    background: var(--danger-hover);
+}
+
+.btn-disabled {
+    background: var(--border);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+.recording-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: var(--recording);
+    font-size: 1.1rem;
+}
+
+.recording-indicator::before {
+    content: "";
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--recording);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.paused-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: var(--paused);
+    font-size: 1.1rem;
+}
+
+.paused-indicator::before {
+    content: "";
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--paused);
+}
+
+.transcript-saved {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    word-break: break-all;
+}
+
+.error {
+    color: var(--danger);
+    font-weight: 600;
+    padding: 0.5rem;
+}
+
+/* Level Indicator */
+.level-section {
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.level-section label {
+    font-weight: 600;
+    font-size: 1rem;
+    white-space: nowrap;
+}
+
+.level-bar-container {
+    flex: 1;
+    height: 20px;
+    background: var(--level-bg);
+    border-radius: 10px;
+    overflow: hidden;
+    max-width: 500px;
+}
+
+.level-bar {
+    height: 100%;
+    background: var(--level-active);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+    min-width: 0;
+}
+
+/* Transcript Section */
+.transcript-section {
+    margin-bottom: 1.5rem;
+}
+
+.transcript-section h2 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+#transcript-area {
+    background: var(--transcript-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    min-height: 200px;
+    max-height: 500px;
+    overflow-y: auto;
+    box-shadow: var(--card-shadow);
+}
+
+#transcript {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    font-size: 1.05rem;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+#transcript .placeholder {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* Footer */
+footer {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.shortcuts {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+kbd {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.8rem;
+    font-family: monospace;
+    background: #e9ecef;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+}
+
+.footer-info {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+/* Responsive: works on 1080p-1440p monitors */
+@media (max-width: 768px) {
+    body {
+        padding: 1rem;
+        font-size: 16px;
+    }
+
+    .btn {
+        min-width: 120px;
+        padding: 0.75rem 1.5rem;
+    }
+
+    header h1 {
+        font-size: 1.4rem;
+    }
+}

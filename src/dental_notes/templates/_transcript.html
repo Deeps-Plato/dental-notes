@@ -1,1 +1,9 @@
-<div id="transcript">{{ transcript or "" }}</div>
+<div id="transcript-area"
+     hx-ext="sse"
+     sse-connect="/session/stream">
+    <div id="transcript"
+         sse-swap="transcript"
+         hx-swap="beforeend">
+        {% if transcript %}{{ transcript }}{% else %}<span class="placeholder">No transcript yet. Start a session to begin.</span>{% endif %}
+    </div>
+</div>

@@ -1,9 +1,49 @@
 {% if state == "idle" %}
-<button hx-post="/session/start" hx-target="#session-controls" hx-swap="innerHTML">Start Recording</button>
+<div class="controls idle">
+    <button class="btn btn-start"
+            hx-post="/session/start"
+            hx-target="#session-controls"
+            hx-swap="innerHTML">
+        Start Recording
+    </button>
+    {% if transcript_path is defined and transcript_path %}
+    <p class="transcript-saved">Transcript saved: {{ transcript_path }}</p>
+    {% endif %}
+</div>
 {% elif state == "recording" %}
-<button hx-post="/session/pause" hx-target="#session-controls" hx-swap="innerHTML">Pause</button>
-<button hx-post="/session/stop" hx-target="#session-controls" hx-swap="innerHTML">Stop</button>
+<div class="controls recording">
+    <span class="recording-indicator">Recording</span>
+    <button class="btn btn-pause"
+            hx-post="/session/pause"
+            hx-target="#session-controls"
+            hx-swap="innerHTML">
+        Pause
+    </button>
+    <button class="btn btn-stop"
+            hx-post="/session/stop"
+            hx-target="#session-controls"
+            hx-swap="innerHTML">
+        Stop
+    </button>
+</div>
 {% elif state == "paused" %}
-<button hx-post="/session/resume" hx-target="#session-controls" hx-swap="innerHTML">Resume</button>
-<button hx-post="/session/stop" hx-target="#session-controls" hx-swap="innerHTML">Stop</button>
+<div class="controls paused">
+    <span class="paused-indicator">Paused</span>
+    <button class="btn btn-resume"
+            hx-post="/session/resume"
+            hx-target="#session-controls"
+            hx-swap="innerHTML">
+        Resume
+    </button>
+    <button class="btn btn-stop"
+            hx-post="/session/stop"
+            hx-target="#session-controls"
+            hx-swap="innerHTML">
+        Stop
+    </button>
+</div>
+{% elif state == "stopping" %}
+<div class="controls stopping">
+    <button class="btn btn-disabled" disabled>Finalizing...</button>
+</div>
 {% endif %}

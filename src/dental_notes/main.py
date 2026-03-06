@@ -54,7 +54,27 @@ async def lifespan(app: FastAPI):
     app.state.session_manager = session_manager
     app.state.whisper_service = whisper_service
 
+    # Start hotkey listener (graceful: if pynput fails on headless, web UI still works)
+    hotkey_listener = None
+    try:
+        from dental_notes.ui.hotkey import HotkeyListener
+
+        hotkey_listener = HotkeyListener(session_manager)
+        hotkey_listener.start()
+    except Exception:
+        logger.warning(
+            "Hotkey listener failed to start (no X display or pynput unavailable). "
+            "Web UI session controls still work."
+        )
+
     yield
+
+    # Shutdown: stop hotkey listener
+    if hotkey_listener is not None:
+        try:
+            hotkey_listener.stop()
+        except Exception:
+            logger.warning("Failed to stop hotkey listener", exc_info=True)
 
     # Shutdown: stop any active session, unload model
     if session_manager.is_active():
