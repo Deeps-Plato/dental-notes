@@ -1,0 +1,9 @@
+{% if state == "idle" %}
+<button hx-post="/session/start" hx-target="#session-controls" hx-swap="innerHTML">Start Recording</button>
+{% elif state == "recording" %}
+<button hx-post="/session/pause" hx-target="#session-controls" hx-swap="innerHTML">Pause</button>
+<button hx-post="/session/stop" hx-target="#session-controls" hx-swap="innerHTML">Stop</button>
+{% elif state == "paused" %}
+<button hx-post="/session/resume" hx-target="#session-controls" hx-swap="innerHTML">Resume</button>
+<button hx-post="/session/stop" hx-target="#session-controls" hx-swap="innerHTML">Stop</button>
+{% endif %}
