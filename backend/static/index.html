@@ -313,6 +313,12 @@ function toggleSettings() {
 // ── Connection check ───────────────────────────────────────────────────────
 async function checkConnection() {
   const el = document.getElementById('connStatus');
+  const key = getApiKey();
+  if (!key) {
+    el.innerHTML = '<span class="status-dot err"></span>No API key — click Settings';
+    document.getElementById('recordBtn').disabled = true;
+    return;
+  }
   try {
     const res = await fetch(getBackendUrl() + '/health');
     const data = await res.json();
@@ -410,6 +416,11 @@ async function transcribeAudio() {
     });
     if (!res.ok) {
       const err = await res.json();
+      if (res.status === 401) {
+        toast('API key missing or wrong — check Settings');
+        toggleSettings();
+        throw new Error('Unauthorized');
+      }
       throw new Error(err.detail || res.statusText);
     }
     const data = await res.json();
@@ -419,7 +430,7 @@ async function transcribeAudio() {
     document.getElementById('generateBtn').disabled = !el.value.trim();
     toast(`Transcribed ${data.duration_seconds}s of audio`);
   } catch (err) {
-    toast('Transcription failed: ' + err.message);
+    if (err.message !== 'Unauthorized') toast('Transcription failed: ' + err.message);
   }
 
   btn.disabled = false;
@@ -446,6 +457,13 @@ async function generateSoap() {
     });
     if (!res.ok) {
       const err = await res.json();
+      if (res.status === 401) {
+        toast('API key missing or wrong — check Settings');
+        toggleSettings();
+        btn.disabled = false;
+        btn.textContent = 'Generate SOAP Note';
+        return;
+      }
       throw new Error(err.detail || res.statusText);
     }
     soapData = await res.json();
