@@ -5,7 +5,6 @@ Uses a FakeWhisperModel to avoid importing real faster_whisper
 """
 
 from collections import namedtuple
-from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -60,15 +59,21 @@ class TestWhisperServiceModelLoading:
     """load_model() creates WhisperModel with correct parameters."""
 
     def test_load_model_params(self, settings):
+        import sys
+        import types
+
         from dental_notes.transcription.whisper_service import WhisperService
 
         service = WhisperService(settings)
 
-        with patch(
-            "dental_notes.transcription.whisper_service.WhisperModel",
-            FakeWhisperModel,
-        ):
+        # Create a fake faster_whisper module so the import inside load_model() resolves
+        fake_module = types.ModuleType("faster_whisper")
+        fake_module.WhisperModel = FakeWhisperModel  # type: ignore[attr-defined]
+        sys.modules["faster_whisper"] = fake_module
+        try:
             service.load_model()
+        finally:
+            del sys.modules["faster_whisper"]
 
         assert service.is_loaded is True
         assert service._model.model_size == "small"
@@ -89,7 +94,6 @@ class TestWhisperServiceTranscription:
     def test_dental_prompt(self, settings):
         from dental_notes.transcription.whisper_service import (
             DENTAL_INITIAL_PROMPT,
-            WhisperService,
         )
 
         service = self._make_service_with_fake(settings)
