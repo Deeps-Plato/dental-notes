@@ -4,9 +4,7 @@ Uses fake/mock versions of all dependencies (AudioCapture, WhisperService,
 VadDetector, AudioChunker, TranscriptWriter) so tests run without GPU or mic.
 """
 
-import importlib
 import inspect
-import threading
 import time
 from pathlib import Path
 
@@ -14,7 +12,6 @@ import numpy as np
 import pytest
 
 from dental_notes.config import Settings
-
 
 # --- Fakes ---
 
