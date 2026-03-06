@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Phase 1 context gathered
-last_updated: "2026-03-06T06:20:36.203Z"
-last_activity: 2026-03-06 -- Roadmap revised (streaming architecture, merged audio+transcription phases, 4 phases -> 3)
+status: executing
+stopped_at: Completed 01-01-PLAN.md
+last_updated: "2026-03-06T22:43:29Z"
+last_activity: 2026-03-06 -- Completed Plan 01-01 (audio pipeline foundation)
 progress:
   total_phases: 3
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_plans: 5
+  completed_plans: 1
+  percent: 20
 ---
 
 # Project State
@@ -26,28 +26,28 @@ See: .planning/PROJECT.md (updated 2026-03-05)
 ## Current Position
 
 Phase: 1 of 3 (Streaming Capture and Transcription)
-Plan: 0 of 2 in current phase
-Status: Ready to plan
-Last activity: 2026-03-06 -- Roadmap revised (streaming architecture, merged audio+transcription phases, 4 phases -> 3)
+Plan: 1 of 2 in current phase
+Status: Executing
+Last activity: 2026-03-06 -- Completed Plan 01-01 (audio pipeline foundation)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [##░░░░░░░░] 20%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
-- Average duration: -
-- Total execution time: 0 hours
+- Total plans completed: 1
+- Average duration: 3min
+- Total execution time: 0.05 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 01-streaming-capture | 1 | 3min | 3min |
 
 **Recent Trend:**
-- Last 5 plans: -
-- Trend: -
+- Last 5 plans: 01-01 (3min)
+- Trend: starting
 
 *Updated after each plan completion*
 
@@ -64,6 +64,9 @@ Recent decisions affecting current work:
 - [Revision]: Streaming architecture -- audio chunks transcribed and discarded immediately, no full WAV stored
 - [Revision]: Merged audio capture + transcription into single phase (inseparable with ephemeral chunks)
 - [Revision]: GTX 1050 (4GB VRAM) is the target floor -- small Whisper model required
+- [01-01]: FakeVadModel test double avoids downloading real silero-vad model in CI
+- [01-01]: Simple word-level overlap matching (not fuzzy) as correct starting point
+- [01-01]: Plain text transcript format with no JSON or timestamps per locked decisions
 
 ### Pending Todos
 
@@ -78,6 +81,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-06T06:20:36.191Z
-Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01-streaming-capture-and-transcription/01-CONTEXT.md
+Last session: 2026-03-06T22:43:29Z
+Stopped at: Completed 01-01-PLAN.md
+Resume file: .planning/phases/01-streaming-capture-and-transcription/01-02-PLAN.md

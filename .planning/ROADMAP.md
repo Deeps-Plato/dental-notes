@@ -31,7 +31,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans:** 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Project setup + core audio pipeline (capture, VAD, chunker, stitcher, transcript writer)
+- [x] 01-01-PLAN.md — Project setup + core audio pipeline (capture, VAD, chunker, stitcher, transcript writer)
 - [ ] 01-02-PLAN.md — Whisper transcription service + session manager state machine
 - [ ] 01-03-PLAN.md — FastAPI web UI with SSE, HTMX templates, keyboard shortcuts, end-to-end verification
 
@@ -74,6 +74,6 @@ Phases execute in numeric order: 1 -> 2 -> 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Streaming Capture and Transcription | 0/3 | Planned | - |
+| 1. Streaming Capture and Transcription | 1/3 | In Progress | - |
 | 2. Clinical Extraction | 0/2 | Not started | - |
 | 3. Review and Export | 0/3 | Not started | - |

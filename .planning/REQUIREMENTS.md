@@ -30,7 +30,7 @@
 
 ### Privacy
 
-- [ ] **PRV-01**: All processing runs locally — no patient data transmitted over the internet
+- [x] **PRV-01**: All processing runs locally — no patient data transmitted over the internet
 
 ## v2 Requirements
 
@@ -74,7 +74,7 @@
 | REV-02 | Phase 3 | Pending |
 | REV-03 | Phase 3 | Pending |
 | REV-04 | Phase 3 | Pending |
-| PRV-01 | Phase 1 | Pending |
+| PRV-01 | Phase 1 | Complete |
 
 **Coverage:**
 - v1 requirements: 12 total
