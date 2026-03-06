@@ -7,13 +7,13 @@
 
 ### Audio
 
-- [ ] **AUD-01**: User can start and stop a streaming capture session that records audio in small chunks, transcribes each chunk immediately, and discards the audio — no full-length recording is ever stored
+- [x] **AUD-01**: User can start and stop a streaming capture session that records audio in small chunks, transcribes each chunk immediately, and discards the audio — no full-length recording is ever stored
 - [ ] **AUD-02**: Transcript file is automatically deleted after the note is finalized
 
 ### Transcription
 
-- [ ] **TRX-01**: Audio chunks are transcribed locally using faster-whisper on NVIDIA GPU, with a model small enough to run on GTX 1050 (4GB VRAM)
-- [ ] **TRX-02**: Transcription uses a dental terminology vocabulary prompt for accuracy
+- [x] **TRX-01**: Audio chunks are transcribed locally using faster-whisper on NVIDIA GPU, with a model small enough to run on GTX 1050 (4GB VRAM)
+- [x] **TRX-02**: Transcription uses a dental terminology vocabulary prompt for accuracy
 
 ### Clinical Intelligence
 
@@ -63,10 +63,10 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUD-01 | Phase 1 | Pending |
+| AUD-01 | Phase 1 | Complete |
 | AUD-02 | Phase 3 | Pending |
-| TRX-01 | Phase 1 | Pending |
-| TRX-02 | Phase 1 | Pending |
+| TRX-01 | Phase 1 | Complete |
+| TRX-02 | Phase 1 | Complete |
 | CLI-01 | Phase 2 | Pending |
 | CLI-02 | Phase 2 | Pending |
 | CLI-03 | Phase 2 | Pending |
