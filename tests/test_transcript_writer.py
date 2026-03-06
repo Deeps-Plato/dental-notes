@@ -3,8 +3,6 @@
 import re
 from pathlib import Path
 
-import pytest
-
 from dental_notes.session.transcript_writer import TranscriptWriter
 
 

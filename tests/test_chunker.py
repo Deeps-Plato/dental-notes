@@ -6,7 +6,6 @@ Uses FakeVadModel-backed VadDetector to control speech/silence detection.
 from unittest.mock import patch
 
 import numpy as np
-import pytest
 
 from tests.conftest import FakeVadModel
 

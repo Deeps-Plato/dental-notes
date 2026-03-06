@@ -1,7 +1,5 @@
 """Tests for dental_notes.config.Settings defaults and env override."""
 
-import os
-
 import pytest
 
 

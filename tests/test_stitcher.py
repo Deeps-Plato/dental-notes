@@ -1,7 +1,5 @@
 """Tests for dental_notes.transcription.stitcher.deduplicate_overlap."""
 
-import pytest
-
 from dental_notes.transcription.stitcher import deduplicate_overlap
 
 
