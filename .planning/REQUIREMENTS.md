@@ -62,24 +62,24 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUD-01 | — | Pending |
-| AUD-02 | — | Pending |
-| TRX-01 | — | Pending |
-| TRX-02 | — | Pending |
-| CLI-01 | — | Pending |
-| CLI-02 | — | Pending |
-| CLI-03 | — | Pending |
-| REV-01 | — | Pending |
-| REV-02 | — | Pending |
-| REV-03 | — | Pending |
-| REV-04 | — | Pending |
-| PRV-01 | — | Pending |
+| AUD-01 | Phase 1 | Pending |
+| AUD-02 | Phase 4 | Pending |
+| TRX-01 | Phase 2 | Pending |
+| TRX-02 | Phase 2 | Pending |
+| CLI-01 | Phase 3 | Pending |
+| CLI-02 | Phase 3 | Pending |
+| CLI-03 | Phase 3 | Pending |
+| REV-01 | Phase 4 | Pending |
+| REV-02 | Phase 4 | Pending |
+| REV-03 | Phase 4 | Pending |
+| REV-04 | Phase 4 | Pending |
+| PRV-01 | Phase 1 | Pending |
 
 **Coverage:**
 - v1 requirements: 12 total
-- Mapped to phases: 0
-- Unmapped: 12
+- Mapped to phases: 12
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-06*
-*Last updated: 2026-03-06 after initial definition*
+*Last updated: 2026-03-06 after roadmap creation*
