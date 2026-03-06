@@ -28,11 +28,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Dental terminology (tooth numbers, procedure names, materials) appears correctly in the transcript due to vocabulary prompting
   4. The tool runs on a GTX 1050 with 4GB VRAM without running out of GPU memory (small Whisper model selected accordingly)
   5. No network requests are made during the session — all capture and transcription stays on the local machine
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
+- [ ] 01-01-PLAN.md — Project setup + core audio pipeline (capture, VAD, chunker, stitcher, transcript writer)
+- [ ] 01-02-PLAN.md — Whisper transcription service + session manager state machine
+- [ ] 01-03-PLAN.md — FastAPI web UI with SSE, HTMX templates, keyboard shortcuts, end-to-end verification
 
 ### Phase 2: Clinical Extraction
 **Goal**: A local LLM filters clinical content from the accumulated transcript and structures it into a SOAP note with CDT procedure code suggestions
@@ -73,6 +74,6 @@ Phases execute in numeric order: 1 -> 2 -> 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Streaming Capture and Transcription | 0/2 | Not started | - |
+| 1. Streaming Capture and Transcription | 0/3 | Planned | - |
 | 2. Clinical Extraction | 0/2 | Not started | - |
 | 3. Review and Export | 0/3 | Not started | - |
