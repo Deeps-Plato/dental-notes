@@ -2,56 +2,41 @@
 
 ## Overview
 
-This roadmap delivers a local-first ambient clinical note-taking tool in 4 phases, following the pipeline that the previous attempt never proved: capture audio, transcribe it, extract clinical content, then build the review workflow. Each phase produces a concrete artifact (WAV file, transcript, SOAP note, usable UI) that can be manually verified before proceeding. No infrastructure or UI work happens until the core pipeline is proven.
+This roadmap delivers a local-first ambient clinical note-taking tool in 3 phases, following a streaming pipeline architecture: capture audio in small chunks, transcribe each chunk immediately via faster-whisper, discard the audio, accumulate the transcript, then extract clinical content and build the review workflow. The key architectural shift from the prior plan is that audio capture and transcription are inseparable — audio chunks are ephemeral, transcribed on arrival, and never stored as a full recording. This minimizes disk usage and proves the core pipeline in a single phase. The tool must run on GPUs as small as GTX 1050 (4GB VRAM), so Whisper model selection is constrained to smaller models.
 
 ## Phases
 
 **Phase Numbering:**
-- Integer phases (1, 2, 3, 4): Planned milestone work
+- Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Audio Capture** - Record dental appointments locally with mic selection and privacy enforcement
-- [ ] **Phase 2: Transcription Pipeline** - Transcribe recorded audio locally using faster-whisper with dental vocabulary
-- [ ] **Phase 3: Clinical Extraction** - Filter clinical content and generate structured SOAP notes via local LLM
-- [ ] **Phase 4: Review and Export** - Side-by-side review UI with editing, clipboard export, and ephemeral cleanup
+- [ ] **Phase 1: Streaming Capture and Transcription** - Stream audio chunks from mic, transcribe each chunk locally via faster-whisper, discard audio, accumulate transcript
+- [ ] **Phase 2: Clinical Extraction** - Filter clinical content from accumulated transcript and generate structured SOAP notes via local LLM
+- [ ] **Phase 3: Review and Export** - Side-by-side review UI with editing, clipboard export, and ephemeral cleanup
 
 ## Phase Details
 
-### Phase 1: Audio Capture
-**Goal**: User can record a dental appointment to a local WAV file using a selected microphone, with all processing staying on the local machine
+### Phase 1: Streaming Capture and Transcription
+**Goal**: User can start an appointment session that continuously captures audio in small chunks, transcribes each chunk locally via faster-whisper, discards the audio, and accumulates a growing text transcript — all on the local GPU with minimal VRAM usage
 **Depends on**: Nothing (first phase)
-**Requirements**: AUD-01, PRV-01
+**Requirements**: AUD-01, TRX-01, TRX-02, PRV-01
 **Success Criteria** (what must be TRUE):
-  1. User can select a microphone from available audio devices and start/stop recording an appointment
-  2. Recording is saved as a playable WAV file on the local machine with speech clearly captured
-  3. No network requests are made during recording — all audio stays on the local filesystem
-  4. User can play back the recorded audio to verify speech quality against dental equipment noise
+  1. User can select a microphone, start a session, and see transcript text accumulating progressively as the appointment proceeds
+  2. Each audio chunk is transcribed within seconds and the audio data is discarded — no full-length WAV is ever stored on disk
+  3. Dental terminology (tooth numbers, procedure names, materials) appears correctly in the transcript due to vocabulary prompting
+  4. The tool runs on a GTX 1050 with 4GB VRAM without running out of GPU memory (small Whisper model selected accordingly)
+  5. No network requests are made during the session — all capture and transcription stays on the local machine
 **Plans**: TBD
 
 Plans:
 - [ ] 01-01: TBD
 - [ ] 01-02: TBD
 
-### Phase 2: Transcription Pipeline
-**Goal**: User can transcribe a recorded appointment locally using faster-whisper with dental-specific vocabulary, producing an accurate text transcript
+### Phase 2: Clinical Extraction
+**Goal**: A local LLM filters clinical content from the accumulated transcript and structures it into a SOAP note with CDT procedure code suggestions
 **Depends on**: Phase 1
-**Requirements**: TRX-01, TRX-02
-**Success Criteria** (what must be TRUE):
-  1. User can trigger transcription of a recorded WAV file and receive a text transcript within minutes
-  2. Transcription runs entirely on the local NVIDIA GPU via faster-whisper — no cloud API calls
-  3. Dental terminology (tooth numbers, procedure names, materials) is transcribed accurately due to vocabulary prompting
-  4. Silent segments during procedures do not produce hallucinated text (VAD preprocessing filters them)
-**Plans**: TBD
-
-Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
-
-### Phase 3: Clinical Extraction
-**Goal**: A local LLM filters clinical content from a dental transcript and structures it into a SOAP note with CDT procedure code suggestions
-**Depends on**: Phase 2
 **Requirements**: CLI-01, CLI-02, CLI-03
 **Success Criteria** (what must be TRUE):
   1. Social conversation and chitchat are filtered out, leaving only clinically relevant content
@@ -61,34 +46,33 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
+- [ ] 02-01: TBD
+- [ ] 02-02: TBD
 
-### Phase 4: Review and Export
-**Goal**: User can review transcript and SOAP note side-by-side, edit the draft, copy the finalized note for Dentrix, and have recordings automatically cleaned up
-**Depends on**: Phase 3
+### Phase 3: Review and Export
+**Goal**: User can review transcript and SOAP note side-by-side, edit the draft, copy the finalized note for Dentrix, and have ephemeral data automatically cleaned up
+**Depends on**: Phase 2
 **Requirements**: REV-01, REV-02, REV-03, REV-04, AUD-02
 **Success Criteria** (what must be TRUE):
-  1. User sees the full transcript alongside the AI-generated SOAP note draft in a side-by-side view
+  1. User sees the full accumulated transcript alongside the AI-generated SOAP note draft in a side-by-side view
   2. User can edit any section of the SOAP note draft before finalizing
   3. User can copy the finalized note to clipboard in one click, formatted for Dentrix paste
   4. A plain-language patient summary is generated alongside the clinical note
-  5. After finalization, the recording and transcript are automatically deleted from disk
+  5. After finalization, the transcript file is automatically deleted from disk (audio was already discarded during capture)
 **Plans**: TBD
 
 Plans:
-- [ ] 04-01: TBD
-- [ ] 04-02: TBD
-- [ ] 04-03: TBD
+- [ ] 03-01: TBD
+- [ ] 03-02: TBD
+- [ ] 03-03: TBD
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4
+Phases execute in numeric order: 1 -> 2 -> 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Audio Capture | 0/2 | Not started | - |
-| 2. Transcription Pipeline | 0/2 | Not started | - |
-| 3. Clinical Extraction | 0/2 | Not started | - |
-| 4. Review and Export | 0/3 | Not started | - |
+| 1. Streaming Capture and Transcription | 0/2 | Not started | - |
+| 2. Clinical Extraction | 0/2 | Not started | - |
+| 3. Review and Export | 0/3 | Not started | - |

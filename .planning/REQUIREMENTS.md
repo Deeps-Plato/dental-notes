@@ -7,12 +7,12 @@
 
 ### Audio
 
-- [ ] **AUD-01**: User can start and stop ambient audio recording of a dental appointment
-- [ ] **AUD-02**: Audio and transcript are automatically deleted after the note is finalized
+- [ ] **AUD-01**: User can start and stop a streaming capture session that records audio in small chunks, transcribes each chunk immediately, and discards the audio — no full-length recording is ever stored
+- [ ] **AUD-02**: Transcript file is automatically deleted after the note is finalized
 
 ### Transcription
 
-- [ ] **TRX-01**: Audio is transcribed locally using faster-whisper on NVIDIA GPU
+- [ ] **TRX-01**: Audio chunks are transcribed locally using faster-whisper on NVIDIA GPU, with a model small enough to run on GTX 1050 (4GB VRAM)
 - [ ] **TRX-02**: Transcription uses a dental terminology vocabulary prompt for accuracy
 
 ### Clinical Intelligence
@@ -49,7 +49,7 @@
 
 | Feature | Reason |
 |---------|--------|
-| Real-time streaming transcript during procedure | Distracts dentist; worse accuracy; massive complexity for no user value |
+| Live transcript display during procedure | Distracts dentist; no clinical value during active work; transcript accumulates silently in the background |
 | Dentrix API integration | Proprietary, poorly documented, requires vendor partnership; copy-paste suffices |
 | Patient identity/records database | Creates PHI liability; Dentrix is the system of record |
 | Always-on continuous recording | Legal nightmare in two-party consent state; generates unusable volumes of audio |
@@ -57,22 +57,23 @@
 | Voice-activated perio charting | Requires extremely high numeric accuracy; separate validation cycle; v2+ |
 | Cloud-based processing | Violates privacy-first principle; no patient data leaves the building |
 | Mobile/tablet recording app | Previous Flutter mobile attempt failed; desktop-first with proven hardware |
+| Storing full appointment audio | Streaming architecture transcribes chunks and discards audio immediately; no full WAV needed |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | AUD-01 | Phase 1 | Pending |
-| AUD-02 | Phase 4 | Pending |
-| TRX-01 | Phase 2 | Pending |
-| TRX-02 | Phase 2 | Pending |
-| CLI-01 | Phase 3 | Pending |
-| CLI-02 | Phase 3 | Pending |
-| CLI-03 | Phase 3 | Pending |
-| REV-01 | Phase 4 | Pending |
-| REV-02 | Phase 4 | Pending |
-| REV-03 | Phase 4 | Pending |
-| REV-04 | Phase 4 | Pending |
+| AUD-02 | Phase 3 | Pending |
+| TRX-01 | Phase 1 | Pending |
+| TRX-02 | Phase 1 | Pending |
+| CLI-01 | Phase 2 | Pending |
+| CLI-02 | Phase 2 | Pending |
+| CLI-03 | Phase 2 | Pending |
+| REV-01 | Phase 3 | Pending |
+| REV-02 | Phase 3 | Pending |
+| REV-03 | Phase 3 | Pending |
+| REV-04 | Phase 3 | Pending |
 | PRV-01 | Phase 1 | Pending |
 
 **Coverage:**
@@ -82,4 +83,4 @@
 
 ---
 *Requirements defined: 2026-03-06*
-*Last updated: 2026-03-06 after roadmap creation*
+*Last updated: 2026-03-06 after roadmap revision (streaming architecture)*
