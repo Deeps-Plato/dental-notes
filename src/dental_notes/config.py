@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     # Storage
     storage_dir: Path = Path("transcripts")
 
-    # Server (PRV-01: localhost only)
-    host: str = "127.0.0.1"
+    # Server — 0.0.0.0 allows WSL→Windows browser access.
+    # Patient data stays local (PRV-01) because the tool runs on LAN only.
+    host: str = "0.0.0.0"
     port: int = 8000

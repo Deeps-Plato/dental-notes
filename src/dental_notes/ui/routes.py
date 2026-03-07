@@ -159,21 +159,25 @@ async def session_stream(request: Request):
 
     async def event_generator():
         last_transcript_len = 0
+        was_active = False
 
         while True:
-            # Check if client disconnected
             if await request.is_disconnected():
                 break
 
-            # Check if session is still active
             if not session_manager.is_active():
-                state = session_manager.get_state()
-                if state == SessionState.IDLE:
+                if was_active:
+                    # Session just ended — notify and close
                     yield ServerSentEvent(
                         data="Session ended",
                         event="session_end",
                     )
                     break
+                # Not yet active — wait for session to start
+                await asyncio.sleep(0.5)
+                continue
+
+            was_active = True
 
             # Get current transcript and send new text
             transcript = session_manager.get_transcript()

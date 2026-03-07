@@ -10,6 +10,11 @@
     <p class="transcript-saved">Transcript saved: {{ transcript_path }}</p>
     {% endif %}
 </div>
+<script>
+    // Disconnect SSE when idle
+    var area = document.getElementById("transcript-area");
+    if (area) { area.removeAttribute("hx-ext"); area.removeAttribute("sse-connect"); htmx.process(area); }
+</script>
 {% elif state == "recording" %}
 <div class="controls recording">
     <span class="recording-indicator">Recording</span>
@@ -26,6 +31,22 @@
         Stop
     </button>
 </div>
+<script>
+    // Connect SSE when recording starts
+    var area = document.getElementById("transcript-area");
+    if (area && !area.getAttribute("sse-connect")) {
+        // Clear placeholder text
+        var t = document.getElementById("transcript");
+        var ph = t ? t.querySelector(".placeholder") : null;
+        if (ph) ph.remove();
+        // Wire up SSE
+        area.setAttribute("hx-ext", "sse");
+        area.setAttribute("sse-connect", "/session/stream");
+        var inner = document.getElementById("transcript");
+        if (inner) { inner.setAttribute("sse-swap", "transcript"); inner.setAttribute("hx-swap", "beforeend"); }
+        htmx.process(area);
+    }
+</script>
 {% elif state == "paused" %}
 <div class="controls paused">
     <span class="paused-indicator">Paused</span>

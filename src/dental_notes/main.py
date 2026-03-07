@@ -35,21 +35,18 @@ async def lifespan(app: FastAPI):
     settings = Settings()
     app.state.settings = settings
 
-    # Load Whisper model (lazy CUDA init at startup)
+    # Defer Whisper model loading to first session start.
+    # Loading at startup blocks the lifespan and delays the web UI.
     whisper_service = WhisperService(settings)
-    try:
-        whisper_service.load_model()
-        logger.info("Whisper model loaded successfully at startup")
-    except Exception:
-        logger.warning(
-            "Whisper model failed to load (expected in headless/test environments). "
-            "SessionManager will attempt loading on first session start."
-        )
+    logger.info(
+        "Whisper model will load on first session start "
+        "(model=%s, compute=%s)",
+        settings.whisper_model,
+        settings.compute_type,
+    )
 
-    # Create session manager with injected whisper service
+    # Create session manager — whisper loads lazily on first start()
     session_manager = SessionManager(settings)
-    if whisper_service.is_loaded:
-        session_manager._whisper = whisper_service
 
     app.state.session_manager = session_manager
     app.state.whisper_service = whisper_service

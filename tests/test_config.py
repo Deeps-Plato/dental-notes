@@ -16,7 +16,7 @@ def test_settings_loads_defaults():
     assert s.silence_gap_secs == 1.5
     assert s.overlap_secs == 1.0
     assert str(s.storage_dir) == "transcripts"
-    assert s.host == "127.0.0.1"
+    assert s.host == "0.0.0.0"
     assert s.port == 8000
 
 
@@ -40,13 +40,12 @@ def test_settings_env_override(monkeypatch: pytest.MonkeyPatch):
     assert s.port == 9000
 
 
-def test_settings_host_default_is_localhost():
-    """PRV-01: host defaults to 127.0.0.1 (never 0.0.0.0)."""
+def test_settings_host_default_binds_all():
+    """Host defaults to 0.0.0.0 so WSL is reachable from Windows browser."""
     from dental_notes.config import Settings
 
     s = Settings()
-    assert s.host == "127.0.0.1"
-    assert s.host != "0.0.0.0"
+    assert s.host == "0.0.0.0"
 
 
 def test_settings_storage_dir_is_path():
