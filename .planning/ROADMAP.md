@@ -49,7 +49,7 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 01.1-01-PLAN.md — Consolidate shared test fakes in conftest + unit tests for AudioCapture and HotkeyListener
+- [x] 01.1-01-PLAN.md — Consolidate shared test fakes in conftest + unit tests for AudioCapture and HotkeyListener
 - [ ] 01.1-02-PLAN.md — App factory tests + pipeline integration test proving end-to-end data flow
 - [ ] 01.1-03-PLAN.md — Full test suite verification + human verification checkpoint (blocking gate)
 
@@ -93,6 +93,6 @@ Phases execute in numeric order: 1 -> 1.1 -> 2 -> 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Streaming Capture and Transcription | 2/3 | In Progress | - |
-| 1.1. Phase 1 Test Hardening *(INSERTED)* | 0/3 | Not started | - |
+| 1.1. Phase 1 Test Hardening *(INSERTED)* | 1/3 | In Progress | - |
 | 2. Clinical Extraction | 0/2 | Not started | - |
 | 3. Review and Export | 0/3 | Not started | - |
