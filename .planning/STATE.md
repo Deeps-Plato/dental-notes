@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_plan: 2 of 3 in Phase 1.1
+current_plan: 3 of 3 in Phase 1.1
 status: executing
-stopped_at: Completed 01.1-01-PLAN.md
-last_updated: "2026-03-08T03:18:36.243Z"
-last_activity: 2026-03-08 -- Plan 01.1-01 complete (conftest consolidation + capture/hotkey tests, 21 new tests)
+stopped_at: Completed 01.1-02-PLAN.md
+last_updated: "2026-03-08T03:27:48.601Z"
+last_activity: 2026-03-08 -- Plan 01.1-02 complete (app factory tests + pipeline integration, 12 new tests)
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 6
-  completed_plans: 3
-  percent: 50
+  completed_plans: 4
+  percent: 67
 ---
 
 # Project State
@@ -23,16 +23,16 @@ See: .planning/PROJECT.md (updated 2026-03-05)
 
 **Core value:** Reliably record, transcribe, and produce a usable clinical note from a real dental appointment -- every time, with no data leaving the building.
 **Methodology:** Pragmatic TDD — test file before implementation, integration tests mandatory, human verification gates are blocking
-**Current focus:** Executing Phase 1.1 (Test Hardening) -- Plan 01 complete, Plan 02 next
+**Current focus:** Executing Phase 1.1 (Test Hardening) -- Plans 01-02 complete, Plan 03 (human verification) next
 
 ## Current Position
 
-Phase: 1.1 of 4 (Test Hardening) — Plan 01 complete, Plans 02-03 remaining
-Current Plan: 2 of 3 in Phase 1.1
+Phase: 1.1 of 4 (Test Hardening) -- Plans 01-02 complete, Plan 03 remaining
+Current Plan: 3 of 3 in Phase 1.1
 Status: Executing Phase 1.1
-Last activity: 2026-03-08 -- Plan 01.1-01 complete (conftest consolidation + capture/hotkey tests, 21 new tests)
+Last activity: 2026-03-08 -- Plan 01.1-02 complete (app factory tests + pipeline integration, 12 new tests)
 
-Progress: [#####░░░░░] 50%
+Progress: [######░░░░] 67%
 
 ## What Works Now
 
@@ -45,7 +45,7 @@ Progress: [#####░░░░░] 50%
 - **Transcript persists after stop**: Chunks remain visible in UI after session ends (was disappearing before)
 - **Multiple sessions**: Stop → Start cycle works (OOB swap gives fresh SSE connection each time)
 - **Transcript files saved**: Plain text with speaker labels, one per session, in `transcripts/` directory
-- **104 tests passing** across all modules (83 original + 11 capture + 10 hotkey)
+- **116 tests passing** across all modules (83 original + 11 capture + 10 hotkey + 7 main + 5 integration)
 
 ## Architecture: Speaker Classification
 
@@ -60,17 +60,18 @@ Transcript storage changed from flat string to `list[tuple[str, str]]` (speaker,
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3 (01-03 code complete but awaiting formal checkpoint)
-- Average duration: 5.3min
-- Total execution time: 0.27 hours
+- Total plans completed: 4 (01-03 code complete but awaiting formal checkpoint)
+- Average duration: 5.0min
+- Total execution time: 0.33 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-streaming-capture | 2 complete + 1 in progress | 9min+ | 4.5min |
-| 01.1-test-hardening | 1 of 3 complete | 7min | 7min |
+| 01.1-test-hardening | 2 of 3 complete | 11min | 5.5min |
 | Phase 01.1 P01 | 7min | 2 tasks | 5 files |
+| Phase 01.1 P02 | 4min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -110,6 +111,9 @@ Recent decisions affecting current work:
 - [01.1-01]: Test AudioCapture by calling _audio_callback directly with numpy arrays, not opening real streams
 - [Phase 01.1]: Import fakes via from tests.conftest import since tests/ has __init__.py (package mode)
 - [Phase 01.1]: Mock pynput via sys.modules patching to avoid X display requirement on headless Linux
+- [01.1-02]: Integration test uses real VadDetector with FakeVadModel injected via _model attribute, not mock.patch
+- [01.1-02]: Tuned Settings for integration test (short chunk duration/silence gap) for fast execution
+- [01.1-02]: Lifespan shutdown tested structurally via FakeSessionManager rather than asgi-lifespan library
 
 ### Bugs Fixed (All Sessions)
 
@@ -140,22 +144,18 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-08T03:18:28.878Z
-Stopped at: Completed 01.1-01-PLAN.md
-Resume action: Execute Plan 01.1-02 (next test hardening plan)
+Last session: 2026-03-08T03:27:48.566Z
+Stopped at: Completed 01.1-02-PLAN.md
+Resume action: Execute Plan 01.1-03 (human verification checkpoint)
 
 ### How to resume
-1. Execute Plan 01.1-02 (next in Phase 1.1 test hardening)
-2. Execute Plan 01.1-03 (human verification)
-3. After Phase 1.1 passes: plan Phase 2 with TDD methodology
+1. Execute Plan 01.1-03 (human verification -- user must confirm app works on Windows)
+2. After Phase 1.1 passes: plan Phase 2 with TDD methodology
 
 ### Phase 1 human verification still pending
 The server restart + browser test from Plan 01-03 Task 3 has not been completed yet.
 This is now part of Phase 1.1 -- the test hardening phase ensures Phase 1 actually works before we move on.
 
 ### Files changed this session
-- `tests/conftest.py` — Promoted FakeAudioCapture, FakeWhisperService, FakeChunker, FakeSessionManager + shared fixtures
-- `tests/test_capture.py` — NEW: 11 AudioCapture boundary tests
-- `tests/test_hotkey.py` — NEW: 10 HotkeyListener behavior tests
-- `tests/test_session_manager.py` — Removed local fake definitions, imports from conftest
-- `tests/test_routes.py` — Removed local FakeSessionManager, uses conftest
+- `tests/test_main.py` — NEW: 7 app factory structural tests
+- `tests/test_pipeline_integration.py` — NEW: 5 pipeline integration tests proving end-to-end data flow
