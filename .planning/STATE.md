@@ -2,16 +2,17 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Adopted pragmatic TDD methodology, inserted Phase 1.1 (test hardening), returning to planning
-last_updated: "2026-03-07T14:00:00Z"
-last_activity: 2026-03-07 -- Added TDD methodology to PROJECT.md, inserted Phase 1.1 into roadmap, updated config
+current_plan: 2 of 3 in Phase 1.1
+status: executing
+stopped_at: Completed 01.1-01-PLAN.md
+last_updated: "2026-03-08T03:18:36.243Z"
+last_activity: 2026-03-08 -- Plan 01.1-01 complete (conftest consolidation + capture/hotkey tests, 21 new tests)
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 6
-  completed_plans: 2
-  percent: 33
+  completed_plans: 3
+  percent: 50
 ---
 
 # Project State
@@ -22,16 +23,16 @@ See: .planning/PROJECT.md (updated 2026-03-05)
 
 **Core value:** Reliably record, transcribe, and produce a usable clinical note from a real dental appointment -- every time, with no data leaving the building.
 **Methodology:** Pragmatic TDD — test file before implementation, integration tests mandatory, human verification gates are blocking
-**Current focus:** Planning — adopted TDD, inserted Phase 1.1 (test hardening), preparing to plan Phase 1.1
+**Current focus:** Executing Phase 1.1 (Test Hardening) -- Plan 01 complete, Plan 02 next
 
 ## Current Position
 
-Phase: 1 of 4 (Streaming Capture and Transcription) — code complete, needs verification
-Next: Phase 1.1 (Test Hardening) — needs planning
-Status: Returned to planning to adopt TDD methodology
-Last activity: 2026-03-07 -- TDD methodology added, Phase 1.1 inserted into roadmap
+Phase: 1.1 of 4 (Test Hardening) — Plan 01 complete, Plans 02-03 remaining
+Current Plan: 2 of 3 in Phase 1.1
+Status: Executing Phase 1.1
+Last activity: 2026-03-08 -- Plan 01.1-01 complete (conftest consolidation + capture/hotkey tests, 21 new tests)
 
-Progress: [###▒░░░░░░] 33%
+Progress: [#####░░░░░] 50%
 
 ## What Works Now
 
@@ -44,7 +45,7 @@ Progress: [###▒░░░░░░] 33%
 - **Transcript persists after stop**: Chunks remain visible in UI after session ends (was disappearing before)
 - **Multiple sessions**: Stop → Start cycle works (OOB swap gives fresh SSE connection each time)
 - **Transcript files saved**: Plain text with speaker labels, one per session, in `transcripts/` directory
-- **83 tests passing** across all modules (including 11 speaker classification tests)
+- **104 tests passing** across all modules (83 original + 11 capture + 10 hotkey)
 
 ## Architecture: Speaker Classification
 
@@ -59,15 +60,17 @@ Transcript storage changed from flat string to `list[tuple[str, str]]` (speaker,
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2 (01-03 code complete but awaiting formal checkpoint)
-- Average duration: 4.5min
-- Total execution time: 0.15 hours
+- Total plans completed: 3 (01-03 code complete but awaiting formal checkpoint)
+- Average duration: 5.3min
+- Total execution time: 0.27 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-streaming-capture | 2 complete + 1 in progress | 9min+ | 4.5min |
+| 01.1-test-hardening | 1 of 3 complete | 7min | 7min |
+| Phase 01.1 P01 | 7min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -102,6 +105,11 @@ Recent decisions affecting current work:
 - [methodology]: Pragmatic TDD adopted -- v1 had 128 tests and zero working product; tests must verify behavior the user cares about, not mock internals
 - [methodology]: Test file before implementation file; integration tests mandatory per phase; human checkpoints are blocking gates
 - [methodology]: Phase 1.1 inserted to harden Phase 1 test coverage before moving to Phase 2
+- [01.1-01]: Import fakes via `from tests.conftest import` since tests/ has __init__.py (package mode)
+- [01.1-01]: Mock pynput via sys.modules patching to avoid X display requirement on headless Linux
+- [01.1-01]: Test AudioCapture by calling _audio_callback directly with numpy arrays, not opening real streams
+- [Phase 01.1]: Import fakes via from tests.conftest import since tests/ has __init__.py (package mode)
+- [Phase 01.1]: Mock pynput via sys.modules patching to avoid X display requirement on headless Linux
 
 ### Bugs Fixed (All Sessions)
 
@@ -132,26 +140,22 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-07
-Stopped at: TDD methodology adopted, Phase 1.1 inserted, ready to plan Phase 1.1
-Resume action: Plan Phase 1.1 (test hardening) → execute → then plan Phase 2 with TDD
+Last session: 2026-03-08T03:18:28.878Z
+Stopped at: Completed 01.1-01-PLAN.md
+Resume action: Execute Plan 01.1-02 (next test hardening plan)
 
 ### How to resume
-1. Run `/gsd:plan-phase 1.1` to create the test hardening plan
-2. Execute Phase 1.1 (fill test gaps, add integration test, complete human verification)
+1. Execute Plan 01.1-02 (next in Phase 1.1 test hardening)
+2. Execute Plan 01.1-03 (human verification)
 3. After Phase 1.1 passes: plan Phase 2 with TDD methodology
-4. Human verification from Phase 1 Plan 01-03 is folded into Phase 1.1
 
 ### Phase 1 human verification still pending
 The server restart + browser test from Plan 01-03 Task 3 has not been completed yet.
-This is now part of Phase 1.1 — the test hardening phase ensures Phase 1 actually works before we move on.
+This is now part of Phase 1.1 -- the test hardening phase ensures Phase 1 actually works before we move on.
 
 ### Files changed this session
-- `src/dental_notes/session/speaker.py` — NEW: text-based Doctor/Patient classifier
-- `src/dental_notes/session/manager.py` — chunks list, classify_speaker integration, get_chunks()/get_chunk_count()
-- `src/dental_notes/ui/routes.py` — SSE sends chunk divs, stop passes chunks, html.escape(), chunk_count status
-- `src/dental_notes/templates/_transcript.html` — chunk rendering with {% for speaker, text in chunks %}
-- `src/dental_notes/templates/_transcript_oob.html` — same chunk rendering for OOB swaps
-- `src/dental_notes/static/style.css` — .chunk spacing, speaker label color
-- `tests/test_speaker.py` — NEW: 11 classification tests
-- `tests/test_routes.py` — updated FakeSessionManager, 2 new integration tests
+- `tests/conftest.py` — Promoted FakeAudioCapture, FakeWhisperService, FakeChunker, FakeSessionManager + shared fixtures
+- `tests/test_capture.py` — NEW: 11 AudioCapture boundary tests
+- `tests/test_hotkey.py` — NEW: 10 HotkeyListener behavior tests
+- `tests/test_session_manager.py` — Removed local fake definitions, imports from conftest
+- `tests/test_routes.py` — Removed local FakeSessionManager, uses conftest
