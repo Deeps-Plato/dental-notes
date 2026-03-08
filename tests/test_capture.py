@@ -5,7 +5,6 @@ and device listing/matching -- all without opening a real audio stream.
 """
 
 import math
-import queue
 from unittest.mock import patch
 
 import numpy as np

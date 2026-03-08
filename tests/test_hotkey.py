@@ -6,7 +6,6 @@ Linux). Tests verify key routing, state-based action dispatch, and queue
 processing.
 """
 
-import queue
 import sys
 import threading
 import time
@@ -16,8 +15,6 @@ from unittest.mock import patch
 import pytest
 
 from dental_notes.session.manager import SessionState
-from tests.conftest import FakeSessionManager
-
 
 # --- Mock pynput setup ---
 

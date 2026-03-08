@@ -15,7 +15,6 @@ import numpy as np
 import pytest
 
 from dental_notes.config import Settings
-
 from tests.conftest import FakeAudioCapture, FakeChunker, FakeWhisperService
 
 

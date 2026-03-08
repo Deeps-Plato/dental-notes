@@ -12,7 +12,6 @@ FAKE: AudioCapture (no PortAudio), WhisperService (no GPU/CUDA),
 
 import time
 from pathlib import Path
-from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -20,7 +19,6 @@ import pytest
 from dental_notes.audio.vad import VadDetector
 from dental_notes.config import Settings
 from dental_notes.session.manager import SessionManager
-
 from tests.conftest import FakeAudioCapture, FakeVadModel, FakeWhisperService
 
 
