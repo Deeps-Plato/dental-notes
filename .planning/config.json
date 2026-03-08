@@ -4,6 +4,7 @@
   "parallelization": true,
   "commit_docs": true,
   "model_profile": "quality",
+  "tdd": true,
   "workflow": {
     "research": true,
     "plan_check": true,

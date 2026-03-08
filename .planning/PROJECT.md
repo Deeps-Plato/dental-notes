@@ -84,6 +84,37 @@ Freed AI and Overjet AI offer similar ambient clinical recording + note generati
 | Evaluate mic hardware | Need inconspicuous option that works in clinical setting; research phase | -- Pending |
 | Evaluate form factor | Desktop app vs phone/tablet vs web UI — research phase will determine | -- Pending |
 | Model profile: Quality (Opus) | User requested Opus for deep thinking during planning | -- Pending |
+| Pragmatic TDD (red-green-refactor) | v1 had 128 tests and didn't produce a working product. Tests must verify behavior that matters to the user, not just internal correctness with mocks. Test file first, then implementation. | Adopted |
+
+## Development Methodology: Pragmatic TDD
+
+### The Problem This Solves
+
+v1 delivered 128 passing tests and zero working product. The tests verified mocked internals — not real behavior. Passing tests gave false confidence while the actual pipeline (record → transcribe → note) never worked end-to-end.
+
+### Rules
+
+1. **Test file before implementation file.** For each task, write the test file first. Define expected behavior as assertions. Run the tests — they must fail (red). Then write the implementation to make them pass (green). Refactor if needed.
+
+2. **Tests must verify what the user cares about.** "Session manager returns transcript" matters. "Mock returns canned string" does not. Every test should answer: *if this test passes, does the user get something that works?*
+
+3. **Integration tests are mandatory per phase.** Each phase must include at least one integration test that exercises the full pipeline for that phase with realistic fakes (not mocks that return canned data). The integration test should prove the components actually connect.
+
+4. **Hardware-dependent code gets boundary tests.** Audio capture, GPU inference, and OS-level features can't run in CI. Test the boundaries: verify the interface contract, test with fake implementations that behave like the real thing, and require human verification for the actual hardware path.
+
+5. **Human verification checkpoints are blocking gates.** No phase is complete until the human checkpoint passes. "Tests pass" is necessary but not sufficient — the user must confirm the thing actually works.
+
+6. **No mocking away the thing you're testing.** If you're testing that transcription works, the test must actually run text through the pipeline — not mock the transcription service to return a canned string.
+
+### What Gets Tested vs What Doesn't
+
+| Test | Don't Test |
+|------|------------|
+| Business logic and data transformations | HTML templates and CSS |
+| Pipeline integration (components connected) | Third-party library internals |
+| Error handling and edge cases | Trivial getters/setters |
+| State machines and transitions | Configuration loading (unless complex) |
+| API route behavior with realistic fakes | Exact log messages |
 
 ---
-*Last updated: 2026-03-05 after initialization*
+*Last updated: 2026-03-07 — added TDD methodology*

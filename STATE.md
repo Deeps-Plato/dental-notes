@@ -23,11 +23,16 @@ Local-first ambient clinical note-taking tool for dental practices. Records appo
 | Roadmap | `.planning/ROADMAP.md` |
 | GSD State | `.planning/STATE.md` |
 
-### Roadmap (3 phases)
+### Methodology
+
+**Pragmatic TDD** — test file before implementation file, integration tests mandatory per phase, human verification checkpoints are blocking gates. Adopted after v1 delivered 128 passing tests and zero working product.
+
+### Roadmap (4 phases)
 
 | Phase | Name | Requirements | Status |
 |-------|------|-------------|--------|
-| 1 | Streaming Capture & Transcription | AUD-01, TRX-01, TRX-02, PRV-01 | Not started |
+| 1 | Streaming Capture & Transcription | AUD-01, TRX-01, TRX-02, PRV-01 | Code complete, awaiting verification |
+| 1.1 | Phase 1 Test Hardening | AUD-01, TRX-01, TRX-02, PRV-01 | Not started |
 | 2 | Clinical Extraction | CLI-01, CLI-02, CLI-03 | Not started |
 | 3 | Review & Export | REV-01, REV-02, REV-03, REV-04, AUD-02 | Not started |
 
@@ -42,7 +47,7 @@ Local-first ambient clinical note-taking tool for dental practices. Records appo
 
 ### Next Step
 
-`/gsd:discuss-phase 1` or `/gsd:plan-phase 1`
+`/gsd:plan-phase 1.1` — plan the test hardening phase, then execute it before moving to Phase 2
 
 ---
 
