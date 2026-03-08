@@ -2,6 +2,9 @@
 
 Uses fake/mock versions of all dependencies (AudioCapture, WhisperService,
 VadDetector, AudioChunker, TranscriptWriter) so tests run without GPU or mic.
+
+Fakes (FakeAudioCapture, FakeWhisperService, FakeChunker) are defined in
+conftest.py and auto-discovered by pytest.
 """
 
 import inspect
@@ -13,99 +16,12 @@ import pytest
 
 from dental_notes.config import Settings
 
-# --- Fakes ---
-
-
-class FakeAudioCapture:
-    """Fake AudioCapture that returns pre-loaded audio blocks."""
-
-    def __init__(self, blocks: list[np.ndarray] | None = None):
-        self._blocks = list(blocks or [])
-        self._block_index = 0
-        self._started = False
-        self._stopped = False
-        self._last_block: np.ndarray | None = None
-
-    def start(self, device_index: int | None = None) -> None:
-        self._started = True
-        self._stopped = False
-
-    def stop(self) -> None:
-        self._stopped = True
-        self._started = False
-
-    def get_block(self) -> np.ndarray | None:
-        if self._block_index < len(self._blocks):
-            block = self._blocks[self._block_index]
-            self._block_index += 1
-            self._last_block = block
-            return block
-        return None
-
-    def get_level(self) -> float:
-        if self._last_block is None:
-            return 0.0
-        return float(np.sqrt(np.mean(self._last_block**2)))
-
-
-class FakeWhisperService:
-    """Fake WhisperService that returns configurable text."""
-
-    def __init__(self, responses: list[str] | None = None):
-        self._responses = list(responses or ["transcribed text"])
-        self._call_index = 0
-        self.transcribe_calls: list[np.ndarray] = []
-
-    def transcribe(self, audio: np.ndarray) -> str:
-        self.transcribe_calls.append(audio)
-        if self._call_index < len(self._responses):
-            text = self._responses[self._call_index]
-            self._call_index += 1
-            return text
-        return ""
-
-    @property
-    def is_loaded(self) -> bool:
-        return True
-
-    def load_model(self) -> None:
-        pass
-
-    def unload(self) -> None:
-        pass
-
-
-class FakeChunker:
-    """Fake AudioChunker that returns a chunk every N blocks."""
-
-    def __init__(self, chunk_every: int = 3, chunk_data: np.ndarray | None = None):
-        self._chunk_every = chunk_every
-        self._chunk_data = chunk_data if chunk_data is not None else np.zeros(
-            16000, dtype=np.float32
-        )
-        self._feed_count = 0
-
-    def feed(self, audio_block: np.ndarray) -> np.ndarray | None:
-        self._feed_count += 1
-        if self._feed_count % self._chunk_every == 0:
-            return self._chunk_data
-        return None
-
-    def flush(self) -> np.ndarray | None:
-        if self._feed_count > 0 and self._feed_count % self._chunk_every != 0:
-            return self._chunk_data
-        return None
+from tests.conftest import FakeAudioCapture, FakeChunker, FakeWhisperService
 
 
 @pytest.fixture
 def settings(tmp_path: Path):
     return Settings(storage_dir=tmp_path / "transcripts")
-
-
-@pytest.fixture
-def audio_blocks():
-    """Pre-loaded audio blocks for testing."""
-    return [np.random.default_rng(i).random(1600).astype(np.float32) for i in range(9)]
 
 
 # --- State transition tests ---

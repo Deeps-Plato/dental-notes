@@ -1,9 +1,16 @@
-"""Shared test fixtures for dental-notes v2."""
+"""Shared test fixtures and fakes for dental-notes v2.
+
+All shared fakes (FakeAudioCapture, FakeWhisperService, FakeChunker,
+FakeSessionManager) live here so any test file can use them via pytest
+auto-discovery.
+"""
 
 from pathlib import Path
 
 import numpy as np
 import pytest
+
+from dental_notes.session.manager import SessionState
 
 
 @pytest.fixture
@@ -34,6 +41,9 @@ def mock_audio_noise() -> np.ndarray:
     """1 second of noise simulating dental drill: random values at 16kHz."""
     rng = np.random.default_rng(seed=42)
     return (rng.random(16000) * 0.1).astype(np.float32)
+
+
+# --- Shared fake classes ---
 
 
 class FakeVadModel:
@@ -69,6 +79,152 @@ class FakeTensor:
         return self._value
 
 
+class FakeAudioCapture:
+    """Fake AudioCapture that returns pre-loaded audio blocks."""
+
+    def __init__(self, blocks: list[np.ndarray] | None = None):
+        self._blocks = list(blocks or [])
+        self._block_index = 0
+        self._started = False
+        self._stopped = False
+        self._last_block: np.ndarray | None = None
+
+    def start(self, device_index: int | None = None) -> None:
+        self._started = True
+        self._stopped = False
+
+    def stop(self) -> None:
+        self._stopped = True
+        self._started = False
+
+    def get_block(self) -> np.ndarray | None:
+        if self._block_index < len(self._blocks):
+            block = self._blocks[self._block_index]
+            self._block_index += 1
+            self._last_block = block
+            return block
+        return None
+
+    def get_level(self) -> float:
+        if self._last_block is None:
+            return 0.0
+        return float(np.sqrt(np.mean(self._last_block**2)))
+
+
+class FakeWhisperService:
+    """Fake WhisperService that returns configurable text."""
+
+    def __init__(self, responses: list[str] | None = None):
+        self._responses = list(responses or ["transcribed text"])
+        self._call_index = 0
+        self.transcribe_calls: list[np.ndarray] = []
+
+    def transcribe(self, audio: np.ndarray) -> str:
+        self.transcribe_calls.append(audio)
+        if self._call_index < len(self._responses):
+            text = self._responses[self._call_index]
+            self._call_index += 1
+            return text
+        return ""
+
+    @property
+    def is_loaded(self) -> bool:
+        return True
+
+    def load_model(self) -> None:
+        pass
+
+    def unload(self) -> None:
+        pass
+
+
+class FakeChunker:
+    """Fake AudioChunker that returns a chunk every N blocks."""
+
+    def __init__(
+        self, chunk_every: int = 3, chunk_data: np.ndarray | None = None
+    ):
+        self._chunk_every = chunk_every
+        self._chunk_data = (
+            chunk_data
+            if chunk_data is not None
+            else np.zeros(16000, dtype=np.float32)
+        )
+        self._feed_count = 0
+
+    def feed(self, audio_block: np.ndarray) -> np.ndarray | None:
+        self._feed_count += 1
+        if self._feed_count % self._chunk_every == 0:
+            return self._chunk_data
+        return None
+
+    def flush(self) -> np.ndarray | None:
+        if self._feed_count > 0 and self._feed_count % self._chunk_every != 0:
+            return self._chunk_data
+        return None
+
+
+class FakeSessionManager:
+    """Mimics SessionManager state transitions and returns canned data."""
+
+    def __init__(self):
+        self._state = SessionState.IDLE
+        self._chunks: list[tuple[str, str]] = []
+        self._level = 0.0
+        self._transcript_path = Path("/tmp/test-transcript.txt")
+
+    def start(self, mic_device: int | None = None) -> None:
+        if self._state != SessionState.IDLE:
+            raise RuntimeError(
+                f"Cannot start: state is {self._state.value}"
+            )
+        self._state = SessionState.RECORDING
+        self._chunks = []
+
+    def pause(self) -> None:
+        if self._state != SessionState.RECORDING:
+            raise RuntimeError(
+                f"Cannot pause: state is {self._state.value}"
+            )
+        self._state = SessionState.PAUSED
+
+    def resume(self) -> None:
+        if self._state != SessionState.PAUSED:
+            raise RuntimeError(
+                f"Cannot resume: state is {self._state.value}"
+            )
+        self._state = SessionState.RECORDING
+
+    def stop(self) -> Path:
+        if self._state not in (SessionState.RECORDING, SessionState.PAUSED):
+            raise RuntimeError(
+                f"Cannot stop: state is {self._state.value}"
+            )
+        self._state = SessionState.IDLE
+        return self._transcript_path
+
+    def get_transcript(self) -> str:
+        return "\n\n".join(f"{s}: {t}" for s, t in self._chunks)
+
+    def get_chunks(self, start: int = 0) -> list[tuple[str, str]]:
+        return self._chunks[start:]
+
+    def get_chunk_count(self) -> int:
+        return len(self._chunks)
+
+    def get_state(self) -> SessionState:
+        return self._state
+
+    def is_active(self) -> bool:
+        return self._state in (SessionState.RECORDING, SessionState.PAUSED)
+
+    def get_level(self) -> float:
+        return self._level
+
+
+# --- Shared fixtures ---
+
+
 @pytest.fixture
 def fake_vad_speech() -> FakeVadModel:
     """FakeVadModel that always returns high speech probability."""
@@ -79,3 +235,18 @@ def fake_vad_speech() -> FakeVadModel:
 def fake_vad_silence() -> FakeVadModel:
     """FakeVadModel that always returns low speech probability."""
     return FakeVadModel(probabilities=[0.1] * 100)
+
+
+@pytest.fixture
+def fake_session_manager() -> FakeSessionManager:
+    """FakeSessionManager for route/hotkey tests."""
+    return FakeSessionManager()
+
+
+@pytest.fixture
+def audio_blocks() -> list[np.ndarray]:
+    """Pre-loaded audio blocks for testing (9 blocks of 1600 samples)."""
+    return [
+        np.random.default_rng(i).random(1600).astype(np.float32)
+        for i in range(9)
+    ]

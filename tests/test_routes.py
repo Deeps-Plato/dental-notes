@@ -1,10 +1,10 @@
 """Integration tests for FastAPI routes and SSE endpoint.
 
 Uses httpx AsyncClient with ASGITransport for testing. SessionManager
-is replaced with FakeSessionManager to avoid real audio/GPU dependencies.
+is replaced with FakeSessionManager (from conftest) to avoid real
+audio/GPU dependencies.
 """
 
-from pathlib import Path
 from unittest.mock import AsyncMock
 
 import pytest
@@ -12,55 +12,6 @@ from httpx import ASGITransport, AsyncClient
 
 from dental_notes.main import create_app
 from dental_notes.session.manager import SessionState
-
-
-class FakeSessionManager:
-    """Mimics SessionManager state transitions and returns canned data."""
-
-    def __init__(self):
-        self._state = SessionState.IDLE
-        self._transcript = ""
-        self._level = 0.0
-        self._transcript_path = Path("/tmp/test-transcript.txt")
-
-    def start(self, mic_device: int | None = None) -> None:
-        if self._state != SessionState.IDLE:
-            raise RuntimeError(f"Cannot start: state is {self._state.value}")
-        self._state = SessionState.RECORDING
-        self._transcript = ""
-
-    def pause(self) -> None:
-        if self._state != SessionState.RECORDING:
-            raise RuntimeError(f"Cannot pause: state is {self._state.value}")
-        self._state = SessionState.PAUSED
-
-    def resume(self) -> None:
-        if self._state != SessionState.PAUSED:
-            raise RuntimeError(f"Cannot resume: state is {self._state.value}")
-        self._state = SessionState.RECORDING
-
-    def stop(self) -> Path:
-        if self._state not in (SessionState.RECORDING, SessionState.PAUSED):
-            raise RuntimeError(f"Cannot stop: state is {self._state.value}")
-        self._state = SessionState.IDLE
-        return self._transcript_path
-
-    def get_transcript(self) -> str:
-        return self._transcript
-
-    def get_state(self) -> SessionState:
-        return self._state
-
-    def is_active(self) -> bool:
-        return self._state in (SessionState.RECORDING, SessionState.PAUSED)
-
-    def get_level(self) -> float:
-        return self._level
-
-
-@pytest.fixture
-def fake_session_manager():
-    return FakeSessionManager()
 
 
 @pytest.fixture
@@ -133,7 +84,7 @@ async def test_sse_stream_yields_transcript(test_app, fake_session_manager):
     from dental_notes.ui.routes import session_stream
 
     fake_session_manager._state = SessionState.RECORDING
-    fake_session_manager._transcript = "test transcript text"
+    fake_session_manager._chunks = [("Doctor", "test transcript text")]
     fake_session_manager._level = 0.5
 
     # Create a mock request
@@ -169,7 +120,7 @@ async def test_status_endpoint(client, fake_session_manager):
     assert response.status_code == 200
     data = response.json()
     assert data["state"] == "idle"
-    assert "transcript_length" in data
+    assert "chunk_count" in data
     assert "level" in data
 
 
@@ -206,3 +157,129 @@ async def test_start_with_device(client, fake_session_manager):
     )
     assert response.status_code == 200
     assert fake_session_manager.get_state() == SessionState.RECORDING
+
+
+@pytest.mark.asyncio
+async def test_start_error_shows_banner(client, fake_session_manager):
+    """POST /session/start with hardware error returns error banner HTML."""
+
+    def exploding_start(mic_device=None):
+        raise OSError("No audio device available")
+
+    fake_session_manager.start = exploding_start
+    response = await client.post("/session/start")
+    assert response.status_code == 500
+    assert "error-banner" in response.text
+    assert "No audio device available" in response.text
+    # Should still show the Start button for retry
+    assert "Start Recording" in response.text
+
+
+@pytest.mark.asyncio
+async def test_stop_shows_transcript_path(client, fake_session_manager):
+    """POST /session/stop shows the saved transcript file path."""
+    fake_session_manager.start()
+    response = await client.post("/session/stop")
+    assert response.status_code == 200
+    assert "test-transcript.txt" in response.text
+
+
+@pytest.mark.asyncio
+async def test_recording_state_shows_pause_stop(client, fake_session_manager):
+    """Recording state HTML includes Pause and Stop buttons."""
+    response = await client.post("/session/start")
+    assert response.status_code == 200
+    assert "Pause" in response.text
+    assert "Stop" in response.text
+    assert "Recording" in response.text
+
+
+@pytest.mark.asyncio
+async def test_paused_state_shows_resume_stop(client, fake_session_manager):
+    """Paused state HTML includes Resume and Stop buttons."""
+    fake_session_manager.start()
+    response = await client.post("/session/pause")
+    assert response.status_code == 200
+    assert "Resume" in response.text
+    assert "Stop" in response.text
+    assert "Paused" in response.text
+
+
+@pytest.mark.asyncio
+async def test_index_has_mic_selector(client):
+    """Homepage includes the microphone selector dropdown."""
+    response = await client.get("/")
+    assert response.status_code == 200
+    assert 'id="mic-select"' in response.text
+    assert "Default device" in response.text
+
+
+@pytest.mark.asyncio
+async def test_index_has_level_bar(client):
+    """Homepage includes the audio level indicator."""
+    response = await client.get("/")
+    assert response.status_code == 200
+    assert 'id="level-bar"' in response.text
+
+
+@pytest.mark.asyncio
+async def test_index_has_transcript_area(client):
+    """Homepage includes the transcript display area."""
+    response = await client.get("/")
+    assert response.status_code == 200
+    assert 'id="transcript-area"' in response.text
+    assert "No transcript yet" in response.text
+
+
+@pytest.mark.asyncio
+async def test_stop_preserves_transcript_with_speaker_labels(
+    client, fake_session_manager
+):
+    """After stop, transcript is rendered with speaker labels and chunk divs."""
+    fake_session_manager.start()
+    fake_session_manager._chunks = [
+        ("Doctor", "I see the MOD amalgam on tooth 14 has a fracture"),
+        ("Patient", "Is that something that needs to be fixed right away"),
+    ]
+    response = await client.post("/session/stop")
+    assert response.status_code == 200
+    # Chunks should be rendered as HTML divs with speaker labels
+    assert "Doctor:" in response.text
+    assert "Patient:" in response.text
+    assert "MOD amalgam" in response.text
+    assert "fixed right away" in response.text
+    assert 'class="chunk"' in response.text
+
+
+@pytest.mark.asyncio
+async def test_sse_sends_chunk_divs(test_app, fake_session_manager):
+    """SSE transcript events contain div.chunk elements with speaker labels."""
+    from dental_notes.ui.routes import session_stream
+
+    fake_session_manager._state = SessionState.RECORDING
+    fake_session_manager._chunks = [
+        ("Doctor", "Crown prep on tooth 14"),
+    ]
+    fake_session_manager._level = 0.3
+
+    mock_request = AsyncMock()
+    mock_request.app = test_app
+    mock_request.is_disconnected = AsyncMock(return_value=False)
+
+    response = await session_stream(mock_request)
+    generator = response.body_iterator
+
+    events = []
+    count = 0
+    async for event in generator:
+        events.append(event)
+        count += 1
+        if count >= 2:
+            fake_session_manager._state = SessionState.IDLE
+        if count >= 4:
+            break
+
+    # Find the transcript event and verify it has the chunk HTML
+    event_data = "".join(e.data for e in events if hasattr(e, "data"))
+    assert "Doctor:" in event_data
+    assert "chunk" in event_data
