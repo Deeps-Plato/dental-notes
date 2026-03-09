@@ -17,10 +17,10 @@
 
 ### Clinical Intelligence
 
-- [ ] **CLI-01**: Local LLM filters clinical content from social conversation/chitchat
-- [ ] **CLI-02**: Filtered content is structured into a dental SOAP note (Subjective, Objective, Assessment, Plan)
-- [ ] **CLI-03**: CDT procedure codes are suggested from the Assessment/Plan sections
-- [ ] **CLI-04**: LLM re-attributes speaker labels (Doctor/Patient) using conversational context — who leads, instructs, and directs vs who responds and reports symptoms
+- [x] **CLI-01**: Local LLM filters clinical content from social conversation/chitchat
+- [x] **CLI-02**: Filtered content is structured into a dental SOAP note (Subjective, Objective, Assessment, Plan)
+- [x] **CLI-03**: CDT procedure codes are suggested from the Assessment/Plan sections
+- [x] **CLI-04**: LLM re-attributes speaker labels (Doctor/Patient) using conversational context — who leads, instructs, and directs vs who responds and reports symptoms
 
 ### Review & Export
 
@@ -68,10 +68,10 @@
 | AUD-02 | Phase 3 | Pending |
 | TRX-01 | Phase 1 | Complete |
 | TRX-02 | Phase 1 | Complete |
-| CLI-01 | Phase 2 | Pending |
-| CLI-02 | Phase 2 | Pending |
-| CLI-03 | Phase 2 | Pending |
-| CLI-04 | Phase 2 | Pending |
+| CLI-01 | Phase 2 | Complete |
+| CLI-02 | Phase 2 | Complete |
+| CLI-03 | Phase 2 | Complete |
+| CLI-04 | Phase 2 | Complete |
 | REV-01 | Phase 3 | Pending |
 | REV-02 | Phase 3 | Pending |
 | REV-03 | Phase 3 | Pending |

@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_plan: 02-01 complete, next is 02-02
-status: in_progress
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-03-09T06:20:15Z"
-last_activity: 2026-03-09 -- Plan 02-01 complete (clinical foundation -- Pydantic models, OllamaService, prompts, config)
+current_plan: 02-02 complete, next is 02-03
+status: executing
+stopped_at: Completed 02-02-PLAN.md
+last_updated: "2026-03-09T06:35:12.535Z"
+last_activity: 2026-03-09 -- Plan 02-02 complete (ClinicalExtractor + SpeakerReattributor + GPU handoff)
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 9
-  completed_plans: 7
-  percent: 78
+  completed_plans: 8
+  percent: 89
 ---
 
 # Project State
@@ -23,16 +23,16 @@ See: .planning/PROJECT.md (updated 2026-03-05)
 
 **Core value:** Reliably record, transcribe, and produce a usable clinical note from a real dental appointment -- every time, with no data leaving the building.
 **Methodology:** Pragmatic TDD — test file before implementation, integration tests mandatory, human verification gates are blocking
-**Current focus:** Phase 2 (Clinical Extraction) in progress. Plan 01 complete, Plan 02 next.
+**Current focus:** Phase 2 (Clinical Extraction) in progress. Plan 02 complete, Plan 03 (integration test) next.
 
 ## Current Position
 
 Phase: 2 of 4 (Clinical Extraction) -- IN PROGRESS
-Current Plan: 02-01 complete, next is 02-02
-Status: Phase 2 In Progress (1/3 plans done)
-Last activity: 2026-03-09 -- Plan 02-01 complete (clinical foundation -- Pydantic models, OllamaService, prompts, config)
+Current Plan: 02-02 complete, next is 02-03
+Status: Phase 2 In Progress (2/3 plans done)
+Last activity: 2026-03-09 -- Plan 02-02 complete (ClinicalExtractor + SpeakerReattributor + GPU handoff)
 
-Progress: [███████░░░] 78%
+Progress: [█████████░] 89%
 
 ## What Works Now
 
@@ -45,8 +45,11 @@ Progress: [███████░░░] 78%
 - **Transcript persists after stop**: Chunks remain visible in UI after session ends (was disappearing before)
 - **Multiple sessions**: Stop → Start cycle works (OOB swap gives fresh SSE connection each time)
 - **Transcript files saved**: Plain text with speaker labels, one per session, in `transcripts/` directory
-- **156 tests passing** across all modules (116 Phase 1/1.1 + 25 clinical models + 15 ollama service)
-- **Clinical module**: src/dental_notes/clinical/ with Pydantic models, OllamaService, and prompts
+- **182 tests passing** across all modules (116 Phase 1/1.1 + 25 clinical models + 15 ollama service + 17 extractor + 9 speaker)
+- **Clinical module**: src/dental_notes/clinical/ with Pydantic models, OllamaService, prompts, ClinicalExtractor, SpeakerReattributor
+- **ClinicalExtractor**: transcript -> ExtractionResult (SOAP note + CDT codes) via OllamaService
+- **SpeakerReattributor**: LLM-based speaker label correction preserving chunk boundaries
+- **GPU handoff**: extract_with_gpu_handoff() sequences Whisper unload -> LLM -> LLM unload -> Whisper reload
 
 ## Architecture: Speaker Classification
 
@@ -61,9 +64,9 @@ Transcript storage changed from flat string to `list[tuple[str, str]]` (speaker,
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7 (Phase 1 + Phase 1.1 + Phase 2 Plan 01)
-- Average duration: 4.9min
-- Total execution time: 0.48 hours
+- Total plans completed: 8 (Phase 1 + Phase 1.1 + Phase 2 Plans 01-02)
+- Average duration: 5.1min
+- Total execution time: 0.60 hours
 
 **By Phase:**
 
@@ -74,8 +77,9 @@ Transcript storage changed from flat string to `list[tuple[str, str]]` (speaker,
 | Phase 01.1 P01 | 7min | 2 tasks | 5 files |
 | Phase 01.1 P02 | 4min | 2 tasks | 2 files |
 | Phase 01.1 P03 | 3min | 2 tasks | 0 files (verification) |
-| 02-clinical-extraction | 1 of 3 complete | 6min | 6min |
+| 02-clinical-extraction | 2 of 3 complete | 13min | 6.5min |
 | Phase 02 P01 | 6min | 2 tasks | 9 files |
+| Phase 02 P02 | 7min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -124,6 +128,10 @@ Recent decisions affecting current work:
 - [02-01]: FakeOllamaService nests cdt_codes inside soap_note matching ExtractionResult schema
 - [02-01]: OllamaService uses ollama.Client sync API (not async) for simplicity
 - [02-01]: /nothink prefix prepended to all user content to disable Qwen3 thinking mode
+- [02-02]: FakeWhisperServiceGpu as separate class from FakeWhisperService to avoid breaking 156 existing tests
+- [02-02]: Speaker system prompt separate from EXTRACTION_SYSTEM_PROMPT (focused on attribution only)
+- [02-02]: _SpeakerChunkList Pydantic wrapper model for structured LLM array output schema
+- [02-02]: GPU handoff pattern: whisper.unload() -> extract() -> finally { ollama.unload(); whisper.load_model() }
 
 ### Bugs Fixed (All Sessions)
 
@@ -139,9 +147,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Execute Phase 2 Plan 02 (ClinicalExtractor and SpeakerReattributor)
-- Execute Phase 2 Plan 03 (Integration test with real Ollama + human verification)
-- Address CLI-04 in Phase 2 Plan 02: LLM-based speaker re-attribution using conversational context
+- Execute Phase 2 Plan 03 (Integration test with real Ollama + human verification checkpoint)
 
 ### Blockers/Concerns
 
@@ -153,13 +159,12 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-09T06:20:15Z
-Stopped at: Completed 02-01-PLAN.md
-Resume action: Execute Phase 2 Plan 02 (ClinicalExtractor and SpeakerReattributor)
+Last session: 2026-03-09T06:34:57.739Z
+Stopped at: Completed 02-02-PLAN.md
+Resume action: Execute Phase 2 Plan 03 (Integration test with real Ollama + human verification)
 
 ### How to resume
-1. Execute Phase 2 Plan 02 -- ClinicalExtractor (transcript -> SOAP note pipeline) and SpeakerReattributor (LLM speaker correction)
-2. Then Phase 2 Plan 03 -- Integration test with real Ollama + human verification checkpoint
+1. Execute Phase 2 Plan 03 -- Integration test with real Ollama + human verification checkpoint
 
 ### Phase 1 human verification COMPLETE
 Human verified on 2026-03-08: server starts, UI loads, audio captures, Whisper transcribes dental terminology, speaker labels render, transcripts persist, no network requests. Session lifecycle (Start/Pause/Resume/Stop) all functional.
@@ -167,15 +172,11 @@ Human verified on 2026-03-08: server starts, UI loads, audio captures, Whisper t
 Known limitation accepted: keyword-based speaker classifier loses context across chunks when doctor pauses mid-thought. Deferred to Phase 2 CLI-04 for LLM re-attribution.
 
 ### Files changed this session
-- `src/dental_notes/clinical/__init__.py` — NEW: clinical module init
-- `src/dental_notes/clinical/models.py` — NEW: SoapNote, CdtCode, SpeakerChunk, ExtractionResult
-- `src/dental_notes/clinical/prompts.py` — NEW: CDT_REFERENCE and EXTRACTION_SYSTEM_PROMPT
-- `src/dental_notes/clinical/ollama_service.py` — NEW: OllamaService wrapper
-- `src/dental_notes/config.py` — MODIFIED: 5 Ollama settings added
-- `pyproject.toml` — MODIFIED: ollama>=0.6.1 dependency added
-- `tests/test_clinical_models.py` — NEW: 25 tests for models, config, prompts
-- `tests/test_ollama_service.py` — NEW: 15 tests for OllamaService and FakeOllamaService
-- `tests/conftest.py` — MODIFIED: FakeOllamaService class and fixture added
-- `.planning/phases/02-clinical-extraction/02-01-SUMMARY.md` — NEW: Plan 01 summary
-- `.planning/STATE.md` — Updated: Phase 2 in progress
+- `src/dental_notes/clinical/extractor.py` — NEW: ClinicalExtractor with extract(), extract_from_chunks(), extract_with_gpu_handoff()
+- `src/dental_notes/clinical/speaker.py` — NEW: SpeakerReattributor with reattribute() and SPEAKER_SYSTEM_PROMPT
+- `tests/test_extractor.py` — NEW: 17 tests for extraction pipeline and GPU handoff
+- `tests/test_speaker_reattribution.py` — NEW: 9 tests for speaker re-attribution
+- `tests/conftest.py` — MODIFIED: FakeWhisperServiceGpu, SAMPLE_DENTAL_TRANSCRIPT, unload_count on FakeOllamaService
+- `.planning/phases/02-clinical-extraction/02-02-SUMMARY.md` — NEW: Plan 02 summary
+- `.planning/STATE.md` — Updated: Phase 2 Plan 02 complete
 - `.planning/ROADMAP.md` — Updated: Phase 2 progress
