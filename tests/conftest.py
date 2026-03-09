@@ -3,6 +3,11 @@
 All shared fakes (FakeAudioCapture, FakeWhisperService, FakeChunker,
 FakeSessionManager, FakeOllamaService) live here so any test file can
 use them via pytest auto-discovery.
+
+Integration test infrastructure:
+- --integration flag enables tests marked @pytest.mark.integration
+- Integration tests connect to real Ollama at localhost:11434
+- Model auto-detection: tries qwen3:8b, falls back to qwen3:4b
 """
 
 import json
@@ -12,6 +17,30 @@ import numpy as np
 import pytest
 
 from dental_notes.session.manager import SessionState
+
+
+def pytest_addoption(parser: pytest.Parser) -> None:
+    """Add --integration flag to enable integration tests."""
+    parser.addoption(
+        "--integration",
+        action="store_true",
+        default=False,
+        help="Run integration tests requiring real Ollama service",
+    )
+
+
+def pytest_collection_modifyitems(
+    config: pytest.Config, items: list[pytest.Item]
+) -> None:
+    """Skip integration tests unless --integration flag is passed."""
+    if config.getoption("--integration"):
+        return
+    skip_integration = pytest.mark.skip(
+        reason="Need --integration flag to run"
+    )
+    for item in items:
+        if "integration" in item.keywords:
+            item.add_marker(skip_integration)
 
 
 @pytest.fixture
@@ -399,3 +428,92 @@ Doctor: It should be covered under your plan. We'll schedule you for the restora
 def sample_transcript() -> str:
     """Sample dental appointment transcript for extraction tests."""
     return SAMPLE_DENTAL_TRANSCRIPT
+
+
+# --- Integration test fixtures (require real Ollama) ---
+
+
+SAMPLE_CHUNKS: list[tuple[str, str]] = [
+    ("Doctor", "Good morning, how are you today?"),
+    (
+        "Patient",
+        "I'm doing well, thanks. My upper right tooth has been "
+        "really sensitive to cold for the past week.",
+    ),
+    (
+        "Doctor",
+        "Let's take a look. Open wide please. I can see some "
+        "discoloration on tooth number 14, the mesial-occlusal "
+        "surface. Let me probe around... pocket depths are normal, "
+        "2 to 3 millimeters.",
+    ),
+    ("Patient", "Is it a cavity?"),
+    (
+        "Doctor",
+        "Yes, I'm seeing a Class II caries on number 14, "
+        "mesial-occlusal. We'll need to do a composite restoration. "
+        "I'd recommend a two-surface composite.",
+    ),
+    ("Patient", "Okay, sounds good. Will insurance cover it?"),
+    (
+        "Doctor",
+        "It should be covered under your plan. We'll schedule you "
+        "for the restoration. I'll also want to take a periapical "
+        "radiograph to rule out any periapical pathology.",
+    ),
+]
+
+
+@pytest.fixture
+def sample_chunks() -> list[tuple[str, str]]:
+    """Sample (speaker, text) chunks parsed from SAMPLE_DENTAL_TRANSCRIPT."""
+    return SAMPLE_CHUNKS
+
+
+@pytest.fixture
+def integration_ollama_service(test_settings):
+    """Real OllamaService for integration tests.
+
+    Auto-detects model: tries qwen3:8b first, falls back to qwen3:4b.
+    Skips test if Ollama is not available or no model is ready.
+    """
+    from dental_notes.clinical.ollama_service import OllamaService
+
+    service = OllamaService(
+        host=test_settings.ollama_host,
+        model=test_settings.ollama_model,
+    )
+    if not service.is_available():
+        pytest.skip("Ollama not available at localhost:11434")
+
+    if service.is_model_ready():
+        return service
+
+    # Try fallback model
+    fallback = OllamaService(
+        host=test_settings.ollama_host,
+        model=test_settings.ollama_fallback_model,
+    )
+    if fallback.is_model_ready():
+        return fallback
+
+    pytest.skip(
+        f"Neither {test_settings.ollama_model} nor "
+        f"{test_settings.ollama_fallback_model} available"
+    )
+
+
+@pytest.fixture
+def integration_extractor(integration_ollama_service, test_settings):
+    """ClinicalExtractor connected to real Ollama for integration tests."""
+    from dental_notes.clinical.extractor import ClinicalExtractor
+
+    return ClinicalExtractor(integration_ollama_service, test_settings)
+
+
+@pytest.fixture
+def integration_reattributor(integration_ollama_service, test_settings):
+    """SpeakerReattributor connected to real Ollama for integration tests."""
+    from dental_notes.clinical.speaker import SpeakerReattributor
+
+    return SpeakerReattributor(integration_ollama_service, test_settings)
