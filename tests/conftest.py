@@ -312,6 +312,7 @@ class FakeOllamaService:
         self.last_system_prompt: str | None = None
         self.last_user_content: str | None = None
         self.call_count: int = 0
+        self.unload_count: int = 0
 
     def is_available(self) -> bool:
         return True
@@ -332,10 +333,69 @@ class FakeOllamaService:
         return json.dumps(self.response_data)
 
     def unload(self) -> None:
-        pass
+        self.unload_count += 1
 
 
 @pytest.fixture
 def fake_ollama_service() -> FakeOllamaService:
     """FakeOllamaService for clinical extraction tests."""
     return FakeOllamaService()
+
+
+# --- GPU handoff fakes ---
+
+
+class FakeWhisperServiceGpu:
+    """Fake WhisperService with call tracking for GPU handoff tests.
+
+    Unlike FakeWhisperService (which tracks transcription calls),
+    this tracks unload/load_model calls for verifying GPU memory
+    management sequences.
+    """
+
+    def __init__(self) -> None:
+        self.unload_count: int = 0
+        self.load_model_count: int = 0
+        self._is_loaded: bool = True
+
+    def unload(self) -> None:
+        self.unload_count += 1
+        self._is_loaded = False
+
+    def load_model(self) -> None:
+        self.load_model_count += 1
+        self._is_loaded = True
+
+    @property
+    def is_loaded(self) -> bool:
+        return self._is_loaded
+
+
+@pytest.fixture
+def fake_whisper_service() -> FakeWhisperServiceGpu:
+    """FakeWhisperServiceGpu for GPU handoff tests."""
+    return FakeWhisperServiceGpu()
+
+
+# --- Sample transcript data ---
+
+
+SAMPLE_DENTAL_TRANSCRIPT = """Doctor: Good morning, how are you today?
+
+Patient: I'm doing well, thanks. My upper right tooth has been really sensitive to cold for the past week.
+
+Doctor: Let's take a look. Open wide please. I can see some discoloration on tooth number 14, the mesial-occlusal surface. Let me probe around... pocket depths are normal, 2 to 3 millimeters.
+
+Patient: Is it a cavity?
+
+Doctor: Yes, I'm seeing a Class II caries on number 14, mesial-occlusal. We'll need to do a composite restoration. I'd recommend a two-surface composite.
+
+Patient: Okay, sounds good. Will insurance cover it?
+
+Doctor: It should be covered under your plan. We'll schedule you for the restoration. I'll also want to take a periapical radiograph to rule out any periapical pathology."""
+
+
+@pytest.fixture
+def sample_transcript() -> str:
+    """Sample dental appointment transcript for extraction tests."""
+    return SAMPLE_DENTAL_TRANSCRIPT
