@@ -12,8 +12,8 @@ This roadmap delivers a local-first ambient clinical note-taking tool in 3 phase
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Streaming Capture and Transcription** - Stream audio chunks from mic, transcribe each chunk locally via faster-whisper, discard audio, accumulate transcript
-- [ ] **Phase 1.1: Phase 1 Test Hardening** *(INSERTED)* - Fill test coverage gaps, add pipeline integration test, complete human verification
+- [x] **Phase 1: Streaming Capture and Transcription** - Stream audio chunks from mic, transcribe each chunk locally via faster-whisper, discard audio, accumulate transcript
+- [x] **Phase 1.1: Phase 1 Test Hardening** *(INSERTED)* - Fill test coverage gaps, add pipeline integration test, complete human verification
 - [ ] **Phase 2: Clinical Extraction** - Filter clinical content from accumulated transcript and generate structured SOAP notes via local LLM
 - [ ] **Phase 3: Review and Export** - Side-by-side review UI with editing, clipboard export, and ephemeral cleanup
 
@@ -34,7 +34,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 Plans:
 - [x] 01-01-PLAN.md — Project setup + core audio pipeline (capture, VAD, chunker, stitcher, transcript writer)
 - [x] 01-02-PLAN.md — Whisper transcription service + session manager state machine
-- [ ] 01-03-PLAN.md — FastAPI web UI with SSE, HTMX templates, keyboard shortcuts, end-to-end verification
+- [x] 01-03-PLAN.md — FastAPI web UI with SSE, HTMX templates, keyboard shortcuts, end-to-end verification
 
 ### Phase 1.1: Phase 1 Test Hardening *(INSERTED)*
 **Goal**: Fill test coverage gaps in Phase 1, add a pipeline integration test that proves components actually connect, and complete the human verification checkpoint — ensuring Phase 1 delivers working software, not just passing tests
@@ -46,22 +46,23 @@ Plans:
   3. The integration test proves components connect — data flows through the full chain and produces a transcript
   4. Human verification checkpoint from Plan 01-03 is completed (user confirms the app works on real hardware)
   5. All tests pass and the test suite serves as a reliable signal (if tests pass, the thing works)
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 
 Plans:
 - [x] 01.1-01-PLAN.md — Consolidate shared test fakes in conftest + unit tests for AudioCapture and HotkeyListener
-- [ ] 01.1-02-PLAN.md — App factory tests + pipeline integration test proving end-to-end data flow
-- [ ] 01.1-03-PLAN.md — Full test suite verification + human verification checkpoint (blocking gate)
+- [x] 01.1-02-PLAN.md — App factory tests + pipeline integration test proving end-to-end data flow
+- [x] 01.1-03-PLAN.md — Full test suite verification + human verification checkpoint (blocking gate)
 
 ### Phase 2: Clinical Extraction
 **Goal**: A local LLM filters clinical content from the accumulated transcript and structures it into a SOAP note with CDT procedure code suggestions
 **Depends on**: Phase 1
-**Requirements**: CLI-01, CLI-02, CLI-03
+**Requirements**: CLI-01, CLI-02, CLI-03, CLI-04
 **Success Criteria** (what must be TRUE):
   1. Social conversation and chitchat are filtered out, leaving only clinically relevant content
   2. Filtered content is structured into a dental SOAP note with Subjective, Objective, Assessment, and Plan sections
   3. CDT procedure codes are suggested based on the Assessment and Plan sections
   4. All LLM processing runs locally via Ollama — no patient data leaves the machine
+  5. Speaker labels (Doctor/Patient) are re-attributed by the LLM using conversational context, correcting keyword-based misclassifications from Phase 1
 **Plans**: TBD
 
 Plans:
@@ -92,7 +93,7 @@ Phases execute in numeric order: 1 -> 1.1 -> 2 -> 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Streaming Capture and Transcription | 2/3 | In Progress | - |
-| 1.1. Phase 1 Test Hardening *(INSERTED)* | 1/3 | In Progress | - |
+| 1. Streaming Capture and Transcription | 3/3 | Complete | 2026-03-07 |
+| 1.1. Phase 1 Test Hardening *(INSERTED)* | 3/3 | Complete   | 2026-03-09 |
 | 2. Clinical Extraction | 0/2 | Not started | - |
 | 3. Review and Export | 0/3 | Not started | - |

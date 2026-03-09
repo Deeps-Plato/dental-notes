@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_plan: 3 of 3 in Phase 1.1
-status: executing
-stopped_at: Completed 01.1-02-PLAN.md
-last_updated: "2026-03-08T03:27:48.601Z"
-last_activity: 2026-03-08 -- Plan 01.1-02 complete (app factory tests + pipeline integration, 12 new tests)
+current_plan: Phase 1.1 complete, next is Phase 2
+status: completed
+stopped_at: Completed 01.1-03-PLAN.md (Phase 1.1 complete)
+last_updated: "2026-03-09T00:57:15.470Z"
+last_activity: 2026-03-08 -- Plan 01.1-03 complete (human verification checkpoint approved -- Phase 1 pipeline verified on real hardware)
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 2
   total_plans: 6
-  completed_plans: 4
-  percent: 67
+  completed_plans: 6
+  percent: 83
 ---
 
 # Project State
@@ -23,16 +23,16 @@ See: .planning/PROJECT.md (updated 2026-03-05)
 
 **Core value:** Reliably record, transcribe, and produce a usable clinical note from a real dental appointment -- every time, with no data leaving the building.
 **Methodology:** Pragmatic TDD — test file before implementation, integration tests mandatory, human verification gates are blocking
-**Current focus:** Executing Phase 1.1 (Test Hardening) -- Plans 01-02 complete, Plan 03 (human verification) next
+**Current focus:** Phase 1.1 complete. Ready for Phase 2 (Clinical Extraction) planning.
 
 ## Current Position
 
-Phase: 1.1 of 4 (Test Hardening) -- Plans 01-02 complete, Plan 03 remaining
-Current Plan: 3 of 3 in Phase 1.1
-Status: Executing Phase 1.1
-Last activity: 2026-03-08 -- Plan 01.1-02 complete (app factory tests + pipeline integration, 12 new tests)
+Phase: 1.1 of 4 (Test Hardening) -- COMPLETE (all 3 plans done, human verification approved)
+Current Plan: Phase 1.1 complete, next is Phase 2
+Status: Phase 1.1 Complete
+Last activity: 2026-03-08 -- Plan 01.1-03 complete (human verification checkpoint approved -- Phase 1 pipeline verified on real hardware)
 
-Progress: [######░░░░] 67%
+Progress: [████████░░] 83%
 
 ## What Works Now
 
@@ -60,18 +60,19 @@ Transcript storage changed from flat string to `list[tuple[str, str]]` (speaker,
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4 (01-03 code complete but awaiting formal checkpoint)
-- Average duration: 5.0min
-- Total execution time: 0.33 hours
+- Total plans completed: 6 (Phase 1 + Phase 1.1 all complete)
+- Average duration: 4.7min
+- Total execution time: 0.38 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-streaming-capture | 2 complete + 1 in progress | 9min+ | 4.5min |
-| 01.1-test-hardening | 2 of 3 complete | 11min | 5.5min |
+| 01-streaming-capture | 3 complete | 9min+ | 3min |
+| 01.1-test-hardening | 3 of 3 complete | 14min | 4.7min |
 | Phase 01.1 P01 | 7min | 2 tasks | 5 files |
 | Phase 01.1 P02 | 4min | 2 tasks | 2 files |
+| Phase 01.1 P03 | 3min | 2 tasks | 0 files (verification) |
 
 ## Accumulated Context
 
@@ -114,6 +115,8 @@ Recent decisions affecting current work:
 - [01.1-02]: Integration test uses real VadDetector with FakeVadModel injected via _model attribute, not mock.patch
 - [01.1-02]: Tuned Settings for integration test (short chunk duration/silence gap) for fast execution
 - [01.1-02]: Lifespan shutdown tested structurally via FakeSessionManager rather than asgi-lifespan library
+- [Phase 01.1]: [01.1-03]: Phase 1 pipeline verified working on real Windows hardware with NVIDIA GPU and Yeti Classic microphone
+- [Phase 01.1]: [01.1-03]: Speaker keyword classifier limitation deferred to Phase 2 CLI-04 for LLM re-attribution
 
 ### Bugs Fixed (All Sessions)
 
@@ -129,10 +132,8 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- **Restart server on Windows** to pick up speaker label + chunk changes
-- **User testing**: verify Doctor/Patient labels appear, paragraphs separated, transcript persists after stop
-- Formal Plan 01-03 Task 3 checkpoint: user browser testing
-- After checkpoint approved: create 01-03-SUMMARY.md, mark Phase 1 complete in ROADMAP.md
+- Plan Phase 2 (Clinical Extraction) with TDD methodology
+- Address CLI-04 in Phase 2: LLM-based speaker re-attribution using conversational context
 
 ### Blockers/Concerns
 
@@ -144,18 +145,20 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-08T03:27:48.566Z
-Stopped at: Completed 01.1-02-PLAN.md
-Resume action: Execute Plan 01.1-03 (human verification checkpoint)
+Last session: 2026-03-09T00:57:14.150Z
+Stopped at: Completed 01.1-03-PLAN.md (Phase 1.1 complete)
+Resume action: Plan Phase 2 (Clinical Extraction) with TDD methodology
 
 ### How to resume
-1. Execute Plan 01.1-03 (human verification -- user must confirm app works on Windows)
-2. After Phase 1.1 passes: plan Phase 2 with TDD methodology
+1. Plan Phase 2 (Clinical Extraction) -- requirements CLI-01 through CLI-04
+2. CLI-04 (LLM speaker re-attribution) added based on Phase 1 testing feedback
 
-### Phase 1 human verification still pending
-The server restart + browser test from Plan 01-03 Task 3 has not been completed yet.
-This is now part of Phase 1.1 -- the test hardening phase ensures Phase 1 actually works before we move on.
+### Phase 1 human verification COMPLETE
+Human verified on 2026-03-08: server starts, UI loads, audio captures, Whisper transcribes dental terminology, speaker labels render, transcripts persist, no network requests. Session lifecycle (Start/Pause/Resume/Stop) all functional.
+
+Known limitation accepted: keyword-based speaker classifier loses context across chunks when doctor pauses mid-thought. Deferred to Phase 2 CLI-04 for LLM re-attribution.
 
 ### Files changed this session
-- `tests/test_main.py` — NEW: 7 app factory structural tests
-- `tests/test_pipeline_integration.py` — NEW: 5 pipeline integration tests proving end-to-end data flow
+- `.planning/phases/01.1-phase-1-test-hardening/01.1-03-SUMMARY.md` — NEW: Plan 03 summary (human verification)
+- `.planning/STATE.md` — Updated: Phase 1.1 complete, ready for Phase 2
+- `.planning/ROADMAP.md` — Updated: Phase 1.1 progress
