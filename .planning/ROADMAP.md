@@ -66,7 +66,7 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Foundation: Pydantic models, config extension, OllamaService, system prompts with CDT reference
+- [x] 02-01-PLAN.md — Foundation: Pydantic models, config extension, OllamaService, system prompts with CDT reference
 - [ ] 02-02-PLAN.md — Clinical pipeline: ClinicalExtractor (SOAP + CDT) and SpeakerReattributor (LLM speaker correction)
 - [ ] 02-03-PLAN.md — Integration test with real Ollama + human verification checkpoint (blocking gate)
 
@@ -96,5 +96,5 @@ Phases execute in numeric order: 1 -> 1.1 -> 2 -> 3
 |-------|----------------|--------|-----------|
 | 1. Streaming Capture and Transcription | 3/3 | Complete | 2026-03-07 |
 | 1.1. Phase 1 Test Hardening *(INSERTED)* | 3/3 | Complete    | 2026-03-09 |
-| 2. Clinical Extraction | 0/3 | Not started | - |
+| 2. Clinical Extraction | 1/3 | In progress | - |
 | 3. Review and Export | 0/3 | Not started | - |
