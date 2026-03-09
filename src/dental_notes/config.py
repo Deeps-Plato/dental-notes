@@ -40,3 +40,10 @@ class Settings(BaseSettings):
     # Patient data stays local (PRV-01) because the tool runs on LAN only.
     host: str = "0.0.0.0"
     port: int = 8000
+
+    # Ollama LLM — all inference runs locally (PRV-01)
+    ollama_host: str = "http://localhost:11434"
+    ollama_model: str = "qwen3:8b"
+    ollama_fallback_model: str = "qwen3:4b"
+    ollama_temperature: float = 0.0
+    ollama_num_ctx: int = 8192
