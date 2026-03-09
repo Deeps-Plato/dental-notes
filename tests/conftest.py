@@ -1,10 +1,11 @@
 """Shared test fixtures and fakes for dental-notes v2.
 
 All shared fakes (FakeAudioCapture, FakeWhisperService, FakeChunker,
-FakeSessionManager) live here so any test file can use them via pytest
-auto-discovery.
+FakeSessionManager, FakeOllamaService) live here so any test file can
+use them via pytest auto-discovery.
 """
 
+import json
 from pathlib import Path
 
 import numpy as np
@@ -250,3 +251,91 @@ def audio_blocks() -> list[np.ndarray]:
         np.random.default_rng(i).random(1600).astype(np.float32)
         for i in range(9)
     ]
+
+
+class FakeOllamaService:
+    """Fake OllamaService for unit tests -- returns canned response, records calls.
+
+    Default response_data matches ExtractionResult schema with cdt_codes
+    nested inside soap_note (not at top level).
+    """
+
+    def __init__(self, response_data: dict | None = None):
+        self.response_data = response_data or {
+            "soap_note": {
+                "subjective": (
+                    "Patient reports sensitivity to cold on upper right "
+                    "tooth for one week."
+                ),
+                "objective": (
+                    "Tooth #14 mesial-occlusal discoloration. "
+                    "Probing depths 2-3mm within normal limits."
+                ),
+                "assessment": "Class II caries on #14 mesial-occlusal surface.",
+                "plan": (
+                    "Two-surface composite restoration on #14. "
+                    "Periapical radiograph to rule out periapical pathology."
+                ),
+                "cdt_codes": [
+                    {
+                        "code": "D2392",
+                        "description": (
+                            "Resin-based composite - two surfaces, posterior"
+                        ),
+                    },
+                    {
+                        "code": "D0220",
+                        "description": "Periapical radiograph",
+                    },
+                ],
+            },
+            "speaker_chunks": [
+                {
+                    "chunk_id": 0,
+                    "speaker": "Doctor",
+                    "text": "Good morning, how are you today?",
+                },
+                {
+                    "chunk_id": 1,
+                    "speaker": "Patient",
+                    "text": (
+                        "My upper right tooth has been sensitive to cold."
+                    ),
+                },
+            ],
+            "clinical_summary": (
+                "Patient presents with cold sensitivity on #14. "
+                "Class II caries diagnosed. "
+                "Plan for two-surface composite restoration."
+            ),
+        }
+        self.last_system_prompt: str | None = None
+        self.last_user_content: str | None = None
+        self.call_count: int = 0
+
+    def is_available(self) -> bool:
+        return True
+
+    def is_model_ready(self) -> bool:
+        return True
+
+    def generate_structured(
+        self,
+        system_prompt: str,
+        user_content: str,
+        schema: dict,
+        **kwargs,
+    ) -> str:
+        self.last_system_prompt = system_prompt
+        self.last_user_content = user_content
+        self.call_count += 1
+        return json.dumps(self.response_data)
+
+    def unload(self) -> None:
+        pass
+
+
+@pytest.fixture
+def fake_ollama_service() -> FakeOllamaService:
+    """FakeOllamaService for clinical extraction tests."""
+    return FakeOllamaService()
