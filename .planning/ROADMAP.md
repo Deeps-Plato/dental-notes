@@ -63,11 +63,12 @@ Plans:
   3. CDT procedure codes are suggested based on the Assessment and Plan sections
   4. All LLM processing runs locally via Ollama — no patient data leaves the machine
   5. Speaker labels (Doctor/Patient) are re-attributed by the LLM using conversational context, correcting keyword-based misclassifications from Phase 1
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+- [ ] 02-01-PLAN.md — Foundation: Pydantic models, config extension, OllamaService, system prompts with CDT reference
+- [ ] 02-02-PLAN.md — Clinical pipeline: ClinicalExtractor (SOAP + CDT) and SpeakerReattributor (LLM speaker correction)
+- [ ] 02-03-PLAN.md — Integration test with real Ollama + human verification checkpoint (blocking gate)
 
 ### Phase 3: Review and Export
 **Goal**: User can review transcript and SOAP note side-by-side, edit the draft, copy the finalized note for Dentrix, and have ephemeral data automatically cleaned up
@@ -95,5 +96,5 @@ Phases execute in numeric order: 1 -> 1.1 -> 2 -> 3
 |-------|----------------|--------|-----------|
 | 1. Streaming Capture and Transcription | 3/3 | Complete | 2026-03-07 |
 | 1.1. Phase 1 Test Hardening *(INSERTED)* | 3/3 | Complete    | 2026-03-09 |
-| 2. Clinical Extraction | 0/2 | Not started | - |
+| 2. Clinical Extraction | 0/3 | Not started | - |
 | 3. Review and Export | 0/3 | Not started | - |
