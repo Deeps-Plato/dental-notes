@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Phase 2 complete, next is Phase 3
 status: verifying
-stopped_at: Completed 02-03-PLAN.md (Phase 2 complete)
-last_updated: "2026-03-10T02:57:57.167Z"
+stopped_at: Phase 3 context gathered
+last_updated: "2026-03-10T04:15:29.240Z"
 last_activity: 2026-03-10 -- Phase 2 complete (integration test + human verification approved)
 progress:
   total_phases: 4
@@ -139,6 +139,30 @@ Recent decisions affecting current work:
 - [02-03]: Model auto-detection: try qwen3:8b first, fall back to qwen3:4b for 4GB GPU hardware
 - [02-03]: clinical_discussion field added to SoapNote during human verification (bullet-point clinical reasoning summary)
 - [02-03]: OllamaService schema dereferencing: inline $ref/$defs and strip unsupported keys for Ollama compatibility
+- [Phase 3 context]: Auto-extract SOAP note on session stop, with Regenerate button in review screen
+- [Phase 3 context]: 50/50 side-by-side layout -- transcript left, SOAP note right, independent scrolling
+- [Phase 3 context]: No transcript highlighting -- plain text with speaker labels
+- [Phase 3 context]: Clinical Discussion inside SOAP panel as section after CDT codes
+- [Phase 3 context]: Full editing on everything -- SOAP note AND transcript are fully editable text areas (type, dictate, cut/copy/paste, add, delete)
+- [Phase 3 context]: CDT codes fully editable -- add, remove, modify
+- [Phase 3 context]: No read-only sections anywhere -- dentist has complete control
+- [Phase 3 context]: Transcript edit triggers "Transcript changed -- Regenerate note?" banner (dentist chooses whether to re-extract)
+- [Phase 3 context]: Dictation (mic-to-text) available on any editable field at any stage -- transcript or SOAP note -- using Whisper pipeline for dental term accuracy
+- [Phase 3 context]: Note structure is richer than textbook SOAP -- see CONTEXT.md for full format spec
+- [Phase 3 context]: Subjective = narrative + bullet point hybrid; Objective = bullet-heavy with some narrative; Assessment = clear-cut; Plan = clear-cut with narrative for justification/contingency
+- [Phase 3 context]: Procedure notes (when procedure done after exam): Tx plan + consent noted, then procedure steps/materials in Objective, future plan at end
+- [Phase 3 context]: Prescribed medications section always at bottom of note
+- [Phase 3 context]: VA patients get additional per-tooth narrative section after the full note (findings + indicated procedures per tooth)
+- [Phase 3 context]: Auto-detect exam-only vs exam+procedure from transcript, adjust note format accordingly
+- [Phase 3 context]: Auto-detect VA patient from transcript context (VA is mentioned in conversation), auto-generate per-tooth narrative
+- [Phase 3 context]: Copy: "Copy All" button + per-section copy icons for granular copying
+- [Phase 3 context]: Medications: auto-extract from transcript + dentist can correct and add more, always at bottom of note
+- [Phase 3 context]: Finalize button then delete -- explicit "Finalize & Clear" to delete transcript (not auto-delete on copy)
+- [Phase 3 context]: Sessions are saveable for later -- dentist can record multiple patients, save sessions, and come back to complete notes later (batch note-writing at end of day)
+- [Phase 3 context]: Multiple saved sessions visible in a list -- dentist picks which one to review/complete
+- [Phase 3 context]: After finalization, show confirmation + clear path to "New Session" or return to session list
+- [Phase 3 context]: Session list shows: timestamp + first line of transcript preview + status badge (Recorded/Extracted/Reviewed)
+- [Phase 3 context]: REV-04 (patient summary) deferred -- skip for v1, focus on dentist workflow
 
 ### Bugs Fixed (All Sessions)
 
@@ -166,8 +190,8 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-10T02:52:19.797Z
-Stopped at: Completed 02-03-PLAN.md (Phase 2 complete)
+Last session: 2026-03-10T04:15:29.225Z
+Stopped at: Phase 3 context gathered
 Resume action: Plan Phase 3 (Review and Export)
 
 ### How to resume
