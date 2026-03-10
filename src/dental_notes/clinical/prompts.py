@@ -87,6 +87,17 @@ vitals if relevant
 ## CDT Code Reference (use ONLY these codes)
 {CDT_REFERENCE}
 
+## Prescribed Medications
+Extract any medications prescribed or discussed during the appointment. For each medication, \
+include drug name, dosage, frequency, and duration if mentioned. Return an empty list if no \
+medications are discussed.
+
+## VA Patient Detection
+If the transcript mentions VA (Veterans Affairs) -- for example the patient references VA \
+benefits, VA coverage, or being a veteran receiving VA dental care -- generate a per-tooth \
+narrative section summarizing findings and indicated procedures for each tooth discussed. \
+Format as: "Tooth #N: [findings]. Indicated: [procedure]." Return null if VA is not mentioned.
+
 ## Rules
 - Only use CDT codes from the reference list above
 - Use tooth numbers in Universal numbering system (1-32)

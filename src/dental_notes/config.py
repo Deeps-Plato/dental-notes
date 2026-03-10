@@ -35,6 +35,7 @@ class Settings(BaseSettings):
 
     # Storage
     storage_dir: Path = Path("transcripts")
+    sessions_dir: Path = Path("sessions")
 
     # Server — 0.0.0.0 allows WSL→Windows browser access.
     # Patient data stays local (PRV-01) because the tool runs on LAN only.

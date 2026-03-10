@@ -47,6 +47,17 @@ class SoapNote(BaseModel):
             "treatment alternatives, and rationale for chosen plan"
         ),
     )
+    medications: list[str] = Field(
+        default_factory=list,
+        description="Prescribed medications extracted from transcript",
+    )
+    va_narrative: str | None = Field(
+        default=None,
+        description=(
+            "Per-tooth narrative for VA patients "
+            "(auto-detected from transcript context)"
+        ),
+    )
 
 
 class ExtractionResult(BaseModel):

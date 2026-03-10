@@ -45,10 +45,13 @@ def pytest_collection_modifyitems(
 
 @pytest.fixture
 def test_settings(tmp_path: Path):
-    """Settings with a tmp_path storage_dir for test isolation."""
+    """Settings with tmp_path storage_dir and sessions_dir for test isolation."""
     from dental_notes.config import Settings
 
-    return Settings(storage_dir=tmp_path / "transcripts")
+    return Settings(
+        storage_dir=tmp_path / "transcripts",
+        sessions_dir=tmp_path / "sessions",
+    )
 
 
 @pytest.fixture
@@ -325,6 +328,8 @@ class FakeOllamaService:
                     "Periapical radiograph to rule out nerve involvement "
                     "before restoration",
                 ],
+                "medications": [],
+                "va_narrative": None,
             },
             "speaker_chunks": [
                 {
@@ -559,3 +564,113 @@ def integration_reattributor(integration_ollama_service, test_settings):
     from dental_notes.clinical.speaker import SpeakerReattributor
 
     return SpeakerReattributor(integration_ollama_service, test_settings)
+
+
+# --- Session store fakes and fixtures ---
+
+
+class FakeSessionStore:
+    """In-memory fake of SessionStore for route/template tests.
+
+    Mirrors the SessionStore interface but stores sessions in a dict
+    instead of JSON files on disk.
+    """
+
+    def __init__(self) -> None:
+        from dental_notes.session.store import SavedSession
+
+        self._sessions: dict[str, SavedSession] = {}
+
+    def create_session(
+        self,
+        chunks: list[tuple[str, str]],
+        transcript_path: str,
+    ):
+        from dental_notes.session.store import SavedSession
+
+        session = SavedSession(
+            transcript_path=transcript_path,
+            chunks=chunks,
+        )
+        self._sessions[session.session_id] = session
+        return session
+
+    def get_session(self, session_id: str):
+        return self._sessions.get(session_id)
+
+    def list_sessions(self) -> list:
+        sessions = list(self._sessions.values())
+        sessions.sort(key=lambda s: s.created_at, reverse=True)
+        return sessions
+
+    def update_session(self, session) -> None:
+        from datetime import datetime, timezone
+
+        session.updated_at = datetime.now(timezone.utc)
+        self._sessions[session.session_id] = session
+
+    def delete_session(self, session_id: str) -> None:
+        self._sessions.pop(session_id, None)
+
+    def finalize_session(self, session_id: str) -> None:
+        self._sessions.pop(session_id, None)
+
+
+@pytest.fixture
+def fake_session_store() -> FakeSessionStore:
+    """In-memory FakeSessionStore for route tests."""
+    return FakeSessionStore()
+
+
+@pytest.fixture
+def sample_saved_session():
+    """A SavedSession with sample extraction result for template tests."""
+    from dental_notes.clinical.models import (
+        CdtCode,
+        ExtractionResult,
+        SoapNote,
+        SpeakerChunk,
+    )
+    from dental_notes.session.store import SavedSession, SessionStatus
+
+    return SavedSession(
+        session_id="sample-session-001",
+        transcript_path="/tmp/sample-transcript.txt",
+        chunks=[
+            ("Doctor", "Good morning, how are you today?"),
+            ("Patient", "My upper right tooth is sensitive to cold."),
+        ],
+        status=SessionStatus.EXTRACTED,
+        extraction_result=ExtractionResult(
+            soap_note=SoapNote(
+                subjective="Patient reports cold sensitivity on upper right.",
+                objective="Tooth #14 MO discoloration. Probing 2-3mm.",
+                assessment="Class II caries #14 MO.",
+                plan="Two-surface composite restoration #14.",
+                cdt_codes=[
+                    CdtCode(
+                        code="D2392",
+                        description="Composite 2 surfaces posterior",
+                    )
+                ],
+                clinical_discussion=[
+                    "Composite chosen over amalgam for aesthetics"
+                ],
+                medications=[],
+                va_narrative=None,
+            ),
+            speaker_chunks=[
+                SpeakerChunk(
+                    chunk_id=0,
+                    speaker="Doctor",
+                    text="Good morning, how are you today?",
+                ),
+                SpeakerChunk(
+                    chunk_id=1,
+                    speaker="Patient",
+                    text="My upper right tooth is sensitive to cold.",
+                ),
+            ],
+            clinical_summary="Class II caries on #14, composite restoration planned.",
+        ),
+    )
