@@ -704,6 +704,41 @@ kbd {
     margin-bottom: 0.75rem;
 }
 
+/* --- Dictation buttons --- */
+
+.section-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.btn-dictate {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.btn-dictate:hover {
+    color: var(--primary);
+    background: #e8f5e9;
+}
+
+.btn-dictate.dictating {
+    color: white;
+    background: var(--recording);
+    border-color: var(--recording);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.btn-dictate.dictate-processing {
+    color: var(--warning);
+    border-color: var(--warning);
+    cursor: wait;
+}
+
+.mic-icon {
+    font-size: 0.85rem;
+}
+
 /* Responsive: works on 1080p-1440p monitors */
 @media (max-width: 768px) {
     body {

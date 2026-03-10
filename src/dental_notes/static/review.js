@@ -1,11 +1,12 @@
 /**
- * Review page JavaScript: clipboard copy, dirty tracking, auto-resize.
+ * Review page JavaScript: clipboard copy, dirty tracking, auto-resize, dictation.
  *
  * Handles:
  * - Copy All: fetches server-formatted text via /api/session/{id}/note-text
  * - Per-section copy: reads textarea value and copies with section header
  * - Transcript dirty tracking: shows regen banner when transcript changes
  * - Auto-resize textareas: adjusts height to content on load and input
+ * - Dictation: mic-to-text via browser MediaRecorder -> POST /dictate
  */
 
 // --- Clipboard helpers ---
@@ -153,6 +154,286 @@ function autoResizeAll() {
     textareas.forEach(function (textarea) {
         autoResize(textarea);
     });
+}
+
+// --- Dictation (mic-to-text via Whisper) ---
+
+/**
+ * Dictation state: tracks active recording per textarea.
+ * Only one dictation can be active at a time.
+ */
+var activeDictation = {
+    targetId: null,
+    mediaRecorder: null,
+    audioChunks: [],
+    stream: null
+};
+
+/**
+ * Toggle dictation for a textarea: start recording if idle, stop if active.
+ *
+ * Uses the browser MediaRecorder API to capture mic audio. On stop,
+ * converts the recorded audio to PCM 16-bit 16kHz mono, sends to
+ * POST /dictate, and inserts the returned text at the cursor position
+ * in the target textarea.
+ */
+function toggleDictation(textareaId) {
+    if (activeDictation.targetId === textareaId) {
+        stopDictation();
+    } else {
+        if (activeDictation.targetId !== null) {
+            stopDictation();
+        }
+        startDictation(textareaId);
+    }
+}
+
+/**
+ * Start recording audio for dictation into the specified textarea.
+ */
+function startDictation(textareaId) {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert("Microphone access not available in this browser.");
+        return;
+    }
+
+    navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(function (stream) {
+            activeDictation.stream = stream;
+            activeDictation.targetId = textareaId;
+            activeDictation.audioChunks = [];
+
+            var mediaRecorder = new MediaRecorder(stream, {
+                mimeType: getRecorderMimeType()
+            });
+            activeDictation.mediaRecorder = mediaRecorder;
+
+            mediaRecorder.ondataavailable = function (e) {
+                if (e.data.size > 0) {
+                    activeDictation.audioChunks.push(e.data);
+                }
+            };
+
+            mediaRecorder.onstop = function () {
+                processDictationAudio(textareaId);
+            };
+
+            mediaRecorder.start();
+            updateDictationButton(textareaId, true);
+        })
+        .catch(function (err) {
+            alert("Microphone permission denied: " + err.message);
+        });
+}
+
+/**
+ * Stop the active dictation recording.
+ */
+function stopDictation() {
+    if (activeDictation.mediaRecorder &&
+        activeDictation.mediaRecorder.state !== "inactive") {
+        activeDictation.mediaRecorder.stop();
+    }
+    if (activeDictation.stream) {
+        activeDictation.stream.getTracks().forEach(function (track) {
+            track.stop();
+        });
+        activeDictation.stream = null;
+    }
+    var targetId = activeDictation.targetId;
+    activeDictation.targetId = null;
+    activeDictation.mediaRecorder = null;
+    if (targetId) {
+        updateDictationButton(targetId, false);
+    }
+}
+
+/**
+ * Get the best available MIME type for MediaRecorder.
+ */
+function getRecorderMimeType() {
+    var types = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/ogg;codecs=opus",
+        "audio/mp4"
+    ];
+    for (var i = 0; i < types.length; i++) {
+        if (MediaRecorder.isTypeSupported(types[i])) {
+            return types[i];
+        }
+    }
+    return "";
+}
+
+/**
+ * Process recorded audio: decode to PCM, send to /dictate, insert text.
+ */
+function processDictationAudio(textareaId) {
+    if (activeDictation.audioChunks.length === 0) return;
+
+    var blob = new Blob(activeDictation.audioChunks);
+    activeDictation.audioChunks = [];
+
+    // Show processing state on button
+    setDictationProcessing(textareaId, true);
+
+    // Decode audio blob to raw PCM using AudioContext
+    var reader = new FileReader();
+    reader.onload = function () {
+        var arrayBuffer = reader.result;
+        var audioContext = new (window.AudioContext ||
+            window.webkitAudioContext)();
+
+        audioContext.decodeAudioData(arrayBuffer)
+            .then(function (audioBuffer) {
+                // Resample to 16kHz mono PCM 16-bit
+                var pcmBytes = audioBufToPcm16k(audioBuffer);
+
+                // Send to /dictate endpoint
+                return fetch("/dictate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/octet-stream" },
+                    body: pcmBytes
+                });
+            })
+            .then(function (response) {
+                if (response.status === 503) {
+                    alert("Whisper model busy (GPU in use for extraction). "
+                        + "Try again after extraction completes.");
+                    return null;
+                }
+                return response.json();
+            })
+            .then(function (data) {
+                if (data && data.text) {
+                    insertTextAtCursor(textareaId, data.text);
+                }
+                setDictationProcessing(textareaId, false);
+                audioContext.close();
+            })
+            .catch(function (err) {
+                setDictationProcessing(textareaId, false);
+                audioContext.close();
+                alert("Dictation failed: " + err.message);
+            });
+    };
+    reader.readAsArrayBuffer(blob);
+}
+
+/**
+ * Convert AudioBuffer to 16kHz mono PCM 16-bit little-endian bytes.
+ *
+ * Downsamples from the AudioBuffer's sample rate to 16kHz and
+ * converts float32 samples to signed 16-bit integers.
+ */
+function audioBufToPcm16k(audioBuffer) {
+    var TARGET_RATE = 16000;
+    var sourceSampleRate = audioBuffer.sampleRate;
+
+    // Get mono channel (use first channel)
+    var inputData = audioBuffer.getChannelData(0);
+
+    // Resample to 16kHz using linear interpolation
+    var ratio = sourceSampleRate / TARGET_RATE;
+    var outputLength = Math.floor(inputData.length / ratio);
+    var output = new Int16Array(outputLength);
+
+    for (var i = 0; i < outputLength; i++) {
+        var srcIndex = i * ratio;
+        var srcFloor = Math.floor(srcIndex);
+        var srcCeil = Math.min(srcFloor + 1, inputData.length - 1);
+        var frac = srcIndex - srcFloor;
+
+        // Linear interpolation
+        var sample = inputData[srcFloor] * (1 - frac) +
+            inputData[srcCeil] * frac;
+
+        // Clamp to [-1, 1] and convert to 16-bit signed int
+        sample = Math.max(-1, Math.min(1, sample));
+        output[i] = Math.round(sample * 32767);
+    }
+
+    return new Uint8Array(output.buffer);
+}
+
+/**
+ * Insert text at the cursor position in a textarea.
+ * If no cursor position, appends to the end with a space separator.
+ */
+function insertTextAtCursor(textareaId, text) {
+    var textarea = document.getElementById(textareaId);
+    if (!textarea) return;
+
+    var start = textarea.selectionStart;
+    var end = textarea.selectionEnd;
+    var before = textarea.value.substring(0, start);
+    var after = textarea.value.substring(end);
+
+    // Add space separator if needed
+    var separator = "";
+    if (before.length > 0 && !before.endsWith(" ") && !before.endsWith("\n")) {
+        separator = " ";
+    }
+
+    textarea.value = before + separator + text + after;
+    textarea.selectionStart = start + separator.length + text.length;
+    textarea.selectionEnd = textarea.selectionStart;
+
+    // Trigger auto-resize and dirty tracking
+    autoResize(textarea);
+    if (textareaId === "transcript-edit") {
+        trackTranscriptChange(textarea);
+    }
+
+    textarea.focus();
+}
+
+/**
+ * Update the dictation button visual state (recording vs idle).
+ */
+function updateDictationButton(textareaId, isRecording) {
+    // Find the mic button for this textarea
+    var textarea = document.getElementById(textareaId);
+    if (!textarea) return;
+
+    var section = textarea.closest(".note-section") ||
+        textarea.closest(".transcript-panel");
+    if (!section) return;
+
+    var btn = section.querySelector(".btn-dictate");
+    if (!btn) return;
+
+    if (isRecording) {
+        btn.classList.add("dictating");
+        btn.title = "Stop dictation";
+    } else {
+        btn.classList.remove("dictating");
+        btn.title = "Dictate into section";
+    }
+}
+
+/**
+ * Show/hide processing indicator on dictation button.
+ */
+function setDictationProcessing(textareaId, isProcessing) {
+    var textarea = document.getElementById(textareaId);
+    if (!textarea) return;
+
+    var section = textarea.closest(".note-section") ||
+        textarea.closest(".transcript-panel");
+    if (!section) return;
+
+    var btn = section.querySelector(".btn-dictate");
+    if (!btn) return;
+
+    if (isProcessing) {
+        btn.classList.add("dictate-processing");
+        btn.title = "Processing...";
+    } else {
+        btn.classList.remove("dictate-processing");
+        btn.title = "Dictate into section";
+    }
 }
 
 // --- Initialization ---

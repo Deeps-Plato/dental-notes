@@ -35,9 +35,14 @@
                 <div class="review-panel transcript-panel">
                     <div class="panel-header">
                         <h2>Transcript</h2>
-                        <button type="button" class="btn-icon" onclick="copyTranscript('{{ session_id }}')" title="Copy transcript">
-                            <span class="copy-icon">&#128203;</span>
-                        </button>
+                        <div class="panel-header-actions">
+                            <button type="button" class="btn-icon btn-dictate" onclick="toggleDictation('transcript-edit')" title="Dictate into transcript">
+                                <span class="mic-icon">&#127908;</span>
+                            </button>
+                            <button type="button" class="btn-icon" onclick="copyTranscript('{{ session_id }}')" title="Copy transcript">
+                                <span class="copy-icon">&#128203;</span>
+                            </button>
+                        </div>
                     </div>
                     <div class="panel-content">
                         {% include "_review_transcript.html" %}

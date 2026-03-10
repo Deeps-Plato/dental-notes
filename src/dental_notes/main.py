@@ -18,6 +18,7 @@ from dental_notes.config import Settings
 from dental_notes.session.manager import SessionManager
 from dental_notes.session.store import SessionStore
 from dental_notes.transcription.whisper_service import WhisperService
+from dental_notes.ui.dictation import router as dictation_router
 from dental_notes.ui.routes import router
 
 logger = logging.getLogger(__name__)
@@ -122,6 +123,7 @@ def create_app() -> FastAPI:
 
     # Include UI routes
     app.include_router(router)
+    app.include_router(dictation_router)
 
     return app
 

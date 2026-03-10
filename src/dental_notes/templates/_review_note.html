@@ -6,9 +6,14 @@
     <div class="note-section">
         <div class="note-section-header">
             <label for="subjective">Subjective</label>
-            <button type="button" class="btn-icon" onclick="copySection('subjective')" title="Copy section">
-                <span class="copy-icon">&#128203;</span>
-            </button>
+            <div class="section-actions">
+                <button type="button" class="btn-icon btn-dictate" onclick="toggleDictation('subjective')" title="Dictate into section">
+                    <span class="mic-icon">&#127908;</span>
+                </button>
+                <button type="button" class="btn-icon" onclick="copySection('subjective')" title="Copy section">
+                    <span class="copy-icon">&#128203;</span>
+                </button>
+            </div>
         </div>
         <textarea id="subjective" name="subjective" class="note-textarea" oninput="autoResize(this)">{{ note.get('subjective', sn.subjective if sn else '') }}</textarea>
     </div>
@@ -17,9 +22,14 @@
     <div class="note-section">
         <div class="note-section-header">
             <label for="objective">Objective</label>
-            <button type="button" class="btn-icon" onclick="copySection('objective')" title="Copy section">
-                <span class="copy-icon">&#128203;</span>
-            </button>
+            <div class="section-actions">
+                <button type="button" class="btn-icon btn-dictate" onclick="toggleDictation('objective')" title="Dictate into section">
+                    <span class="mic-icon">&#127908;</span>
+                </button>
+                <button type="button" class="btn-icon" onclick="copySection('objective')" title="Copy section">
+                    <span class="copy-icon">&#128203;</span>
+                </button>
+            </div>
         </div>
         <textarea id="objective" name="objective" class="note-textarea" oninput="autoResize(this)">{{ note.get('objective', sn.objective if sn else '') }}</textarea>
     </div>
@@ -28,9 +38,14 @@
     <div class="note-section">
         <div class="note-section-header">
             <label for="assessment">Assessment</label>
-            <button type="button" class="btn-icon" onclick="copySection('assessment')" title="Copy section">
-                <span class="copy-icon">&#128203;</span>
-            </button>
+            <div class="section-actions">
+                <button type="button" class="btn-icon btn-dictate" onclick="toggleDictation('assessment')" title="Dictate into section">
+                    <span class="mic-icon">&#127908;</span>
+                </button>
+                <button type="button" class="btn-icon" onclick="copySection('assessment')" title="Copy section">
+                    <span class="copy-icon">&#128203;</span>
+                </button>
+            </div>
         </div>
         <textarea id="assessment" name="assessment" class="note-textarea" oninput="autoResize(this)">{{ note.get('assessment', sn.assessment if sn else '') }}</textarea>
     </div>
@@ -39,9 +54,14 @@
     <div class="note-section">
         <div class="note-section-header">
             <label for="plan">Plan</label>
-            <button type="button" class="btn-icon" onclick="copySection('plan')" title="Copy section">
-                <span class="copy-icon">&#128203;</span>
-            </button>
+            <div class="section-actions">
+                <button type="button" class="btn-icon btn-dictate" onclick="toggleDictation('plan')" title="Dictate into section">
+                    <span class="mic-icon">&#127908;</span>
+                </button>
+                <button type="button" class="btn-icon" onclick="copySection('plan')" title="Copy section">
+                    <span class="copy-icon">&#128203;</span>
+                </button>
+            </div>
         </div>
         <textarea id="plan" name="plan" class="note-textarea" oninput="autoResize(this)">{{ note.get('plan', sn.plan if sn else '') }}</textarea>
     </div>
@@ -50,9 +70,14 @@
     <div class="note-section">
         <div class="note-section-header">
             <label for="cdt_codes">CDT Codes</label>
-            <button type="button" class="btn-icon" onclick="copySection('cdt_codes')" title="Copy section">
-                <span class="copy-icon">&#128203;</span>
-            </button>
+            <div class="section-actions">
+                <button type="button" class="btn-icon btn-dictate" onclick="toggleDictation('cdt_codes')" title="Dictate into section">
+                    <span class="mic-icon">&#127908;</span>
+                </button>
+                <button type="button" class="btn-icon" onclick="copySection('cdt_codes')" title="Copy section">
+                    <span class="copy-icon">&#128203;</span>
+                </button>
+            </div>
         </div>
         <textarea id="cdt_codes" name="cdt_codes" class="note-textarea" oninput="autoResize(this)">{% if note.get('cdt_codes') %}{{ note['cdt_codes'] }}{% elif sn and sn.cdt_codes %}{% for code in sn.cdt_codes %}{{ code.code }} - {{ code.description }}{% if not loop.last %}
 {% endif %}{% endfor %}{% endif %}</textarea>
@@ -62,9 +87,14 @@
     <div class="note-section">
         <div class="note-section-header">
             <label for="clinical_discussion">Clinical Discussion</label>
-            <button type="button" class="btn-icon" onclick="copySection('clinical_discussion')" title="Copy section">
-                <span class="copy-icon">&#128203;</span>
-            </button>
+            <div class="section-actions">
+                <button type="button" class="btn-icon btn-dictate" onclick="toggleDictation('clinical_discussion')" title="Dictate into section">
+                    <span class="mic-icon">&#127908;</span>
+                </button>
+                <button type="button" class="btn-icon" onclick="copySection('clinical_discussion')" title="Copy section">
+                    <span class="copy-icon">&#128203;</span>
+                </button>
+            </div>
         </div>
         <textarea id="clinical_discussion" name="clinical_discussion" class="note-textarea" oninput="autoResize(this)">{% if note.get('clinical_discussion') %}{{ note['clinical_discussion'] }}{% elif sn and sn.clinical_discussion %}{% for item in sn.clinical_discussion %}- {{ item }}{% if not loop.last %}
 {% endif %}{% endfor %}{% endif %}</textarea>
@@ -74,9 +104,14 @@
     <div class="note-section">
         <div class="note-section-header">
             <label for="medications">Prescribed Medications</label>
-            <button type="button" class="btn-icon" onclick="copySection('medications')" title="Copy section">
-                <span class="copy-icon">&#128203;</span>
-            </button>
+            <div class="section-actions">
+                <button type="button" class="btn-icon btn-dictate" onclick="toggleDictation('medications')" title="Dictate into section">
+                    <span class="mic-icon">&#127908;</span>
+                </button>
+                <button type="button" class="btn-icon" onclick="copySection('medications')" title="Copy section">
+                    <span class="copy-icon">&#128203;</span>
+                </button>
+            </div>
         </div>
         <textarea id="medications" name="medications" class="note-textarea" oninput="autoResize(this)">{% if note.get('medications') %}{{ note['medications'] }}{% elif sn and sn.medications %}{% for med in sn.medications %}- {{ med }}{% if not loop.last %}
 {% endif %}{% endfor %}{% endif %}</textarea>
@@ -87,9 +122,14 @@
     <div class="note-section">
         <div class="note-section-header">
             <label for="va_narrative">VA Per-Tooth Narrative</label>
-            <button type="button" class="btn-icon" onclick="copySection('va_narrative')" title="Copy section">
-                <span class="copy-icon">&#128203;</span>
-            </button>
+            <div class="section-actions">
+                <button type="button" class="btn-icon btn-dictate" onclick="toggleDictation('va_narrative')" title="Dictate into section">
+                    <span class="mic-icon">&#127908;</span>
+                </button>
+                <button type="button" class="btn-icon" onclick="copySection('va_narrative')" title="Copy section">
+                    <span class="copy-icon">&#128203;</span>
+                </button>
+            </div>
         </div>
         <textarea id="va_narrative" name="va_narrative" class="note-textarea" oninput="autoResize(this)">{{ note.get('va_narrative', sn.va_narrative if sn else '') }}</textarea>
     </div>
