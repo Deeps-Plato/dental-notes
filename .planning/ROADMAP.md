@@ -84,7 +84,7 @@ Plans:
 
 Plans:
 - [x] 03-01-PLAN.md — Session persistence + enriched SoapNote model + clipboard text formatter
-- [ ] 03-02-PLAN.md — Review UI routes + templates + JavaScript (side-by-side, editing, copy, session list, finalize)
+- [x] 03-02-PLAN.md — Review UI routes + templates + JavaScript (side-by-side, editing, copy, session list, finalize)
 - [ ] 03-03-PLAN.md — Dictation on editable fields + human verification checkpoint (blocking gate)
 
 ## Progress
@@ -97,4 +97,4 @@ Phases execute in numeric order: 1 -> 1.1 -> 2 -> 3
 | 1. Streaming Capture and Transcription | 3/3 | Complete | 2026-03-07 |
 | 1.1. Phase 1 Test Hardening *(INSERTED)* | 3/3 | Complete    | 2026-03-09 |
 | 2. Clinical Extraction | 3/3 | Complete | 2026-03-09 |
-| 3. Review and Export | 1/3 | In progress | - |
+| 3. Review and Export | 2/3 | In progress | - |
