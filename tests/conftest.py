@@ -317,6 +317,14 @@ class FakeOllamaService:
                         "description": "Periapical radiograph",
                     },
                 ],
+                "clinical_discussion": [
+                    "Explained Class II caries as decay between teeth "
+                    "requiring two-surface restoration",
+                    "Composite chosen over amalgam for aesthetics and "
+                    "tooth-conserving bonding",
+                    "Periapical radiograph to rule out nerve involvement "
+                    "before restoration",
+                ],
             },
             "speaker_chunks": [
                 {
@@ -417,11 +425,19 @@ Doctor: Let's take a look. Open wide please. I can see some discoloration on too
 
 Patient: Is it a cavity?
 
-Doctor: Yes, I'm seeing a Class II caries on number 14, mesial-occlusal. We'll need to do a composite restoration. I'd recommend a two-surface composite.
+Doctor: Yes, I'm seeing a Class II caries on number 14, mesial-occlusal. Think of it like a pothole forming between the teeth. Right now it's still in the outer shell, the enamel and into the dentin, but it hasn't reached the nerve yet. That's good news because we can fix it with a filling instead of needing a root canal.
+
+Patient: Oh okay, so what kind of filling?
+
+Doctor: I'd recommend a composite, which is a tooth-colored resin material. The alternative would be an amalgam, the silver-colored filling, but composite bonds directly to the tooth structure so we can be more conservative and preserve more of your natural tooth. It also looks much better. The downside is composite can be slightly more sensitive to technique, but for a two-surface restoration like this, it's the standard of care.
+
+Patient: What happens if I don't do it?
+
+Doctor: Good question. If we leave it, the decay will keep progressing deeper. Eventually it'll reach the nerve, and then we're looking at either a root canal or potentially losing the tooth. Catching it now means a straightforward filling. Much simpler and less expensive than waiting.
 
 Patient: Okay, sounds good. Will insurance cover it?
 
-Doctor: It should be covered under your plan. We'll schedule you for the restoration. I'll also want to take a periapical radiograph to rule out any periapical pathology."""
+Doctor: It should be covered under your plan. We'll schedule you for the restoration. I'll also want to take a periapical radiograph to rule out any periapical pathology before we start."""
 
 
 @pytest.fixture
@@ -451,15 +467,41 @@ SAMPLE_CHUNKS: list[tuple[str, str]] = [
     (
         "Doctor",
         "Yes, I'm seeing a Class II caries on number 14, "
-        "mesial-occlusal. We'll need to do a composite restoration. "
-        "I'd recommend a two-surface composite.",
+        "mesial-occlusal. Think of it like a pothole forming between "
+        "the teeth. Right now it's still in the outer shell, the "
+        "enamel and into the dentin, but it hasn't reached the nerve "
+        "yet. That's good news because we can fix it with a filling "
+        "instead of needing a root canal.",
+    ),
+    ("Patient", "Oh okay, so what kind of filling?"),
+    (
+        "Doctor",
+        "I'd recommend a composite, which is a tooth-colored resin "
+        "material. The alternative would be an amalgam, the silver-"
+        "colored filling, but composite bonds directly to the tooth "
+        "structure so we can be more conservative and preserve more "
+        "of your natural tooth. It also looks much better. The "
+        "downside is composite can be slightly more sensitive to "
+        "technique, but for a two-surface restoration like this, "
+        "it's the standard of care.",
+    ),
+    ("Patient", "What happens if I don't do it?"),
+    (
+        "Doctor",
+        "Good question. If we leave it, the decay will keep "
+        "progressing deeper. Eventually it'll reach the nerve, "
+        "and then we're looking at either a root canal or "
+        "potentially losing the tooth. Catching it now means a "
+        "straightforward filling. Much simpler and less expensive "
+        "than waiting.",
     ),
     ("Patient", "Okay, sounds good. Will insurance cover it?"),
     (
         "Doctor",
         "It should be covered under your plan. We'll schedule you "
         "for the restoration. I'll also want to take a periapical "
-        "radiograph to rule out any periapical pathology.",
+        "radiograph to rule out any periapical pathology before "
+        "we start.",
     ),
 ]
 

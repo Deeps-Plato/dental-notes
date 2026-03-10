@@ -68,6 +68,9 @@ class TestSoapNote:
             cdt_codes=[
                 CdtCode(code="D2392", description="Composite 2 surfaces posterior")
             ],
+            clinical_discussion=[
+                "Composite chosen over amalgam for aesthetics",
+            ],
         )
         assert note.subjective == "Patient reports cold sensitivity."
         assert note.objective == "Tooth #14 discoloration. Probing 2-3mm."
@@ -75,6 +78,7 @@ class TestSoapNote:
         assert note.plan == "Two-surface composite restoration #14."
         assert len(note.cdt_codes) == 1
         assert note.cdt_codes[0].code == "D2392"
+        assert len(note.clinical_discussion) == 1
 
     def test_model_json_schema_produces_dict_with_properties(self):
         from dental_notes.clinical.models import SoapNote
@@ -100,8 +104,10 @@ class TestSoapNote:
             assessment="a",
             plan="p",
             cdt_codes=[],
+            clinical_discussion=[],
         )
         assert note.cdt_codes == []
+        assert note.clinical_discussion == []
 
 
 class TestSpeakerChunk:
@@ -136,6 +142,7 @@ class TestExtractionResult:
                 cdt_codes=[
                     CdtCode(code="D2391", description="Composite 1 surface posterior")
                 ],
+                clinical_discussion=["Explained treatment options"],
             ),
             speaker_chunks=[
                 SpeakerChunk(chunk_id=0, speaker="Doctor", text="Hello"),

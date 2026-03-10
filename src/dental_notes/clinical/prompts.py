@@ -77,6 +77,12 @@ the next utterance is likely the same speaker unless there is a clear turn-takin
 vitals if relevant
 - Assessment: Diagnosis with tooth numbers, classification (e.g., "Class II caries #14-MO")
 - Plan: Procedures planned with CDT codes, materials, follow-up schedule, patient instructions
+- Clinical Discussion: Bullet-point summary of the reasoning discussed with the patient. Capture:
+  - How the doctor explained the diagnosis (including any analogies or plain-language breakdowns)
+  - Risks, benefits, and alternatives discussed for the treatment plan
+  - Why this treatment was chosen over alternatives
+  - Any patient concerns addressed and how they were resolved
+  - Do NOT transcribe verbatim -- summarize the logic of the conversation in concise bullets
 
 ## CDT Code Reference (use ONLY these codes)
 {CDT_REFERENCE}

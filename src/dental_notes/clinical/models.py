@@ -40,6 +40,13 @@ class SoapNote(BaseModel):
     cdt_codes: list[CdtCode] = Field(
         description="Suggested CDT codes from assessment and plan"
     )
+    clinical_discussion: list[str] = Field(
+        description=(
+            "Bullet-point summary of clinical reasoning discussed with "
+            "patient: diagnosis explanation, analogies used, risks/benefits, "
+            "treatment alternatives, and rationale for chosen plan"
+        ),
+    )
 
 
 class ExtractionResult(BaseModel):

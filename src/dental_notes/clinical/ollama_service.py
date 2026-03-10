@@ -5,6 +5,7 @@ and GPU memory management via model unloading. All inference runs locally
 to comply with PRV-01 (no patient data leaves the machine).
 """
 
+import copy
 import logging
 
 from ollama import Client, ResponseError
@@ -39,6 +40,42 @@ class OllamaService:
         except ResponseError:
             return False
 
+    @staticmethod
+    def _dereference_schema(schema: dict) -> dict:
+        """Inline $ref/$defs and strip unsupported keys for Ollama.
+
+        Ollama's structured output requires flat schemas without $ref,
+        pattern, title, or description annotations.
+        """
+        schema = copy.deepcopy(schema)
+        defs = schema.pop("$defs", {})
+
+        _strip_keys = {"title", "pattern"}
+
+        def _resolve(node: object, is_properties_value: bool = False) -> object:
+            if isinstance(node, dict):
+                if "$ref" in node:
+                    ref_name = node["$ref"].split("/")[-1]
+                    return _resolve(defs[ref_name], is_properties_value)
+                result = {}
+                for k, v in node.items():
+                    if k in _strip_keys:
+                        continue
+                    if k == "description" and not is_properties_value:
+                        continue
+                    in_props = k == "properties"
+                    result[k] = (
+                        {pk: _resolve(pv, True) for pk, pv in v.items()}
+                        if in_props and isinstance(v, dict)
+                        else _resolve(v, False)
+                    )
+                return result
+            if isinstance(node, list):
+                return [_resolve(item, False) for item in node]
+            return node
+
+        return _resolve(schema)  # type: ignore[return-value]
+
     def generate_structured(
         self,
         system_prompt: str,
@@ -50,15 +87,17 @@ class OllamaService:
         """Generate structured output conforming to a JSON schema.
 
         Prepends /nothink to user content to disable Qwen3 thinking mode.
+        Dereferences $ref/$defs since Ollama requires flat schemas.
         Returns raw JSON string for caller to validate with Pydantic.
         """
+        resolved_schema = self._dereference_schema(schema)
         response = self._client.chat(
             model=self._model,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"/nothink\n\n{user_content}"},
             ],
-            format=schema,
+            format=resolved_schema,
             options={"temperature": temperature, "num_ctx": num_ctx},
         )
         return response.message.content
