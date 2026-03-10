@@ -7,7 +7,7 @@
     <!-- HTMX 2.x from CDN. These are UI framework scripts, not patient data.
          CDN loading does not violate PRV-01 (which concerns patient data transmission).
          For fully air-gapped deployments, vendor these files locally. -->
-    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>
     <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
     <link rel="stylesheet" href="/static/style.css">
 </head>
@@ -56,6 +56,12 @@
         <section class="footer-info" id="footer-info">
             <p id="transcript-path"></p>
         </section>
+
+        <!-- Saved Sessions List -->
+        <section class="sessions-section">
+            <h2>Saved Sessions</h2>
+            {% include "_session_list.html" %}
+        </section>
     </main>
 
     <footer>
@@ -70,30 +76,25 @@
         // Listen for SSE level events to update the level bar
         document.body.addEventListener("level", function(event) {
             var bar = document.getElementById("level-bar");
-            if (bar) {
-                var level = parseFloat(event.detail.data) || 0;
-                // Scale level for visibility (raw RMS is typically 0-10%)
+            if (bar && event.detail) {
+                var level = parseFloat(event.detail.data || event.detail) || 0;
                 var width = Math.min(level * 5, 100);
                 bar.style.width = width + "%";
             }
         });
 
-        // Listen for session_end events
+        // Listen for session_end events — reset level bar
         document.body.addEventListener("session_end", function(event) {
             var bar = document.getElementById("level-bar");
-            if (bar) {
-                bar.style.width = "0%";
-                bar.classList.remove("active");
-            }
+            if (bar) { bar.style.width = "0%"; }
         });
 
-        // Include mic device in start request
-        document.body.addEventListener("htmx:configRequest", function(event) {
-            if (event.detail.path === "/session/start") {
-                var mic = document.getElementById("mic-select");
-                if (mic && mic.value) {
-                    event.detail.parameters["device"] = mic.value;
-                }
+        // After any HTMX swap, re-sync the mic selector hidden input
+        document.body.addEventListener("htmx:afterSwap", function(event) {
+            var hidden = document.getElementById("device-input");
+            var mic = document.getElementById("mic-select");
+            if (hidden && mic) {
+                hidden.value = mic.value;
             }
         });
     </script>
