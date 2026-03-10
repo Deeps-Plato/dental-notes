@@ -42,7 +42,7 @@ Plans:
 **Requirements**: AUD-01, TRX-01, TRX-02, PRV-01 (hardening existing requirement coverage)
 **Success Criteria** (what must be TRUE):
   1. Every production module has a dedicated test file with meaningful behavioral tests (not just import checks)
-  2. A pipeline integration test exercises: audio input → VAD → chunker → whisper service → stitcher → transcript writer (with realistic fakes, not canned mocks)
+  2. A pipeline integration test exercises: audio input -> VAD -> chunker -> whisper service -> stitcher -> transcript writer (with realistic fakes, not canned mocks)
   3. The integration test proves components connect — data flows through the full chain and produces a transcript
   4. Human verification checkpoint from Plan 01-03 is completed (user confirms the app works on real hardware)
   5. All tests pass and the test suite serves as a reliable signal (if tests pass, the thing works)
@@ -78,14 +78,14 @@ Plans:
   1. User sees the full accumulated transcript alongside the AI-generated SOAP note draft in a side-by-side view
   2. User can edit any section of the SOAP note draft before finalizing
   3. User can copy the finalized note to clipboard in one click, formatted for Dentrix paste
-  4. A plain-language patient summary is generated alongside the clinical note
+  4. A plain-language patient summary is generated alongside the clinical note (DEFERRED to v2 per user decision)
   5. After finalization, the transcript file is automatically deleted from disk (audio was already discarded during capture)
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
-- [ ] 03-03: TBD
+- [ ] 03-01-PLAN.md — Session persistence + enriched SoapNote model + clipboard text formatter
+- [ ] 03-02-PLAN.md — Review UI routes + templates + JavaScript (side-by-side, editing, copy, session list, finalize)
+- [ ] 03-03-PLAN.md — Dictation on editable fields + human verification checkpoint (blocking gate)
 
 ## Progress
 
@@ -97,4 +97,4 @@ Phases execute in numeric order: 1 -> 1.1 -> 2 -> 3
 | 1. Streaming Capture and Transcription | 3/3 | Complete | 2026-03-07 |
 | 1.1. Phase 1 Test Hardening *(INSERTED)* | 3/3 | Complete    | 2026-03-09 |
 | 2. Clinical Extraction | 3/3 | Complete | 2026-03-09 |
-| 3. Review and Export | 0/3 | Not started | - |
+| 3. Review and Export | 0/3 | Planning complete | - |
