@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dental Notes - Review</title>
+    <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/review.js" defer></script>
+</head>
+<body class="review-body">
+    <header>
+        <h1>Dental Notes</h1>
+        <div class="status-bar">
+            <a href="/sessions" class="btn-link">Sessions</a>
+        </div>
+    </header>
+
+    <main>
+        <!-- Regeneration banner (hidden by default, shown by JS when transcript changes) -->
+        <div id="regen-banner" class="regen-banner" style="display: none;">
+            Transcript changed -- Regenerate note?
+            <button class="btn btn-regen-inline"
+                    hx-post="/session/{{ session_id }}/extract"
+                    hx-target="#note-panel"
+                    hx-swap="innerHTML"
+                    hx-indicator="#extraction-spinner">
+                Regenerate
+            </button>
+        </div>
+
+        <form id="review-form">
+            <div class="review-container">
+                <!-- Left panel: Transcript -->
+                <div class="review-panel transcript-panel">
+                    <div class="panel-header">
+                        <h2>Transcript</h2>
+                        <button type="button" class="btn-icon" onclick="copyTranscript('{{ session_id }}')" title="Copy transcript">
+                            <span class="copy-icon">&#128203;</span>
+                        </button>
+                    </div>
+                    <div class="panel-content">
+                        {% include "_review_transcript.html" %}
+                    </div>
+                </div>
+
+                <!-- Right panel: Clinical Note -->
+                <div class="review-panel note-panel">
+                    <div class="panel-header">
+                        <h2>Clinical Note</h2>
+                        <div class="panel-header-actions">
+                            <button type="button" class="btn btn-copy" onclick="copyAll('{{ session_id }}')">
+                                Copy All
+                            </button>
+                            <button type="button" class="btn btn-regen"
+                                    hx-post="/session/{{ session_id }}/extract"
+                                    hx-target="#note-panel"
+                                    hx-swap="innerHTML"
+                                    hx-indicator="#extraction-spinner">
+                                Regenerate
+                            </button>
+                            <span id="extraction-spinner" class="htmx-indicator spinner">Extracting...</span>
+                        </div>
+                    </div>
+                    <div class="panel-content" id="note-panel">
+                        {% include "_review_note.html" %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom action bar -->
+            <div class="review-actions">
+                <button type="button" class="btn btn-start"
+                        hx-post="/session/{{ session_id }}/save"
+                        hx-include="#review-form"
+                        hx-target="#save-feedback"
+                        hx-swap="innerHTML">
+                    Save
+                </button>
+                <button type="button" class="btn btn-stop"
+                        hx-post="/session/{{ session_id }}/finalize"
+                        hx-confirm="This will permanently delete the transcript. Are you sure?"
+                        hx-target="main"
+                        hx-swap="innerHTML">
+                    Finalize &amp; Clear
+                </button>
+                <a href="/sessions" class="btn btn-link">Back to Sessions</a>
+                <span id="save-feedback"></span>
+            </div>
+        </form>
+    </main>
+</body>
+</html>

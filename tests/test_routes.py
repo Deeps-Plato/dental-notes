@@ -15,13 +15,15 @@ from dental_notes.session.manager import SessionState
 
 
 @pytest.fixture
-def test_app(fake_session_manager):
+def test_app(fake_session_manager, fake_session_store):
     """Create a FastAPI app with overridden session manager (skip lifespan)."""
     app = create_app()
     # Override lifespan by directly setting state
     app.state.session_manager = fake_session_manager
+    app.state.session_store = fake_session_store
     app.state.settings = None
     app.state.whisper_service = None
+    app.state.clinical_extractor = None
     return app
 
 
@@ -176,12 +178,15 @@ async def test_start_error_shows_banner(client, fake_session_manager):
 
 
 @pytest.mark.asyncio
-async def test_stop_shows_transcript_path(client, fake_session_manager):
-    """POST /session/stop shows the saved transcript file path."""
+async def test_stop_redirects_to_review(client, fake_session_manager):
+    """POST /session/stop creates session and redirects to review page."""
     fake_session_manager.start()
-    response = await client.post("/session/stop")
+    response = await client.post("/session/stop", follow_redirects=False)
     assert response.status_code == 200
-    assert "test-transcript.txt" in response.text
+    # HX-Redirect header points to the review page
+    hx_redirect = response.headers.get("hx-redirect", "")
+    assert "/session/" in hx_redirect
+    assert "/review" in hx_redirect
 
 
 @pytest.mark.asyncio
@@ -232,23 +237,22 @@ async def test_index_has_transcript_area(client):
 
 
 @pytest.mark.asyncio
-async def test_stop_preserves_transcript_with_speaker_labels(
-    client, fake_session_manager
+async def test_stop_creates_session_in_store(
+    client, fake_session_manager, fake_session_store
 ):
-    """After stop, transcript is rendered with speaker labels and chunk divs."""
+    """POST /session/stop creates a session in the store with chunks."""
     fake_session_manager.start()
     fake_session_manager._chunks = [
         ("Doctor", "I see the MOD amalgam on tooth 14 has a fracture"),
         ("Patient", "Is that something that needs to be fixed right away"),
     ]
-    response = await client.post("/session/stop")
+    response = await client.post("/session/stop", follow_redirects=False)
     assert response.status_code == 200
-    # Chunks should be rendered as HTML divs with speaker labels
-    assert "Doctor:" in response.text
-    assert "Patient:" in response.text
-    assert "MOD amalgam" in response.text
-    assert "fixed right away" in response.text
-    assert 'class="chunk"' in response.text
+
+    # Session should have been saved
+    sessions = fake_session_store.list_sessions()
+    assert len(sessions) == 1
+    assert len(sessions[0].chunks) == 2
 
 
 @pytest.mark.asyncio

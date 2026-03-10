@@ -16,6 +16,7 @@ from fastapi.templating import Jinja2Templates
 
 from dental_notes.config import Settings
 from dental_notes.session.manager import SessionManager
+from dental_notes.session.store import SessionStore
 from dental_notes.transcription.whisper_service import WhisperService
 from dental_notes.ui.routes import router
 
@@ -48,8 +49,31 @@ async def lifespan(app: FastAPI):
     # Create session manager — whisper loads lazily on first start()
     session_manager = SessionManager(settings)
 
+    # Session persistence for review workflow
+    session_store = SessionStore(settings.sessions_dir)
+
+    # Clinical extraction pipeline (LLM inference via Ollama)
+    try:
+        from dental_notes.clinical.extractor import ClinicalExtractor
+        from dental_notes.clinical.ollama_service import OllamaService
+
+        ollama_service = OllamaService(
+            host=settings.ollama_host,
+            model=settings.ollama_model,
+        )
+        clinical_extractor = ClinicalExtractor(ollama_service, settings)
+    except Exception:
+        logger.warning(
+            "Clinical extractor not available (Ollama or dependencies missing). "
+            "Extraction will fail at runtime."
+        )
+        ollama_service = None
+        clinical_extractor = None
+
     app.state.session_manager = session_manager
     app.state.whisper_service = whisper_service
+    app.state.session_store = session_store
+    app.state.clinical_extractor = clinical_extractor
 
     # Start hotkey listener (graceful: if pynput fails on headless, web UI still works)
     hotkey_listener = None

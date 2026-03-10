@@ -1,0 +1,23 @@
+{% if sessions is defined and sessions %}
+<div class="session-list">
+    {% for session in sessions %}
+    <a href="/session/{{ session.session_id }}/review" class="session-card">
+        <div class="session-card-header">
+            <span class="session-timestamp">{{ session.created_at.strftime('%b %d, %-I:%M %p') }}</span>
+            <span class="status-badge status-{{ session.status.value }}">{{ session.status.value | capitalize }}</span>
+        </div>
+        <div class="session-preview">
+            {% if session.chunks %}
+                {{ session.chunks[0][1][:60] }}{% if session.chunks[0][1]|length > 60 %}...{% endif %}
+            {% else %}
+                No transcript
+            {% endif %}
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="no-sessions">
+    <p>No saved sessions</p>
+</div>
+{% endif %}

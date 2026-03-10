@@ -1,0 +1,97 @@
+{% set note = edited_note if edited_note else {} %}
+{% set sn = soap_note %}
+
+<div class="note-sections">
+    <!-- Subjective -->
+    <div class="note-section">
+        <div class="note-section-header">
+            <label for="subjective">Subjective</label>
+            <button type="button" class="btn-icon" onclick="copySection('subjective')" title="Copy section">
+                <span class="copy-icon">&#128203;</span>
+            </button>
+        </div>
+        <textarea id="subjective" name="subjective" class="note-textarea" oninput="autoResize(this)">{{ note.get('subjective', sn.subjective if sn else '') }}</textarea>
+    </div>
+
+    <!-- Objective -->
+    <div class="note-section">
+        <div class="note-section-header">
+            <label for="objective">Objective</label>
+            <button type="button" class="btn-icon" onclick="copySection('objective')" title="Copy section">
+                <span class="copy-icon">&#128203;</span>
+            </button>
+        </div>
+        <textarea id="objective" name="objective" class="note-textarea" oninput="autoResize(this)">{{ note.get('objective', sn.objective if sn else '') }}</textarea>
+    </div>
+
+    <!-- Assessment -->
+    <div class="note-section">
+        <div class="note-section-header">
+            <label for="assessment">Assessment</label>
+            <button type="button" class="btn-icon" onclick="copySection('assessment')" title="Copy section">
+                <span class="copy-icon">&#128203;</span>
+            </button>
+        </div>
+        <textarea id="assessment" name="assessment" class="note-textarea" oninput="autoResize(this)">{{ note.get('assessment', sn.assessment if sn else '') }}</textarea>
+    </div>
+
+    <!-- Plan -->
+    <div class="note-section">
+        <div class="note-section-header">
+            <label for="plan">Plan</label>
+            <button type="button" class="btn-icon" onclick="copySection('plan')" title="Copy section">
+                <span class="copy-icon">&#128203;</span>
+            </button>
+        </div>
+        <textarea id="plan" name="plan" class="note-textarea" oninput="autoResize(this)">{{ note.get('plan', sn.plan if sn else '') }}</textarea>
+    </div>
+
+    <!-- CDT Codes -->
+    <div class="note-section">
+        <div class="note-section-header">
+            <label for="cdt_codes">CDT Codes</label>
+            <button type="button" class="btn-icon" onclick="copySection('cdt_codes')" title="Copy section">
+                <span class="copy-icon">&#128203;</span>
+            </button>
+        </div>
+        <textarea id="cdt_codes" name="cdt_codes" class="note-textarea" oninput="autoResize(this)">{% if note.get('cdt_codes') %}{{ note['cdt_codes'] }}{% elif sn and sn.cdt_codes %}{% for code in sn.cdt_codes %}{{ code.code }} - {{ code.description }}{% if not loop.last %}
+{% endif %}{% endfor %}{% endif %}</textarea>
+    </div>
+
+    <!-- Clinical Discussion -->
+    <div class="note-section">
+        <div class="note-section-header">
+            <label for="clinical_discussion">Clinical Discussion</label>
+            <button type="button" class="btn-icon" onclick="copySection('clinical_discussion')" title="Copy section">
+                <span class="copy-icon">&#128203;</span>
+            </button>
+        </div>
+        <textarea id="clinical_discussion" name="clinical_discussion" class="note-textarea" oninput="autoResize(this)">{% if note.get('clinical_discussion') %}{{ note['clinical_discussion'] }}{% elif sn and sn.clinical_discussion %}{% for item in sn.clinical_discussion %}- {{ item }}{% if not loop.last %}
+{% endif %}{% endfor %}{% endif %}</textarea>
+    </div>
+
+    <!-- Medications -->
+    <div class="note-section">
+        <div class="note-section-header">
+            <label for="medications">Prescribed Medications</label>
+            <button type="button" class="btn-icon" onclick="copySection('medications')" title="Copy section">
+                <span class="copy-icon">&#128203;</span>
+            </button>
+        </div>
+        <textarea id="medications" name="medications" class="note-textarea" oninput="autoResize(this)">{% if note.get('medications') %}{{ note['medications'] }}{% elif sn and sn.medications %}{% for med in sn.medications %}- {{ med }}{% if not loop.last %}
+{% endif %}{% endfor %}{% endif %}</textarea>
+    </div>
+
+    <!-- VA Narrative (conditional) -->
+    {% if (note and note.get('va_narrative')) or (sn and sn.va_narrative) %}
+    <div class="note-section">
+        <div class="note-section-header">
+            <label for="va_narrative">VA Per-Tooth Narrative</label>
+            <button type="button" class="btn-icon" onclick="copySection('va_narrative')" title="Copy section">
+                <span class="copy-icon">&#128203;</span>
+            </button>
+        </div>
+        <textarea id="va_narrative" name="va_narrative" class="note-textarea" oninput="autoResize(this)">{{ note.get('va_narrative', sn.va_narrative if sn else '') }}</textarea>
+    </div>
+    {% endif %}
+</div>
