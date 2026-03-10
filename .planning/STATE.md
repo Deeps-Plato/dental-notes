@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_plan: Phase 2 complete, next is Phase 3
-status: verifying
-stopped_at: Phase 3 context gathered
-last_updated: "2026-03-10T04:15:29.240Z"
-last_activity: 2026-03-10 -- Phase 2 complete (integration test + human verification approved)
+current_plan: Plan 2 of 3 in Phase 3
+status: executing
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-03-10T04:45:15Z"
+last_activity: 2026-03-10 -- Phase 3 Plan 01 complete (session store + enriched models + formatter)
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 9
-  completed_plans: 8
-  percent: 100
+  total_plans: 12
+  completed_plans: 9
+  percent: 75
 ---
 
 # Project State
@@ -23,16 +23,16 @@ See: .planning/PROJECT.md (updated 2026-03-05)
 
 **Core value:** Reliably record, transcribe, and produce a usable clinical note from a real dental appointment -- every time, with no data leaving the building.
 **Methodology:** Pragmatic TDD — test file before implementation, integration tests mandatory, human verification gates are blocking
-**Current focus:** Phase 2 (Clinical Extraction) COMPLETE. All 3 plans done, human verification approved. Ready for Phase 3.
+**Current focus:** Phase 3 (Review and Export) in progress. Plan 01 complete (session store + models + formatter). Plan 02 next (review UI).
 
 ## Current Position
 
-Phase: 2 of 4 (Clinical Extraction) -- COMPLETE
-Current Plan: Phase 2 complete, next is Phase 3
-Status: Phase 2 Complete (3/3 plans done, human verified)
-Last activity: 2026-03-10 -- Phase 2 complete (integration test + human verification approved)
+Phase: 3 of 4 (Review and Export)
+Current Plan: Plan 2 of 3 in Phase 3
+Status: Executing Phase 3 (1/3 plans complete)
+Last activity: 2026-03-10 -- Phase 3 Plan 01 complete (session store + enriched models + formatter)
 
-Progress: [██████████] 100% (Phases 1, 1.1, 2 complete -- Phase 3 not yet planned)
+Progress: [███████▌  ] 75% (Phases 1, 1.1, 2 complete + Phase 3 Plan 01)
 
 ## What Works Now
 
@@ -45,7 +45,7 @@ Progress: [██████████] 100% (Phases 1, 1.1, 2 complete -- Ph
 - **Transcript persists after stop**: Chunks remain visible in UI after session ends (was disappearing before)
 - **Multiple sessions**: Stop → Start cycle works (OOB swap gives fresh SSE connection each time)
 - **Transcript files saved**: Plain text with speaker labels, one per session, in `transcripts/` directory
-- **182+ tests passing** across all modules (116 Phase 1/1.1 + 25 clinical models + 15 ollama service + 17 extractor + 9 speaker + 13 integration)
+- **228 tests passing** across all modules (116 Phase 1/1.1 + 25 clinical models + 15 ollama service + 17 extractor + 9 speaker + 13 integration + 28 session store + 18 formatter + skipped 13 integration)
 - **Clinical module**: src/dental_notes/clinical/ with Pydantic models, OllamaService, prompts, ClinicalExtractor, SpeakerReattributor
 - **ClinicalExtractor**: transcript -> ExtractionResult (SOAP note + CDT codes + clinical_discussion) via OllamaService
 - **SpeakerReattributor**: LLM-based speaker label correction preserving chunk boundaries
@@ -66,9 +66,9 @@ Transcript storage changed from flat string to `list[tuple[str, str]]` (speaker,
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9 (Phase 1 + Phase 1.1 + Phase 2 Plans 01-03)
-- Average duration: 5.9min
-- Total execution time: 0.88 hours
+- Total plans completed: 10 (Phase 1 + Phase 1.1 + Phase 2 Plans 01-03 + Phase 3 Plan 01)
+- Average duration: 6.0min
+- Total execution time: 1.0 hours
 
 **By Phase:**
 
@@ -83,6 +83,8 @@ Transcript storage changed from flat string to `list[tuple[str, str]]` (speaker,
 | Phase 02 P01 | 6min | 2 tasks | 9 files |
 | Phase 02 P02 | 7min | 2 tasks | 5 files |
 | Phase 02 P03 | 20min | 2 tasks | 7 files (integration + human verification) |
+| 03-review-and-export | 1 of 3 complete | 7min | 7min |
+| Phase 03 P01 | 7min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -163,6 +165,10 @@ Recent decisions affecting current work:
 - [Phase 3 context]: After finalization, show confirmation + clear path to "New Session" or return to session list
 - [Phase 3 context]: Session list shows: timestamp + first line of transcript preview + status badge (Recorded/Extracted/Reviewed)
 - [Phase 3 context]: REV-04 (patient summary) deferred -- skip for v1, focus on dentist workflow
+- [03-01]: Atomic write via tempfile.mkstemp + os.replace prevents data corruption on interrupted writes
+- [03-01]: medications and va_narrative fields defaulted (backward-compatible) so existing extraction pipeline unaffected
+- [03-01]: Medications section always at bottom of formatted note, VA narrative conditional (auto-detected)
+- [03-01]: edited_note dict overrides SoapNote in formatter (user edits take priority)
 
 ### Bugs Fixed (All Sessions)
 
@@ -178,7 +184,8 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Plan Phase 3 (Review and Export): side-by-side review UI, note editing, clipboard export, ephemeral cleanup
+- Execute Phase 3 Plan 02: review UI routes, templates, JavaScript (side-by-side, editing, copy, session list, finalize)
+- Execute Phase 3 Plan 03: dictation on editable fields + human verification checkpoint
 
 ### Blockers/Concerns
 
@@ -190,12 +197,12 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-10T04:15:29.225Z
-Stopped at: Phase 3 context gathered
-Resume action: Plan Phase 3 (Review and Export)
+Last session: 2026-03-10T04:45:15Z
+Stopped at: Completed 03-01-PLAN.md
+Resume action: Execute Phase 3 Plan 02 (review UI routes + templates)
 
 ### How to resume
-1. Plan Phase 3 -- Review and Export (side-by-side UI, editing, clipboard export, ephemeral cleanup)
+1. Execute Plan 03-02 -- Review UI routes, templates, JavaScript (side-by-side, editing, copy, session list, finalize)
 
 ### Phase 1 human verification COMPLETE
 Human verified on 2026-03-08: server starts, UI loads, audio captures, Whisper transcribes dental terminology, speaker labels render, transcripts persist, no network requests. Session lifecycle (Start/Pause/Resume/Stop) all functional.
@@ -206,13 +213,14 @@ Known limitation accepted: keyword-based speaker classifier loses context across
 Human verified on 2026-03-09: SOAP notes from real dental transcripts are clinically acceptable. Subjective captures chief complaint, Objective references findings, Assessment includes diagnosis, Plan mentions procedures. CDT codes reasonable. Social conversation filtered. clinical_discussion field added during verification.
 
 ### Files changed this session
-- `tests/test_clinical_integration.py` — NEW: 13 integration tests for clinical pipeline with real Ollama
-- `tests/conftest.py` — MODIFIED: integration fixtures, --integration flag, enriched sample transcript
-- `pyproject.toml` — MODIFIED: integration marker added to pytest config
-- `src/dental_notes/clinical/models.py` — MODIFIED: clinical_discussion field added to SoapNote
-- `src/dental_notes/clinical/ollama_service.py` — MODIFIED: schema dereferencing for Ollama compatibility
-- `src/dental_notes/clinical/prompts.py` — MODIFIED: Clinical Discussion guidance in extraction prompt
-- `tests/test_clinical_models.py` — MODIFIED: tests for clinical_discussion field
-- `.planning/phases/02-clinical-extraction/02-03-SUMMARY.md` — NEW: Plan 03 summary
-- `.planning/STATE.md` — Updated: Phase 2 complete
-- `.planning/ROADMAP.md` — Updated: Phase 2 progress
+- `src/dental_notes/session/store.py` — NEW: SessionStore, SavedSession, SessionStatus (JSON persistence)
+- `src/dental_notes/clinical/formatter.py` — NEW: format_note_for_clipboard(), format_section()
+- `src/dental_notes/clinical/models.py` — MODIFIED: medications and va_narrative fields added to SoapNote
+- `src/dental_notes/clinical/prompts.py` — MODIFIED: medications + VA detection in EXTRACTION_SYSTEM_PROMPT
+- `src/dental_notes/config.py` — MODIFIED: sessions_dir added to Settings
+- `tests/test_session_store.py` — NEW: 28 tests for session persistence + enriched model
+- `tests/test_note_formatter.py` — NEW: 18 tests for clipboard formatter
+- `tests/conftest.py` — MODIFIED: FakeSessionStore, sample_saved_session, updated FakeOllamaService
+- `.planning/phases/03-review-and-export/03-01-SUMMARY.md` — NEW: Plan 01 summary
+- `.planning/STATE.md` — Updated: Phase 3 Plan 01 complete
+- `.planning/ROADMAP.md` — Updated: Phase 3 progress

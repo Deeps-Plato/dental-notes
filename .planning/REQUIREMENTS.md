@@ -8,7 +8,7 @@
 ### Audio
 
 - [x] **AUD-01**: User can start and stop a streaming capture session that records audio in small chunks, transcribes each chunk immediately, and discards the audio — no full-length recording is ever stored
-- [ ] **AUD-02**: Transcript file is automatically deleted after the note is finalized
+- [x] **AUD-02**: Transcript file is automatically deleted after the note is finalized
 
 ### Transcription
 
@@ -24,9 +24,9 @@
 
 ### Review & Export
 
-- [ ] **REV-01**: User can view full transcript side-by-side with the structured SOAP note draft
-- [ ] **REV-02**: User can edit the AI-generated SOAP note before finalizing
-- [ ] **REV-03**: User can copy the finalized note to clipboard in one click (Dentrix-ready format)
+- [x] **REV-01**: User can view full transcript side-by-side with the structured SOAP note draft
+- [x] **REV-02**: User can edit the AI-generated SOAP note before finalizing
+- [x] **REV-03**: User can copy the finalized note to clipboard in one click (Dentrix-ready format)
 - [ ] **REV-04**: A plain-language patient summary is generated alongside the clinical note
 
 ### Privacy
@@ -65,16 +65,16 @@
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | AUD-01 | Phase 1 | Complete |
-| AUD-02 | Phase 3 | Pending |
+| AUD-02 | Phase 3 | Complete |
 | TRX-01 | Phase 1 | Complete |
 | TRX-02 | Phase 1 | Complete |
 | CLI-01 | Phase 2 | Complete |
 | CLI-02 | Phase 2 | Complete |
 | CLI-03 | Phase 2 | Complete |
 | CLI-04 | Phase 2 | Complete |
-| REV-01 | Phase 3 | Pending |
-| REV-02 | Phase 3 | Pending |
-| REV-03 | Phase 3 | Pending |
+| REV-01 | Phase 3 | Complete |
+| REV-02 | Phase 3 | Complete |
+| REV-03 | Phase 3 | Complete |
 | REV-04 | Phase 3 | Pending |
 | PRV-01 | Phase 1 | Complete |
 
