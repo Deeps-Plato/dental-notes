@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Streaming Capture and Transcription** - Stream audio chunks from mic, transcribe each chunk locally via faster-whisper, discard audio, accumulate transcript
 - [x] **Phase 1.1: Phase 1 Test Hardening** *(INSERTED)* - Fill test coverage gaps, add pipeline integration test, complete human verification
-- [ ] **Phase 2: Clinical Extraction** - Filter clinical content from accumulated transcript and generate structured SOAP notes via local LLM
+- [x] **Phase 2: Clinical Extraction** - Filter clinical content from accumulated transcript and generate structured SOAP notes via local LLM
 - [ ] **Phase 3: Review and Export** - Side-by-side review UI with editing, clipboard export, and ephemeral cleanup
 
 ## Phase Details
@@ -63,12 +63,12 @@ Plans:
   3. CDT procedure codes are suggested based on the Assessment and Plan sections
   4. All LLM processing runs locally via Ollama — no patient data leaves the machine
   5. Speaker labels (Doctor/Patient) are re-attributed by the LLM using conversational context, correcting keyword-based misclassifications from Phase 1
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 
 Plans:
 - [x] 02-01-PLAN.md — Foundation: Pydantic models, config extension, OllamaService, system prompts with CDT reference
-- [ ] 02-02-PLAN.md — Clinical pipeline: ClinicalExtractor (SOAP + CDT) and SpeakerReattributor (LLM speaker correction)
-- [ ] 02-03-PLAN.md — Integration test with real Ollama + human verification checkpoint (blocking gate)
+- [x] 02-02-PLAN.md — Clinical pipeline: ClinicalExtractor (SOAP + CDT) and SpeakerReattributor (LLM speaker correction)
+- [x] 02-03-PLAN.md — Integration test with real Ollama + human verification checkpoint (blocking gate)
 
 ### Phase 3: Review and Export
 **Goal**: User can review transcript and SOAP note side-by-side, edit the draft, copy the finalized note for Dentrix, and have ephemeral data automatically cleaned up
@@ -96,5 +96,5 @@ Phases execute in numeric order: 1 -> 1.1 -> 2 -> 3
 |-------|----------------|--------|-----------|
 | 1. Streaming Capture and Transcription | 3/3 | Complete | 2026-03-07 |
 | 1.1. Phase 1 Test Hardening *(INSERTED)* | 3/3 | Complete    | 2026-03-09 |
-| 2. Clinical Extraction | 1/3 | In progress | - |
+| 2. Clinical Extraction | 3/3 | Complete | 2026-03-09 |
 | 3. Review and Export | 0/3 | Not started | - |

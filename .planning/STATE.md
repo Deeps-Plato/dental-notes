@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_plan: 02-02 complete, next is 02-03
+current_plan: Phase 2 complete, next is Phase 3
 status: executing
-stopped_at: Completed 02-02-PLAN.md
-last_updated: "2026-03-09T06:35:12.535Z"
-last_activity: 2026-03-09 -- Plan 02-02 complete (ClinicalExtractor + SpeakerReattributor + GPU handoff)
+stopped_at: Completed 02-03-PLAN.md (Phase 2 complete)
+last_updated: "2026-03-10T02:52:45.117Z"
+last_activity: 2026-03-10 -- Phase 2 complete (integration test + human verification approved)
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 3
   total_plans: 9
-  completed_plans: 8
-  percent: 89
+  completed_plans: 9
+  percent: 100
 ---
 
 # Project State
@@ -23,16 +23,16 @@ See: .planning/PROJECT.md (updated 2026-03-05)
 
 **Core value:** Reliably record, transcribe, and produce a usable clinical note from a real dental appointment -- every time, with no data leaving the building.
 **Methodology:** Pragmatic TDD — test file before implementation, integration tests mandatory, human verification gates are blocking
-**Current focus:** Phase 2 (Clinical Extraction) in progress. Plan 02 complete, Plan 03 (integration test) next.
+**Current focus:** Phase 2 (Clinical Extraction) COMPLETE. All 3 plans done, human verification approved. Ready for Phase 3.
 
 ## Current Position
 
-Phase: 2 of 4 (Clinical Extraction) -- IN PROGRESS
-Current Plan: 02-02 complete, next is 02-03
-Status: Phase 2 In Progress (2/3 plans done)
-Last activity: 2026-03-09 -- Plan 02-02 complete (ClinicalExtractor + SpeakerReattributor + GPU handoff)
+Phase: 2 of 4 (Clinical Extraction) -- COMPLETE
+Current Plan: Phase 2 complete, next is Phase 3
+Status: Phase 2 Complete (3/3 plans done, human verified)
+Last activity: 2026-03-10 -- Phase 2 complete (integration test + human verification approved)
 
-Progress: [█████████░] 89%
+Progress: [██████████] 100% (Phases 1, 1.1, 2 complete -- Phase 3 not yet planned)
 
 ## What Works Now
 
@@ -45,11 +45,13 @@ Progress: [█████████░] 89%
 - **Transcript persists after stop**: Chunks remain visible in UI after session ends (was disappearing before)
 - **Multiple sessions**: Stop → Start cycle works (OOB swap gives fresh SSE connection each time)
 - **Transcript files saved**: Plain text with speaker labels, one per session, in `transcripts/` directory
-- **182 tests passing** across all modules (116 Phase 1/1.1 + 25 clinical models + 15 ollama service + 17 extractor + 9 speaker)
+- **182+ tests passing** across all modules (116 Phase 1/1.1 + 25 clinical models + 15 ollama service + 17 extractor + 9 speaker + 13 integration)
 - **Clinical module**: src/dental_notes/clinical/ with Pydantic models, OllamaService, prompts, ClinicalExtractor, SpeakerReattributor
-- **ClinicalExtractor**: transcript -> ExtractionResult (SOAP note + CDT codes) via OllamaService
+- **ClinicalExtractor**: transcript -> ExtractionResult (SOAP note + CDT codes + clinical_discussion) via OllamaService
 - **SpeakerReattributor**: LLM-based speaker label correction preserving chunk boundaries
 - **GPU handoff**: extract_with_gpu_handoff() sequences Whisper unload -> LLM -> LLM unload -> Whisper reload
+- **Integration tests**: 13 tests with real Ollama + Qwen3 (--integration flag, skipped by default)
+- **Human verified SOAP quality**: SOAP notes clinically acceptable for dental transcripts (Phase 2 gate passed)
 
 ## Architecture: Speaker Classification
 
@@ -64,9 +66,9 @@ Transcript storage changed from flat string to `list[tuple[str, str]]` (speaker,
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8 (Phase 1 + Phase 1.1 + Phase 2 Plans 01-02)
-- Average duration: 5.1min
-- Total execution time: 0.60 hours
+- Total plans completed: 9 (Phase 1 + Phase 1.1 + Phase 2 Plans 01-03)
+- Average duration: 5.9min
+- Total execution time: 0.88 hours
 
 **By Phase:**
 
@@ -77,9 +79,10 @@ Transcript storage changed from flat string to `list[tuple[str, str]]` (speaker,
 | Phase 01.1 P01 | 7min | 2 tasks | 5 files |
 | Phase 01.1 P02 | 4min | 2 tasks | 2 files |
 | Phase 01.1 P03 | 3min | 2 tasks | 0 files (verification) |
-| 02-clinical-extraction | 2 of 3 complete | 13min | 6.5min |
+| 02-clinical-extraction | 3 of 3 complete | 33min | 11min |
 | Phase 02 P01 | 6min | 2 tasks | 9 files |
 | Phase 02 P02 | 7min | 2 tasks | 5 files |
+| Phase 02 P03 | 20min | 2 tasks | 7 files (integration + human verification) |
 
 ## Accumulated Context
 
@@ -132,6 +135,10 @@ Recent decisions affecting current work:
 - [02-02]: Speaker system prompt separate from EXTRACTION_SYSTEM_PROMPT (focused on attribution only)
 - [02-02]: _SpeakerChunkList Pydantic wrapper model for structured LLM array output schema
 - [02-02]: GPU handoff pattern: whisper.unload() -> extract() -> finally { ollama.unload(); whisper.load_model() }
+- [02-03]: pytest --integration flag with pytest_addoption/pytest_collection_modifyitems (integration tests skipped by default)
+- [02-03]: Model auto-detection: try qwen3:8b first, fall back to qwen3:4b for 4GB GPU hardware
+- [02-03]: clinical_discussion field added to SoapNote during human verification (bullet-point clinical reasoning summary)
+- [02-03]: OllamaService schema dereferencing: inline $ref/$defs and strip unsupported keys for Ollama compatibility
 
 ### Bugs Fixed (All Sessions)
 
@@ -147,36 +154,41 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Execute Phase 2 Plan 03 (Integration test with real Ollama + human verification checkpoint)
+- Plan Phase 3 (Review and Export): side-by-side review UI, note editing, clipboard export, ephemeral cleanup
 
 ### Blockers/Concerns
 
 - **WSL audio limitation (resolved):** Server must run on Windows Python directly
-- Speaker classification accuracy depends on keyword patterns -- may misclassify ambiguous phrases (falls back to alternation)
-- Qwen3 8B quality on dental content is unvalidated -- may need model fallback (Phase 2)
+- Speaker classification accuracy depends on keyword patterns -- may misclassify ambiguous phrases (falls back to alternation). LLM re-attribution (CLI-04) now available via SpeakerReattributor.
+- Qwen3 8B quality on dental content validated -- SOAP notes clinically acceptable (human verified)
 - Whisper model size constrained by 4GB VRAM floor
 - Chunk size tuning: too small = lost context at boundaries, too large = defeats streaming purpose
 
 ## Session Continuity
 
-Last session: 2026-03-09T06:34:57.739Z
-Stopped at: Completed 02-02-PLAN.md
-Resume action: Execute Phase 2 Plan 03 (Integration test with real Ollama + human verification)
+Last session: 2026-03-10T02:52:19.797Z
+Stopped at: Completed 02-03-PLAN.md (Phase 2 complete)
+Resume action: Plan Phase 3 (Review and Export)
 
 ### How to resume
-1. Execute Phase 2 Plan 03 -- Integration test with real Ollama + human verification checkpoint
+1. Plan Phase 3 -- Review and Export (side-by-side UI, editing, clipboard export, ephemeral cleanup)
 
 ### Phase 1 human verification COMPLETE
 Human verified on 2026-03-08: server starts, UI loads, audio captures, Whisper transcribes dental terminology, speaker labels render, transcripts persist, no network requests. Session lifecycle (Start/Pause/Resume/Stop) all functional.
 
-Known limitation accepted: keyword-based speaker classifier loses context across chunks when doctor pauses mid-thought. Deferred to Phase 2 CLI-04 for LLM re-attribution.
+Known limitation accepted: keyword-based speaker classifier loses context across chunks when doctor pauses mid-thought. Now correctable via Phase 2 SpeakerReattributor (CLI-04).
+
+### Phase 2 human verification COMPLETE
+Human verified on 2026-03-09: SOAP notes from real dental transcripts are clinically acceptable. Subjective captures chief complaint, Objective references findings, Assessment includes diagnosis, Plan mentions procedures. CDT codes reasonable. Social conversation filtered. clinical_discussion field added during verification.
 
 ### Files changed this session
-- `src/dental_notes/clinical/extractor.py` — NEW: ClinicalExtractor with extract(), extract_from_chunks(), extract_with_gpu_handoff()
-- `src/dental_notes/clinical/speaker.py` — NEW: SpeakerReattributor with reattribute() and SPEAKER_SYSTEM_PROMPT
-- `tests/test_extractor.py` — NEW: 17 tests for extraction pipeline and GPU handoff
-- `tests/test_speaker_reattribution.py` — NEW: 9 tests for speaker re-attribution
-- `tests/conftest.py` — MODIFIED: FakeWhisperServiceGpu, SAMPLE_DENTAL_TRANSCRIPT, unload_count on FakeOllamaService
-- `.planning/phases/02-clinical-extraction/02-02-SUMMARY.md` — NEW: Plan 02 summary
-- `.planning/STATE.md` — Updated: Phase 2 Plan 02 complete
+- `tests/test_clinical_integration.py` — NEW: 13 integration tests for clinical pipeline with real Ollama
+- `tests/conftest.py` — MODIFIED: integration fixtures, --integration flag, enriched sample transcript
+- `pyproject.toml` — MODIFIED: integration marker added to pytest config
+- `src/dental_notes/clinical/models.py` — MODIFIED: clinical_discussion field added to SoapNote
+- `src/dental_notes/clinical/ollama_service.py` — MODIFIED: schema dereferencing for Ollama compatibility
+- `src/dental_notes/clinical/prompts.py` — MODIFIED: Clinical Discussion guidance in extraction prompt
+- `tests/test_clinical_models.py` — MODIFIED: tests for clinical_discussion field
+- `.planning/phases/02-clinical-extraction/02-03-SUMMARY.md` — NEW: Plan 03 summary
+- `.planning/STATE.md` — Updated: Phase 2 complete
 - `.planning/ROADMAP.md` — Updated: Phase 2 progress
