@@ -26,19 +26,32 @@ class SoapNote(BaseModel):
     """Structured dental SOAP note with CDT code suggestions."""
 
     subjective: str = Field(
-        description="Chief complaint, patient-reported symptoms, pain, onset/duration"
+        description=(
+            "Narrative paragraph: chief complaint, location, onset/duration, "
+            "pain quality/severity, aggravating/relieving factors, dental history"
+        )
     )
     objective: str = Field(
-        description="Clinical findings, tooth numbers, surfaces, conditions, radiographic findings"
+        description=(
+            "Narrative of all clinical and radiographic findings: tooth numbers, "
+            "existing restorations and their condition, cracks, proximity to pulp, "
+            "periapical status, percussion/palpation results"
+        )
     )
     assessment: str = Field(
-        description="Diagnoses with tooth numbers, classification"
+        description="Diagnoses with tooth numbers, classification, differentials, prognosis"
     )
     plan: str = Field(
-        description="Procedures planned with CDT codes, materials, follow-up, patient instructions"
+        description=(
+            "All procedures planned with tooth numbers, materials, contingency plans, "
+            "follow-up, patient instructions, referrals"
+        )
     )
     cdt_codes: list[CdtCode] = Field(
-        description="Suggested CDT codes from assessment and plan"
+        description=(
+            "ALL CDT codes for services performed and planned: "
+            "exam type, radiographs taken, procedures completed or planned"
+        )
     )
     clinical_discussion: list[str] = Field(
         description=(
@@ -49,7 +62,10 @@ class SoapNote(BaseModel):
     )
     medications: list[str] = Field(
         default_factory=list,
-        description="Prescribed medications extracted from transcript",
+        description=(
+            "ONLY medications explicitly prescribed in transcript. "
+            "Empty list if none discussed -- never infer standard medications"
+        ),
     )
     va_narrative: str | None = Field(
         default=None,

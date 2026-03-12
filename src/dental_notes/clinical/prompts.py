@@ -72,25 +72,84 @@ the next utterance is likely the same speaker unless there is a clear turn-takin
 - When in doubt: clinical language = Doctor, symptom reports = Patient.
 
 ## SOAP Note Structure
-- Subjective: Chief complaint, patient-reported symptoms, pain description, onset/duration
-- Objective: Clinical findings (tooth numbers, surfaces, conditions), radiographic findings, \
-vitals if relevant
-- Assessment: Diagnosis with tooth numbers, classification (e.g., "Class II caries #14-MO")
-- Plan: Procedures planned with CDT codes, materials, follow-up schedule, patient instructions
-- Clinical Discussion: Bullet-point summary of the reasoning discussed with the patient. Capture:
-  - How the doctor explained the diagnosis (including any analogies or plain-language breakdowns)
-  - Risks, benefits, and alternatives discussed for the treatment plan
-  - Why this treatment was chosen over alternatives
-  - Any patient concerns addressed and how they were resolved
-  - Do NOT transcribe verbatim -- summarize the logic of the conversation in concise bullets
 
-## CDT Code Reference (use ONLY these codes)
+### Subjective
+Write a narrative paragraph (not just a one-liner). Include ALL of the following that are \
+discussed in the transcript:
+- Chief complaint in the patient's own words
+- Location of symptoms (quadrant, tooth area, specific tooth if identified)
+- Onset and duration ("for about a week", "started yesterday")
+- Quality/character of pain (sharp, dull, throbbing, aching, sensitivity)
+- Severity (mild, moderate, severe; numeric scale if mentioned)
+- Aggravating factors (hot, cold, biting, chewing, sweets)
+- Relieving factors (OTC medications, avoiding certain side)
+- Associated symptoms (swelling, bleeding, bad taste, drainage)
+- Relevant dental history on the tooth (prior treatment, how long ago)
+
+Example: "Patient Robert presents with a chief complaint of pain in the upper right posterior \
+region, ongoing for approximately one week. He localizes the pain to the second molar. No \
+specific aggravating or relieving factors were reported during this visit."
+
+### Objective
+Write a detailed narrative of ALL clinical and radiographic findings. Include:
+- Tooth number(s) examined (Universal numbering 1-32)
+- Visual findings: existing restorations, cracks, fractures, caries, discoloration
+- Condition of existing restorations (intact, fractured, marginal breakdown, recurrent caries)
+- Radiographic findings: proximity to pulp, periapical pathology (or absence thereof), \
+bone levels, radiolucencies, radiopacities
+- Percussion/palpation/thermal/EPT results if performed
+- Periodontal findings if relevant (probing depths, mobility, bleeding on probing)
+- Soft tissue findings if relevant
+
+Example: "Clinical examination of tooth #2 reveals an existing composite restoration with a \
+visible crack line extending through the restoration. Radiographic examination (periapical) \
+shows the existing restoration is in close proximity to the pulp chamber. No periapical \
+radiolucency is noted at this time, suggesting no current infection at the root apex."
+
+### Assessment
+- Diagnosis with tooth numbers and classification
+- Include differential diagnoses if discussed (e.g., reversible vs irreversible pulpitis)
+- Prognosis statements if discussed
+
+### Plan
+- All procedures planned with specific tooth numbers
+- Materials if discussed
+- Contingency plans discussed (e.g., "if decay extends to pulp, will refer for root canal")
+- Follow-up schedule
+- Patient instructions
+- Referrals if applicable
+
+### Clinical Discussion
+Bullet-point summary of the actual clinical reasoning discussed with the patient. Capture:
+- How the doctor explained the diagnosis (including any analogies or plain-language breakdowns)
+- What treatment options were presented and their pros/cons
+- Risks, benefits, and alternatives discussed for the treatment plan
+- Why this treatment approach was chosen over alternatives
+- Any patient concerns or fears expressed and how they were addressed
+- Contingency scenarios discussed ("if we find X, then we'll need Y")
+- Patient's understanding and agreement with the plan
+- Do NOT transcribe verbatim -- summarize the actual substance of what was discussed
+
+## CDT Codes
+Include codes for ALL services performed or planned during this visit, not just the primary \
+procedure. Common combinations to check for:
+- Examination performed today? (D0120 periodic, D0140 limited/problem-focused, D0150 comprehensive)
+- Radiographs taken? (D0220 periapical, D0230 additional PA, D0270/D0272/D0274 bitewings, D0330 panoramic)
+- Prophylaxis/cleaning done? (D1110, D1120)
+- Restorations planned? (D2140-D2394 with surface count)
+- Crowns discussed? (D2740, D2750, D2751)
+- Root canal discussed? (D3310-D3330)
+- Palliative treatment? (D9110)
+
+### CDT Code Reference (use ONLY these codes)
 {CDT_REFERENCE}
 
 ## Prescribed Medications
-Extract any medications prescribed or discussed during the appointment. For each medication, \
-include drug name, dosage, frequency, and duration if mentioned. Return an empty list if no \
-medications are discussed.
+ONLY include medications that were explicitly prescribed or recommended in the transcript. \
+Include drug name, dosage, frequency, and duration if mentioned. \
+CRITICAL: Return an EMPTY list if no medications are explicitly discussed. Do NOT infer or \
+assume standard post-procedure medications (like ibuprofen or amoxicillin) unless the doctor \
+actually mentions prescribing them in the transcript.
 
 ## VA Patient Detection
 If the transcript mentions VA (Veterans Affairs) -- for example the patient references VA \
@@ -101,7 +160,9 @@ Format as: "Tooth #N: [findings]. Indicated: [procedure]." Return null if VA is 
 ## Rules
 - Only use CDT codes from the reference list above
 - Use tooth numbers in Universal numbering system (1-32)
-- If information is not mentioned in the transcript, do not fabricate it
-- Keep each SOAP section concise but complete
-- Include all clinically relevant details from the transcript
+- NEVER fabricate or infer information not explicitly stated in the transcript
+- Medications: EMPTY list unless explicitly prescribed -- this is the #1 hallucination risk
+- Write narrative paragraphs, not telegraphic bullet fragments -- these are medicolegal documents
+- CDT codes: include ALL services (exam, radiographs, procedures) not just the primary treatment
+- Include all clinically relevant details from the transcript -- err on the side of completeness
 - Omit social pleasantries, weather talk, scheduling logistics, and non-clinical conversation"""
