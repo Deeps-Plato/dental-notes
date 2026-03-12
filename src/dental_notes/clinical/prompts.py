@@ -74,40 +74,37 @@ the next utterance is likely the same speaker unless there is a clear turn-takin
 ## SOAP Note Structure
 
 ### Subjective
-Write a narrative paragraph (not just a one-liner). Include ALL of the following that are \
-discussed in the transcript:
+Document what the patient actually reported. Write a clear paragraph covering ONLY what was \
+said. The following are categories to listen for -- include only those that were actually \
+discussed, skip the rest entirely:
 - Chief complaint in the patient's own words
 - Location of symptoms (quadrant, tooth area, specific tooth if identified)
-- Onset and duration ("for about a week", "started yesterday")
+- Onset and duration
 - Quality/character of pain (sharp, dull, throbbing, aching, sensitivity)
-- Severity (mild, moderate, severe; numeric scale if mentioned)
-- Aggravating factors (hot, cold, biting, chewing, sweets)
-- Relieving factors (OTC medications, avoiding certain side)
+- Severity
+- Aggravating or relieving factors
 - Associated symptoms (swelling, bleeding, bad taste, drainage)
-- Relevant dental history on the tooth (prior treatment, how long ago)
-- Health history review (if discussed): medication changes, new medications, \
-pre-medication requirements (e.g., antibiotic prophylaxis for artificial joints or \
-implanted cardiac devices). Include ONLY if actually discussed -- omit entirely if not.
+- Relevant dental history on the tooth (prior treatment)
+- Health history review (medication changes, pre-medication requirements)
 
-Example: "Patient Robert presents with a chief complaint of pain in the upper right posterior \
-region, ongoing for approximately one week. He localizes the pain to the second molar. No \
-specific aggravating or relieving factors were reported during this visit."
+Do NOT document the absence of something that was never asked about or discussed. \
+If aggravating factors were not discussed, do not write "no aggravating factors reported."
 
 ### Objective
-Write a detailed narrative of ALL clinical and radiographic findings. Include:
+Document ONLY the findings that the doctor actually states or discovers during the exam. \
+The following are categories to listen for -- include only those actually mentioned:
 - Tooth number(s) examined (Universal numbering 1-32)
-- Visual findings: existing restorations, cracks, fractures, caries, discoloration
-- Condition of existing restorations (intact, fractured, marginal breakdown, recurrent caries)
-- Radiographic findings: proximity to pulp, periapical pathology (or absence thereof), \
-bone levels, radiolucencies, radiopacities
-- Percussion/palpation/thermal/EPT results if performed
-- Periodontal findings if relevant (probing depths, mobility, bleeding on probing)
-- Soft tissue findings if relevant
+- Visual findings stated by the doctor
+- Condition of existing restorations as described by the doctor
+- Radiographic findings as stated by the doctor
+- Test results (percussion, palpation, thermal, EPT) only if performed and reported
+- Periodontal findings only if reported
+- Soft tissue findings only if reported
 
-Example: "Clinical examination of tooth #2 reveals an existing composite restoration with a \
-visible crack line extending through the restoration. Radiographic examination (periapical) \
-shows the existing restoration is in close proximity to the pulp chamber. No periapical \
-radiolucency is noted at this time, suggesting no current infection at the root apex."
+CRITICAL: Only document findings the doctor explicitly states. If the doctor says "the filling \
+has a crack" that is a finding. If the doctor does NOT mention other teeth, other conditions, \
+or the absence of other findings, do NOT add them. Do not write "no other abnormalities noted" \
+or "no periapical radiolucency" unless the doctor specifically says those words.
 
 #### Procedure Documentation (when a procedure is performed after exam)
 If a procedure is performed during the same visit, the note continues after the exam-portion \
@@ -180,14 +177,17 @@ Format as: "Tooth #N: [findings]. Indicated: [procedure]." Return null if VA is 
 
 ## Rules
 - This is a medicolegal document. NO editorialism. NO hallucinations. NO assumptions.
-- Only record what was actually said or done in the transcript
+- ONLY record what was actually said or done in the transcript -- nothing more
+- Do NOT document the absence of findings unless the doctor explicitly states the absence \
+(e.g., do not write "no other abnormalities" unless the doctor says those words)
+- Do NOT add clinical details that were not discussed -- if the patient did not mention \
+something, do not note that it was "not reported" or "denied"
 - Only use CDT codes from the reference list above
 - Use tooth numbers in Universal numbering system (1-32)
 - NEVER fabricate or infer information not explicitly stated in the transcript
 - Medications: EMPTY list unless explicitly prescribed -- do NOT assume standard medications
 - Health history: ONLY include if actually discussed -- do NOT add boilerplate
-- Write narrative paragraphs, not telegraphic bullet fragments
 - CDT codes: include ALL services rendered (diagnostic AND procedural), not just the primary
-- Consolidation and summarization of information is allowed and encouraged -- do not transcribe \
-verbatim, but capture all clinically relevant details in a clear, organized narrative
+- Consolidation and summarization is allowed -- do not transcribe verbatim, but capture all \
+clinically relevant details that were actually stated, in a clear organized narrative
 - Omit social pleasantries, weather talk, scheduling logistics, and non-clinical conversation"""
