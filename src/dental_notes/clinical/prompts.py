@@ -85,6 +85,9 @@ discussed in the transcript:
 - Relieving factors (OTC medications, avoiding certain side)
 - Associated symptoms (swelling, bleeding, bad taste, drainage)
 - Relevant dental history on the tooth (prior treatment, how long ago)
+- Health history review (if discussed): medication changes, new medications, \
+pre-medication requirements (e.g., antibiotic prophylaxis for artificial joints or \
+implanted cardiac devices). Include ONLY if actually discussed -- omit entirely if not.
 
 Example: "Patient Robert presents with a chief complaint of pain in the upper right posterior \
 region, ongoing for approximately one week. He localizes the pain to the second molar. No \
@@ -105,6 +108,19 @@ Example: "Clinical examination of tooth #2 reveals an existing composite restora
 visible crack line extending through the restoration. Radiographic examination (periapical) \
 shows the existing restoration is in close proximity to the pulp chamber. No periapical \
 radiolucency is noted at this time, suggesting no current infection at the root apex."
+
+#### Procedure Documentation (when a procedure is performed after exam)
+If a procedure is performed during the same visit, the note continues after the exam-portion \
+SOAP (Subjective, Objective, Assessment, Plan) with a procedure section. Document in order:
+1. Treatment plan presentation: consent obtained, signature on paperwork if discussed
+2. Anesthetic: type of anesthetic, amount in milligrams, epinephrine concentration \
+(e.g., "1:100,000"), location/site of placement (e.g., "right inferior alveolar nerve block")
+3. Procedure details: step-by-step narrative of what was done
+4. Materials used: restoration material, shade (if selected), bonding system, \
+liner/base if placed, impression material if used
+5. Lab information: lab name, shade, material type (if sent to lab)
+6. Post-operative condition: bite check, occlusal adjustment, patient tolerance
+7. Post-operative instructions given to patient
 
 ### Assessment
 - Diagnosis with tooth numbers and classification
@@ -131,15 +147,20 @@ Bullet-point summary of the actual clinical reasoning discussed with the patient
 - Do NOT transcribe verbatim -- summarize the actual substance of what was discussed
 
 ## CDT Codes
-Include codes for ALL services performed or planned during this visit, not just the primary \
-procedure. Common combinations to check for:
-- Examination performed today? (D0120 periodic, D0140 limited/problem-focused, D0150 comprehensive)
-- Radiographs taken? (D0220 periapical, D0230 additional PA, D0270/D0272/D0274 bitewings, D0330 panoramic)
-- Prophylaxis/cleaning done? (D1110, D1120)
-- Restorations planned? (D2140-D2394 with surface count)
-- Crowns discussed? (D2740, D2750, D2751)
-- Root canal discussed? (D3310-D3330)
-- Palliative treatment? (D9110)
+Include codes for ANY AND ALL services completed during this visit -- both diagnostic and \
+clinical procedures. Every service rendered gets a code. Scan the transcript systematically:
+- Diagnostic: exam type (D0120/D0140/D0150/D0160/D0180), radiographs (D0220 PA, D0230 \
+additional PA, D0270/D0272/D0274 bitewings, D0330 pano)
+- Preventive: prophylaxis (D1110/D1120), fluoride (D1206), sealants (D1351)
+- Restorative: fillings (D2140-D2394 with surface count), crowns (D2740/D2750/D2751), \
+core buildup (D2950)
+- Endodontic: root canal (D3310/D3320/D3330)
+- Periodontic: SRP (D4341/D4342), perio maintenance (D4910)
+- Oral surgery: extractions (D7140/D7210/D7220/D7240)
+- Other: palliative (D9110), nitrous (D9230)
+
+If a procedure is PLANNED but not yet performed, still include it and note it is planned. \
+If a procedure IS performed during this visit, code it as completed.
 
 ### CDT Code Reference (use ONLY these codes)
 {CDT_REFERENCE}
@@ -158,11 +179,15 @@ narrative section summarizing findings and indicated procedures for each tooth d
 Format as: "Tooth #N: [findings]. Indicated: [procedure]." Return null if VA is not mentioned.
 
 ## Rules
+- This is a medicolegal document. NO editorialism. NO hallucinations. NO assumptions.
+- Only record what was actually said or done in the transcript
 - Only use CDT codes from the reference list above
 - Use tooth numbers in Universal numbering system (1-32)
 - NEVER fabricate or infer information not explicitly stated in the transcript
-- Medications: EMPTY list unless explicitly prescribed -- this is the #1 hallucination risk
-- Write narrative paragraphs, not telegraphic bullet fragments -- these are medicolegal documents
-- CDT codes: include ALL services (exam, radiographs, procedures) not just the primary treatment
-- Include all clinically relevant details from the transcript -- err on the side of completeness
+- Medications: EMPTY list unless explicitly prescribed -- do NOT assume standard medications
+- Health history: ONLY include if actually discussed -- do NOT add boilerplate
+- Write narrative paragraphs, not telegraphic bullet fragments
+- CDT codes: include ALL services rendered (diagnostic AND procedural), not just the primary
+- Consolidation and summarization of information is allowed and encouraged -- do not transcribe \
+verbatim, but capture all clinically relevant details in a clear, organized narrative
 - Omit social pleasantries, weather talk, scheduling logistics, and non-clinical conversation"""
