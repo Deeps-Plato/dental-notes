@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Streaming Capture and Transcription** - Stream audio chunks from mic, transcribe each chunk locally via faster-whisper, discard audio, accumulate transcript
 - [x] **Phase 1.1: Phase 1 Test Hardening** *(INSERTED)* - Fill test coverage gaps, add pipeline integration test, complete human verification
 - [x] **Phase 2: Clinical Extraction** - Filter clinical content from accumulated transcript and generate structured SOAP notes via local LLM
-- [ ] **Phase 3: Review and Export** - Side-by-side review UI with editing, clipboard export, and ephemeral cleanup
+- [x] **Phase 3: Review and Export** - Side-by-side review UI with editing, clipboard export, and ephemeral cleanup
 
 ## Phase Details
 
@@ -80,12 +80,12 @@ Plans:
   3. User can copy the finalized note to clipboard in one click, formatted for Dentrix paste
   4. A plain-language patient summary is generated alongside the clinical note (DEFERRED to v2 per user decision)
   5. After finalization, the transcript file is automatically deleted from disk (audio was already discarded during capture)
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 
 Plans:
 - [x] 03-01-PLAN.md — Session persistence + enriched SoapNote model + clipboard text formatter
 - [x] 03-02-PLAN.md — Review UI routes + templates + JavaScript (side-by-side, editing, copy, session list, finalize)
-- [ ] 03-03-PLAN.md — Dictation on editable fields + human verification checkpoint (blocking gate)
+- [x] 03-03-PLAN.md — Dictation on editable fields + human verification checkpoint (blocking gate)
 
 ## Progress
 
@@ -97,4 +97,4 @@ Phases execute in numeric order: 1 -> 1.1 -> 2 -> 3
 | 1. Streaming Capture and Transcription | 3/3 | Complete | 2026-03-07 |
 | 1.1. Phase 1 Test Hardening *(INSERTED)* | 3/3 | Complete    | 2026-03-09 |
 | 2. Clinical Extraction | 3/3 | Complete | 2026-03-09 |
-| 3. Review and Export | 2/3 | In progress | - |
+| 3. Review and Export | 3/3 | Complete | 2026-03-28 |

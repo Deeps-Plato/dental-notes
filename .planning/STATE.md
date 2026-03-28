@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_plan: Plan 3 of 3 in Phase 3
-status: executing
-stopped_at: Completed 03-02-PLAN.md
-last_updated: "2026-03-10T04:57:57Z"
-last_activity: 2026-03-10 -- Phase 3 Plan 02 complete (review UI routes + templates + JavaScript)
+current_plan: All plans complete
+status: complete
+stopped_at: Phase 3 Plan 03 complete -- all v1 phases done
+last_updated: "2026-03-28T22:46:43Z"
+last_activity: 2026-03-28 -- Phase 3 Plan 03 human verification approved. All v1 requirements complete (REV-04 deferred to v2).
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 4
   total_plans: 12
-  completed_plans: 10
-  percent: 83
+  completed_plans: 12
+  percent: 100
 ---
 
 # Project State
@@ -23,16 +23,16 @@ See: .planning/PROJECT.md (updated 2026-03-05)
 
 **Core value:** Reliably record, transcribe, and produce a usable clinical note from a real dental appointment -- every time, with no data leaving the building.
 **Methodology:** Pragmatic TDD — test file before implementation, integration tests mandatory, human verification gates are blocking
-**Current focus:** Phase 3 (Review and Export) in progress. Plan 01 complete (session store + models + formatter). Plan 02 next (review UI).
+**Current focus:** All v1 phases complete. 249 tests passing. All 3 human verification gates passed. REV-04 (patient summary) deferred to v2.
 
 ## Current Position
 
-Phase: 3 of 4 (Review and Export)
-Current Plan: Plan 3 of 3 in Phase 3
-Status: Executing Phase 3 (2/3 plans complete)
-Last activity: 2026-03-10 -- Phase 3 Plan 02 complete (review UI routes + templates + JavaScript)
+Phase: All complete (v1 milestone done)
+Current Plan: All plans complete
+Status: COMPLETE
+Last activity: 2026-03-28 -- Phase 3 Plan 03 human verification approved. All v1 requirements complete.
 
-Progress: [████████▎ ] 83% (Phases 1, 1.1, 2 complete + Phase 3 Plans 01-02)
+Progress: [██████████] 100% (All 4 phases complete, all 12 plans complete, all 3 human verification gates passed)
 
 ## What Works Now
 
@@ -45,7 +45,7 @@ Progress: [████████▎ ] 83% (Phases 1, 1.1, 2 complete + Phase 
 - **Transcript persists after stop**: Chunks remain visible in UI after session ends (was disappearing before)
 - **Multiple sessions**: Stop → Start cycle works (OOB swap gives fresh SSE connection each time)
 - **Transcript files saved**: Plain text with speaker labels, one per session, in `transcripts/` directory
-- **246 tests passing** across all modules (116 Phase 1/1.1 + 25 clinical models + 15 ollama service + 17 extractor + 9 speaker + 13 integration + 28 session store + 18 formatter + 20 review routes + skipped 13 integration)
+- **249 tests passing** across all modules (116 Phase 1/1.1 + 25 clinical models + 15 ollama service + 17 extractor + 9 speaker + 13 integration + 28 session store + 18 formatter + 20 review routes + dictation tests + skipped 13 integration)
 - **Review page**: 50/50 side-by-side layout with editable SOAP note and transcript, clipboard copy (Copy All + per-section), regeneration, save, finalize
 - **Session list**: Shows saved sessions with timestamp, transcript preview, and colored status badges (Recorded/Extracted/Reviewed)
 - **Auto-extraction**: Session stop triggers GPU handoff extraction and redirects to review page
@@ -69,9 +69,9 @@ Transcript storage changed from flat string to `list[tuple[str, str]]` (speaker,
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11 (Phase 1 + Phase 1.1 + Phase 2 Plans 01-03 + Phase 3 Plans 01-02)
-- Average duration: 6.2min
-- Total execution time: 1.1 hours
+- Total plans completed: 12 (Phase 1 + Phase 1.1 + Phase 2 Plans 01-03 + Phase 3 Plans 01-03)
+- Average duration: 6.4min
+- Total execution time: 1.3 hours
 
 **By Phase:**
 
@@ -86,9 +86,10 @@ Transcript storage changed from flat string to `list[tuple[str, str]]` (speaker,
 | Phase 02 P01 | 6min | 2 tasks | 9 files |
 | Phase 02 P02 | 7min | 2 tasks | 5 files |
 | Phase 02 P03 | 20min | 2 tasks | 7 files (integration + human verification) |
-| 03-review-and-export | 2 of 3 complete | 15min | 7.5min |
+| 03-review-and-export | 3 of 3 complete | 29min | 9.7min |
 | Phase 03 P01 | 7min | 2 tasks | 8 files |
 | Phase 03 P02 | 8min | 2 tasks | 12 files |
+| Phase 03 P03 | 7min + human verification | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -179,6 +180,14 @@ Recent decisions affecting current work:
 - [03-02]: Clipboard fallback using hidden textarea + execCommand for non-secure contexts
 - [03-02]: Review page uses full viewport width for 50/50 panel split
 - [03-02]: ClinicalExtractor initialization in lifespan wrapped in try/except so server starts without Ollama
+- [03-03]: strftime %-I is Linux-only; use %I for Windows compatibility in session list timestamps
+- [prompt-v2]: Extraction prompt enriched for dental documentation standards (narrative Subjective with pain details, detailed Objective with all findings, comprehensive CDT coding for all services)
+- [prompt-v2]: Procedure documentation section added: consent, anesthetic (type/mg/epi/site), materials, shade, lab info, post-op
+- [prompt-v2]: Health history review in Subjective only when discussed (med changes, pre-medication for joints/cardiac devices)
+- [prompt-v2]: Strict anti-hallucination: medications EMPTY unless explicitly prescribed, no inferred findings
+- [prompt-v3]: Do NOT document absence of findings unless doctor explicitly states the absence — only record what was actually said
+- [prompt-v3]: CDT codes for ALL services rendered (diagnostic AND procedural) — exam, radiographs, procedures
+- [prompt-v3]: Consolidation/summarization allowed, but no editorialism — straightforward record of conversation
 
 ### Bugs Fixed (All Sessions)
 
@@ -191,10 +200,12 @@ Recent decisions affecting current work:
 7. **Transcript disappears on stop** — stop route didn't pass transcript to template; now passes `chunks` list
 8. **One big paragraph / no speaker separation** — flat string + `\n\n` in `<span>` unreliable via SSE; restructured to chunk list with `<div>` elements
 9. **No speaker labels** — added text-based classifier, integrated into processing loop and templates
+10. **Session list 500 on Windows** — strftime('%-I') is Linux-only; changed to %I for cross-platform
+11. **ollama Python package missing on Windows** — pip install ollama on Windows Python (was only in WSL venv)
 
 ### Pending Todos
 
-- Execute Phase 3 Plan 03: dictation on editable fields + human verification checkpoint
+- None -- all v1 plans and human verification gates complete
 
 ### Blockers/Concerns
 
@@ -206,12 +217,9 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-10T04:57:57Z
-Stopped at: Completed 03-02-PLAN.md
-Resume action: Execute Phase 3 Plan 03 (dictation on editable fields + human verification)
-
-### How to resume
-1. Execute Plan 03-03 -- Dictation on editable fields + human verification checkpoint
+Last session: 2026-03-28
+Stopped at: All v1 plans complete. Phase 3 human verification approved.
+Resume action: v1 milestone complete. Next steps: v2 requirements (REV-04 patient summary, REC-01/REC-02 recording workflow, ENH-01/02/03 clinical enhancements).
 
 ### Phase 1 human verification COMPLETE
 Human verified on 2026-03-08: server starts, UI loads, audio captures, Whisper transcribes dental terminology, speaker labels render, transcripts persist, no network requests. Session lifecycle (Start/Pause/Resume/Stop) all functional.
@@ -221,19 +229,28 @@ Known limitation accepted: keyword-based speaker classifier loses context across
 ### Phase 2 human verification COMPLETE
 Human verified on 2026-03-09: SOAP notes from real dental transcripts are clinically acceptable. Subjective captures chief complaint, Objective references findings, Assessment includes diagnosis, Plan mentions procedures. CDT codes reasonable. Social conversation filtered. clinical_discussion field added during verification.
 
-### Files changed this session
-- `src/dental_notes/ui/routes.py` — MODIFIED: 7 review routes added, stop route modified for auto-extract + HX-Redirect
+### Phase 3 human verification COMPLETE
+Human verified on 2026-03-28: Full workflow approved -- record, stop, auto-extract, review (50/50 split), edit all sections, transcript dirty tracking + regenerate, copy all + per-section copy, dictation on editable fields, session list with status badges, finalize and clear, batch workflow. 249 automated tests passing. REV-04 (patient summary) deferred to v2 per user decision.
+
+### Files changed (Phase 3 execution + prompt refinement)
+- `src/dental_notes/session/store.py` — NEW: SessionStore, SavedSession, SessionStatus (JSON persistence)
+- `src/dental_notes/clinical/formatter.py` — NEW: format_note_for_clipboard(), format_section()
+- `src/dental_notes/clinical/models.py` — MODIFIED: medications, va_narrative fields, enriched descriptions
+- `src/dental_notes/clinical/prompts.py` — MODIFIED: 3 iterations of prompt refinement (narrative, anti-hallucination, transcript-only)
+- `src/dental_notes/ui/routes.py` — MODIFIED: 7 review routes, stop auto-extract + HX-Redirect
+- `src/dental_notes/ui/dictation.py` — NEW: field-level mic-to-text via Whisper
 - `src/dental_notes/main.py` — MODIFIED: lifespan initializes SessionStore, OllamaService, ClinicalExtractor
-- `src/dental_notes/templates/review.html` — NEW: 50/50 review page with HTMX extraction
+- `src/dental_notes/templates/review.html` — NEW: 50/50 review page with HTMX extraction + dictation
 - `src/dental_notes/templates/_review_note.html` — NEW: SOAP note partial with editable textareas
 - `src/dental_notes/templates/_review_transcript.html` — NEW: Transcript textarea with dirty tracking
-- `src/dental_notes/templates/_session_list.html` — NEW: Session card list with status badges
+- `src/dental_notes/templates/_session_list.html` — NEW+FIX: Session card list (strftime fix for Windows)
 - `src/dental_notes/templates/sessions.html` — NEW: Standalone session list page
 - `src/dental_notes/templates/index.html` — MODIFIED: Added session list section
-- `src/dental_notes/static/review.js` — NEW: Clipboard copy, dirty tracking, auto-resize
-- `src/dental_notes/static/style.css` — MODIFIED: Review layout, panel, badge, and finalize styles
-- `tests/test_review_routes.py` — NEW: 20 tests for review workflow routes
+- `src/dental_notes/static/review.js` — NEW: Clipboard copy, dirty tracking, auto-resize, dictation
+- `src/dental_notes/static/style.css` — MODIFIED: Review layout, panel, badge, dictation, finalize styles
+- `tests/test_session_store.py` — NEW: 28 tests
+- `tests/test_note_formatter.py` — NEW: 18 tests
+- `tests/test_review_routes.py` — NEW: 20 tests
+- `tests/test_dictation.py` — NEW: dictation endpoint tests
 - `tests/test_routes.py` — MODIFIED: Updated stop tests for new HX-Redirect behavior
-- `.planning/phases/03-review-and-export/03-02-SUMMARY.md` — NEW: Plan 02 summary
-- `.planning/STATE.md` — Updated: Phase 3 Plan 02 complete
-- `.planning/ROADMAP.md` — Updated: Phase 3 progress
+- `tests/conftest.py` — MODIFIED: FakeSessionStore, sample fixtures

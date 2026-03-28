@@ -75,7 +75,7 @@
 | REV-01 | Phase 3 | Complete |
 | REV-02 | Phase 3 | Complete |
 | REV-03 | Phase 3 | Complete |
-| REV-04 | Phase 3 | Pending |
+| REV-04 | Phase 3 | Deferred to v2 |
 | PRV-01 | Phase 1 | Complete |
 
 **Coverage:**
