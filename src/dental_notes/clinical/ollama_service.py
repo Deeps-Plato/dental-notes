@@ -102,6 +102,29 @@ class OllamaService:
         )
         return response.message.content
 
+    def generate(
+        self,
+        system_prompt: str,
+        user_content: str,
+        temperature: float = 0.0,
+        num_ctx: int = 2048,
+    ) -> str:
+        """Generate plain text (non-structured) output.
+
+        Used for lightweight classification tasks like appointment type
+        detection where a single word response is expected.
+        Prepends /nothink to user content to disable Qwen3 thinking mode.
+        """
+        response = self._client.chat(
+            model=self._model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"/nothink\n\n{user_content}"},
+            ],
+            options={"temperature": temperature, "num_ctx": num_ctx},
+        )
+        return response.message.content
+
     def unload(self) -> None:
         """Unload model from GPU memory (keep_alive=0).
 

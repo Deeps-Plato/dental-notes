@@ -393,11 +393,11 @@ class FakeOllamaService:
         self.system_prompts.append(system_prompt)
         self.user_contents.append(user_content)
         self.call_count += 1
+        structured_idx = self.call_count - self.generate_call_count - 1
         if isinstance(self.response_data, list):
             # Multi-call: return response at current structured call index
-            idx = self.call_count - 1
-            if idx < len(self.response_data):
-                return json.dumps(self.response_data[idx])
+            if structured_idx < len(self.response_data):
+                return json.dumps(self.response_data[structured_idx])
             return json.dumps(self.response_data[-1])
         return json.dumps(self.response_data)
 

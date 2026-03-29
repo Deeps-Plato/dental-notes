@@ -1,12 +1,15 @@
-"""Clipboard text formatter for SOAP notes.
+"""Clipboard text formatter for SOAP notes and patient summaries.
 
 Produces plain text with section headers for one-click clipboard copy.
 Supports both full-note formatting and per-section formatting for
 granular copying. User edits (edited_note dict) take priority over
 the AI-generated SoapNote when both are provided.
+
+Also provides format_patient_summary_for_clipboard() for plain-language
+patient handouts.
 """
 
-from dental_notes.clinical.models import CdtCode, SoapNote
+from dental_notes.clinical.models import CdtCode, PatientSummary, SoapNote
 
 
 def format_section(
@@ -94,3 +97,31 @@ def format_note_for_clipboard(
             formatted_sections.append(section_text)
 
     return "\n\n".join(formatted_sections)
+
+
+def format_patient_summary_for_clipboard(
+    patient_summary: PatientSummary | dict,
+) -> str:
+    """Format a patient summary as plain text for clipboard copy or printing.
+
+    Accepts either a PatientSummary model or a dict with the same keys.
+    Returns plain text with section headers: WHAT WE DID TODAY, WHAT COMES
+    NEXT, HOME CARE INSTRUCTIONS. Sections separated by blank lines.
+    """
+    if isinstance(patient_summary, PatientSummary):
+        data = patient_summary.model_dump()
+    else:
+        data = patient_summary
+
+    sections = [
+        ("WHAT WE DID TODAY", data.get("what_we_did", "")),
+        ("WHAT COMES NEXT", data.get("whats_next", "")),
+        ("HOME CARE INSTRUCTIONS", data.get("home_care", "")),
+    ]
+
+    formatted: list[str] = []
+    for header, content in sections:
+        if content:
+            formatted.append(f"{header}\n{content}")
+
+    return "\n\n".join(formatted)

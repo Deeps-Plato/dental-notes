@@ -46,6 +46,8 @@ class SavedSession(BaseModel):
     extraction_result: ExtractionResult | None = None
     edited_note: dict | None = None
     transcript_dirty: bool = False
+    appointment_type: str = "general"
+    patient_summary: dict | None = None
 
 
 class SessionStore:
