@@ -46,15 +46,15 @@ created: 2026-03-29
 | 04-02-03 | 02 | 1 | CLI-06 | unit | `pytest tests/test_session_store.py -x` | Exists (update) | ⬜ pending |
 | 04-02-04 | 02 | 1 | CLI-06 | unit | `pytest tests/test_extractor.py -x` | Exists (update) | ⬜ pending |
 | 04-02-05 | 02 | 1 | CLI-06 | unit | `pytest tests/test_extractor.py::test_auto_detect_template -x` | Wave 0 | ⬜ pending |
-| 04-03-01 | 03 | 1 | CLI-07 | unit | `pytest tests/test_speaker.py -x` | Exists (update) | ⬜ pending |
-| 04-03-02 | 03 | 1 | CLI-07 | unit | `pytest tests/test_speaker.py::test_assistant_doctor_tie_defaults_doctor -x` | Wave 0 | ⬜ pending |
-| 04-03-03 | 03 | 1 | CLI-07 | unit | `pytest tests/test_speaker_reattribution.py -x` | Exists (update) | ⬜ pending |
-| 04-03-04 | 03 | 1 | CLI-07 | unit | `pytest tests/test_clinical_models.py -x` | Exists (update) | ⬜ pending |
-| 04-04-01 | 04 | 2 | REV-04 | unit | `pytest tests/test_clinical_models.py::TestPatientSummary -x` | Wave 0 | ⬜ pending |
-| 04-04-02 | 04 | 2 | REV-04 | unit | `pytest tests/test_extractor.py::test_gpu_handoff_generates_summary -x` | Wave 0 | ⬜ pending |
-| 04-04-03 | 04 | 2 | REV-04 | unit | `pytest tests/test_prompts.py::test_patient_summary_prompt -x` | Wave 0 | ⬜ pending |
-| 04-04-04 | 04 | 2 | REV-04 | unit | `pytest tests/test_review_routes.py -x` | Exists (update) | ⬜ pending |
-| 04-04-05 | 04 | 2 | REV-04 | smoke | Manual: open print preview in browser | Manual only | ⬜ pending |
+| 04-01-04 | 01 | 1 | CLI-07 | unit | `pytest tests/test_speaker.py -x` | Exists (update) | ⬜ pending |
+| 04-01-05 | 01 | 1 | CLI-07 | unit | `pytest tests/test_speaker.py::test_assistant_doctor_tie_defaults_doctor -x` | Wave 0 | ⬜ pending |
+| 04-01-06 | 01 | 1 | CLI-07 | unit | `pytest tests/test_speaker_reattribution.py -x` | Exists (update) | ⬜ pending |
+| 04-01-07 | 01 | 1 | CLI-07 | unit | `pytest tests/test_clinical_models.py -x` | Exists (update) | ⬜ pending |
+| 04-02-06 | 02 | 1 | REV-04 | unit | `pytest tests/test_clinical_models.py::TestPatientSummary -x` | Wave 0 | ⬜ pending |
+| 04-02-07 | 02 | 1 | REV-04 | unit | `pytest tests/test_extractor.py::test_gpu_handoff_generates_summary -x` | Wave 0 | ⬜ pending |
+| 04-02-08 | 02 | 1 | REV-04 | unit | `pytest tests/test_prompts.py::test_patient_summary_prompt -x` | Wave 0 | ⬜ pending |
+| 04-03-01 | 03 | 2 | REV-04 | unit | `pytest tests/test_review_routes.py -x` | Exists (update) | ⬜ pending |
+| 04-03-02 | 03 | 2 | REV-04 | smoke | Manual: open print preview in browser | Manual only | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
