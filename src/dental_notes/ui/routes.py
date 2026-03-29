@@ -21,7 +21,6 @@ from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from sse_starlette.sse import EventSourceResponse, ServerSentEvent
 
-from dental_notes.transcription.vocab import TEMPLATE_HOTWORDS
 
 logger = logging.getLogger(__name__)
 
@@ -284,15 +283,11 @@ async def session_stop(request: Request):
 async def session_stream(request: Request):
     """SSE endpoint streaming transcript updates and audio level.
 
-    Passes template-specific hotwords to whisper_service.transcribe()
-    based on the appointment_type selected at session start. This boosts
-    recognition accuracy for domain-specific terms during live recording.
+    Template-specific hotwords are not used during live recording because
+    the appointment type is auto-detected at extraction time, not pre-selected.
+    The expanded DENTAL_INITIAL_PROMPT provides general dental vocabulary.
     """
     session_manager = _get_session_manager(request)
-
-    # Read appointment_type for hotwords lookup
-    appt_type = getattr(request.app.state, "appointment_type", "general")
-    hotwords = TEMPLATE_HOTWORDS.get(appt_type)
 
     async def event_generator():
         last_chunk_count = 0
