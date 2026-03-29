@@ -88,25 +88,25 @@
 | REV-02 | v1 Phase 3 | Complete |
 | REV-03 | v1 Phase 3 | Complete |
 | PRV-01 | v1 Phase 1 | Complete |
-| CLI-05 | — | Pending |
-| CLI-06 | — | Pending |
-| CLI-07 | — | Pending |
-| REV-04 | — | Pending |
-| WRK-01 | — | Pending |
-| WRK-02 | — | Pending |
-| WRK-03 | — | Pending |
-| WRK-04 | — | Pending |
-| DPL-01 | — | Pending |
-| DPL-02 | — | Pending |
-| DPL-03 | — | Pending |
-| DPL-04 | — | Pending |
+| CLI-05 | Phase 4 | Pending |
+| CLI-06 | Phase 4 | Pending |
+| CLI-07 | Phase 4 | Pending |
+| REV-04 | Phase 4 | Pending |
+| WRK-01 | Phase 5 | Pending |
+| WRK-02 | Phase 5 | Pending |
+| WRK-03 | Phase 5 | Pending |
+| WRK-04 | Phase 5 | Pending |
+| DPL-01 | Phase 6 | Pending |
+| DPL-02 | Phase 6 | Pending |
+| DPL-03 | Phase 6 | Pending |
+| DPL-04 | Phase 6 | Pending |
 
 **Coverage:**
 - v1 requirements: 12 total (all complete)
 - v2.0 requirements: 12 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 12
+- Mapped to phases: 12/12
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-06*
-*Last updated: 2026-03-29 after v2.0 milestone requirements*
+*Last updated: 2026-03-29 — v2.0 requirements mapped to Phases 4-6*
