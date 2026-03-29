@@ -290,70 +290,89 @@ class FakeOllamaService:
 
     Default response_data matches ExtractionResult schema with cdt_codes
     nested inside soap_note (not at top level).
+
+    Supports multi-call scenarios:
+    - response_data as dict: returns same dict for all generate_structured() calls
+    - response_data as list[dict]: returns response_data[call_index] per call
+    - text_response: returned by generate() for plain-text classification calls
     """
 
-    def __init__(self, response_data: dict | None = None):
-        self.response_data = response_data or {
-            "soap_note": {
-                "subjective": (
-                    "Patient reports sensitivity to cold on upper right "
-                    "tooth for one week."
-                ),
-                "objective": (
-                    "Tooth #14 mesial-occlusal discoloration. "
-                    "Probing depths 2-3mm within normal limits."
-                ),
-                "assessment": "Class II caries on #14 mesial-occlusal surface.",
-                "plan": (
-                    "Two-surface composite restoration on #14. "
-                    "Periapical radiograph to rule out periapical pathology."
-                ),
-                "cdt_codes": [
-                    {
-                        "code": "D2392",
-                        "description": (
-                            "Resin-based composite - two surfaces, posterior"
-                        ),
-                    },
-                    {
-                        "code": "D0220",
-                        "description": "Periapical radiograph",
-                    },
-                ],
-                "clinical_discussion": [
-                    "Explained Class II caries as decay between teeth "
-                    "requiring two-surface restoration",
-                    "Composite chosen over amalgam for aesthetics and "
-                    "tooth-conserving bonding",
-                    "Periapical radiograph to rule out nerve involvement "
-                    "before restoration",
-                ],
-                "medications": [],
-                "va_narrative": None,
-            },
-            "speaker_chunks": [
+    # Default ExtractionResult response data for generate_structured()
+    DEFAULT_RESPONSE: dict = {
+        "soap_note": {
+            "subjective": (
+                "Patient reports sensitivity to cold on upper right "
+                "tooth for one week."
+            ),
+            "objective": (
+                "Tooth #14 mesial-occlusal discoloration. "
+                "Probing depths 2-3mm within normal limits."
+            ),
+            "assessment": "Class II caries on #14 mesial-occlusal surface.",
+            "plan": (
+                "Two-surface composite restoration on #14. "
+                "Periapical radiograph to rule out periapical pathology."
+            ),
+            "cdt_codes": [
                 {
-                    "chunk_id": 0,
-                    "speaker": "Doctor",
-                    "text": "Good morning, how are you today?",
-                },
-                {
-                    "chunk_id": 1,
-                    "speaker": "Patient",
-                    "text": (
-                        "My upper right tooth has been sensitive to cold."
+                    "code": "D2392",
+                    "description": (
+                        "Resin-based composite - two surfaces, posterior"
                     ),
                 },
+                {
+                    "code": "D0220",
+                    "description": "Periapical radiograph",
+                },
             ],
-            "clinical_summary": (
-                "Patient presents with cold sensitivity on #14. "
-                "Class II caries diagnosed. "
-                "Plan for two-surface composite restoration."
-            ),
-        }
+            "clinical_discussion": [
+                "Explained Class II caries as decay between teeth "
+                "requiring two-surface restoration",
+                "Composite chosen over amalgam for aesthetics and "
+                "tooth-conserving bonding",
+                "Periapical radiograph to rule out nerve involvement "
+                "before restoration",
+            ],
+            "medications": [],
+            "va_narrative": None,
+        },
+        "speaker_chunks": [
+            {
+                "chunk_id": 0,
+                "speaker": "Doctor",
+                "text": "Good morning, how are you today?",
+            },
+            {
+                "chunk_id": 1,
+                "speaker": "Patient",
+                "text": (
+                    "My upper right tooth has been sensitive to cold."
+                ),
+            },
+        ],
+        "clinical_summary": (
+            "Patient presents with cold sensitivity on #14. "
+            "Class II caries diagnosed. "
+            "Plan for two-surface composite restoration."
+        ),
+    }
+
+    def __init__(
+        self,
+        response_data: dict | list[dict] | None = None,
+        text_response: str = "general",
+    ):
+        if response_data is None:
+            self.response_data: dict | list[dict] = dict(self.DEFAULT_RESPONSE)
+        else:
+            self.response_data = response_data
+        self.text_response = text_response
         self.last_system_prompt: str | None = None
         self.last_user_content: str | None = None
+        self.system_prompts: list[str] = []
+        self.user_contents: list[str] = []
         self.call_count: int = 0
+        self.generate_call_count: int = 0
         self.unload_count: int = 0
 
     def is_available(self) -> bool:
@@ -371,8 +390,31 @@ class FakeOllamaService:
     ) -> str:
         self.last_system_prompt = system_prompt
         self.last_user_content = user_content
+        self.system_prompts.append(system_prompt)
+        self.user_contents.append(user_content)
         self.call_count += 1
+        if isinstance(self.response_data, list):
+            # Multi-call: return response at current structured call index
+            idx = self.call_count - 1
+            if idx < len(self.response_data):
+                return json.dumps(self.response_data[idx])
+            return json.dumps(self.response_data[-1])
         return json.dumps(self.response_data)
+
+    def generate(
+        self,
+        system_prompt: str,
+        user_content: str,
+        **kwargs,
+    ) -> str:
+        """Plain text generation for classification calls."""
+        self.last_system_prompt = system_prompt
+        self.last_user_content = user_content
+        self.system_prompts.append(system_prompt)
+        self.user_contents.append(user_content)
+        self.generate_call_count += 1
+        self.call_count += 1
+        return self.text_response
 
     def unload(self) -> None:
         self.unload_count += 1

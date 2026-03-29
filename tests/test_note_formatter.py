@@ -172,6 +172,49 @@ class TestFormatNoteForClipboard:
         assert text == ""
 
 
+class TestFormatPatientSummaryForClipboard:
+    """format_patient_summary_for_clipboard() produces plain text with section headers."""
+
+    def test_returns_plain_text_with_headers(self):
+        from dental_notes.clinical.formatter import format_patient_summary_for_clipboard
+
+        summary = {
+            "what_we_did": "We fixed a cavity in your upper right tooth.",
+            "whats_next": "Come back in two weeks.",
+            "home_care": "Brush gently around the filling.",
+        }
+        text = format_patient_summary_for_clipboard(summary)
+        assert "WHAT WE DID TODAY" in text
+        assert "WHAT COMES NEXT" in text
+        assert "HOME CARE INSTRUCTIONS" in text
+
+    def test_includes_content_text(self):
+        from dental_notes.clinical.formatter import format_patient_summary_for_clipboard
+
+        summary = {
+            "what_we_did": "Cleaned your teeth and checked for problems.",
+            "whats_next": "See you in six months.",
+            "home_care": "Floss daily.",
+        }
+        text = format_patient_summary_for_clipboard(summary)
+        assert "Cleaned your teeth" in text
+        assert "See you in six months" in text
+        assert "Floss daily" in text
+
+    def test_handles_patient_summary_model(self):
+        from dental_notes.clinical.formatter import format_patient_summary_for_clipboard
+        from dental_notes.clinical.models import PatientSummary
+
+        summary = PatientSummary(
+            what_we_did="Fixed a cavity.",
+            whats_next="Come back in two weeks.",
+            home_care="Brush gently.",
+        )
+        text = format_patient_summary_for_clipboard(summary)
+        assert "WHAT WE DID TODAY" in text
+        assert "Fixed a cavity." in text
+
+
 class TestFormatSection:
     """format_section() returns a single section's text."""
 

@@ -297,11 +297,311 @@ class TestGpuHandoff:
         ollama.unload = tracked_ollama_unload
 
         ext = ClinicalExtractor(ollama, settings)
-        ext.extract_with_gpu_handoff(sample_transcript, whisper)
+        ext.extract_with_gpu_handoff(sample_transcript, whisper, template_type="general")
 
         assert call_log == [
             "whisper.unload",
             "ollama.generate_structured",
+            "ollama.generate_structured",
             "ollama.unload",
             "whisper.load_model",
         ]
+
+
+# --- Template-aware extraction tests ---
+
+
+class TestTemplateAwareExtract:
+    """Tests for template_type parameter on extract()."""
+
+    def test_extract_accepts_template_type(
+        self, extractor: ClinicalExtractor, sample_transcript: str
+    ) -> None:
+        """extract() accepts optional template_type parameter."""
+        result = extractor.extract(sample_transcript, template_type="restorative")
+        assert isinstance(result, ExtractionResult)
+
+    def test_extract_without_template_type_backward_compatible(
+        self, extractor: ClinicalExtractor, sample_transcript: str
+    ) -> None:
+        """extract() without template_type still works (backward compatible)."""
+        result = extractor.extract(sample_transcript)
+        assert isinstance(result, ExtractionResult)
+
+    def test_extract_restorative_passes_composed_prompt(
+        self,
+        fake_ollama_service: FakeOllamaService,
+        settings: Settings,
+        sample_transcript: str,
+    ) -> None:
+        """extract(template_type='restorative') passes composed prompt with overlay."""
+        ext = ClinicalExtractor(fake_ollama_service, settings)
+        ext.extract(sample_transcript, template_type="restorative")
+        prompt = fake_ollama_service.last_system_prompt
+        assert prompt is not None
+        assert "Template Emphasis: Restorative" in prompt
+
+    def test_extract_general_uses_base_prompt(
+        self,
+        fake_ollama_service: FakeOllamaService,
+        settings: Settings,
+        sample_transcript: str,
+    ) -> None:
+        """extract(template_type='general') uses base prompt."""
+        from dental_notes.clinical.prompts import EXTRACTION_SYSTEM_PROMPT
+
+        ext = ClinicalExtractor(fake_ollama_service, settings)
+        ext.extract(sample_transcript, template_type="general")
+        prompt = fake_ollama_service.last_system_prompt
+        assert prompt == EXTRACTION_SYSTEM_PROMPT
+
+
+# --- Auto-detection tests ---
+
+
+class TestInferAppointmentType:
+    """Tests for _infer_appointment_type() auto-detection."""
+
+    def test_infer_calls_generate_with_classification_prompt(
+        self, settings: Settings, sample_transcript: str
+    ) -> None:
+        """_infer_appointment_type calls generate() with classification prompt."""
+        from dental_notes.clinical.prompts import APPOINTMENT_TYPE_CLASSIFICATION_PROMPT
+
+        ollama = FakeOllamaService(text_response="restorative")
+        ext = ClinicalExtractor(ollama, settings)
+        ext._infer_appointment_type(sample_transcript)
+        assert ollama.generate_call_count == 1
+        assert APPOINTMENT_TYPE_CLASSIFICATION_PROMPT in ollama.system_prompts[0]
+
+    def test_infer_truncates_transcript_to_500_words(
+        self, settings: Settings
+    ) -> None:
+        """_infer_appointment_type passes first ~500 words."""
+        long_transcript = " ".join(["word"] * 1000)
+        ollama = FakeOllamaService(text_response="general")
+        ext = ClinicalExtractor(ollama, settings)
+        ext._infer_appointment_type(long_transcript)
+        content = ollama.last_user_content
+        assert content is not None
+        word_count = len(content.split())
+        assert word_count <= 500
+
+    def test_infer_returns_valid_appointment_type(
+        self, settings: Settings, sample_transcript: str
+    ) -> None:
+        """_infer_appointment_type returns parsed type from LLM response."""
+        ollama = FakeOllamaService(text_response="restorative")
+        ext = ClinicalExtractor(ollama, settings)
+        result = ext._infer_appointment_type(sample_transcript)
+        assert result == "restorative"
+
+    def test_infer_returns_general_on_unrecognized_value(
+        self, settings: Settings, sample_transcript: str
+    ) -> None:
+        """_infer_appointment_type returns 'general' when LLM returns nonsense."""
+        ollama = FakeOllamaService(text_response="nonsense_type")
+        ext = ClinicalExtractor(ollama, settings)
+        result = ext._infer_appointment_type(sample_transcript)
+        assert result == "general"
+
+    def test_infer_returns_general_on_error(
+        self, settings: Settings, sample_transcript: str
+    ) -> None:
+        """_infer_appointment_type returns 'general' on LLM error."""
+
+        class FailingOllama(FakeOllamaService):
+            def generate(self, *args, **kwargs):
+                raise RuntimeError("LLM connection failed")
+
+        ext = ClinicalExtractor(FailingOllama(), settings)
+        result = ext._infer_appointment_type(sample_transcript)
+        assert result == "general"
+
+    def test_extract_none_template_calls_infer(
+        self, settings: Settings, sample_transcript: str
+    ) -> None:
+        """When template_type is None, extract() calls _infer then composes."""
+        ollama = FakeOllamaService(text_response="restorative")
+        ext = ClinicalExtractor(ollama, settings)
+        ext.extract(sample_transcript, template_type=None)
+        # Should have called generate() for classification
+        assert ollama.generate_call_count == 1
+        # And generate_structured() for SOAP extraction
+        assert ollama.call_count == 2
+        # The structured call should use restorative template
+        assert "Template Emphasis: Restorative" in ollama.system_prompts[1]
+
+
+# --- Patient summary generation tests ---
+
+
+SAMPLE_PATIENT_SUMMARY_RESPONSE = {
+    "what_we_did": "We fixed a cavity in your upper right tooth with a tooth-colored filling.",
+    "whats_next": "Come back in two weeks for a follow-up check.",
+    "home_care": "Brush gently around the new filling for 24 hours. Avoid chewing on that side today.",
+}
+
+
+class TestPatientSummaryGeneration:
+    """Tests for _generate_patient_summary() and GPU handoff integration."""
+
+    def test_gpu_handoff_with_explicit_template_makes_two_structured_calls(
+        self, settings: Settings, sample_transcript: str
+    ) -> None:
+        """extract_with_gpu_handoff(template_type='restorative') makes 2 structured calls."""
+        ollama = FakeOllamaService(
+            response_data=[
+                FakeOllamaService.DEFAULT_RESPONSE,
+                SAMPLE_PATIENT_SUMMARY_RESPONSE,
+            ],
+        )
+        whisper = FakeWhisperServiceGpu()
+        ext = ClinicalExtractor(ollama, settings)
+        ext.extract_with_gpu_handoff(
+            sample_transcript, whisper, template_type="restorative"
+        )
+        # SOAP + patient summary = 2 structured calls
+        assert ollama.call_count == 2
+
+    def test_gpu_handoff_with_none_template_makes_three_calls(
+        self, settings: Settings, sample_transcript: str
+    ) -> None:
+        """extract_with_gpu_handoff(template_type=None) makes 3 calls (classify + SOAP + summary)."""
+        ollama = FakeOllamaService(
+            response_data=[
+                FakeOllamaService.DEFAULT_RESPONSE,
+                SAMPLE_PATIENT_SUMMARY_RESPONSE,
+            ],
+            text_response="restorative",
+        )
+        whisper = FakeWhisperServiceGpu()
+        ext = ClinicalExtractor(ollama, settings)
+        ext.extract_with_gpu_handoff(
+            sample_transcript, whisper, template_type=None
+        )
+        # classify (generate) + SOAP (generate_structured) + summary (generate_structured) = 3
+        assert ollama.call_count == 3
+
+    def test_gpu_handoff_populates_patient_summary(
+        self, settings: Settings, sample_transcript: str
+    ) -> None:
+        """extract_with_gpu_handoff() returns result with patient_summary populated."""
+        ollama = FakeOllamaService(
+            response_data=[
+                FakeOllamaService.DEFAULT_RESPONSE,
+                SAMPLE_PATIENT_SUMMARY_RESPONSE,
+            ],
+        )
+        whisper = FakeWhisperServiceGpu()
+        ext = ClinicalExtractor(ollama, settings)
+        result = ext.extract_with_gpu_handoff(
+            sample_transcript, whisper, template_type="general"
+        )
+        assert result.patient_summary is not None
+        assert "cavity" in result.patient_summary.what_we_did
+
+    def test_patient_summary_uses_transcript_not_soap(
+        self, settings: Settings, sample_transcript: str
+    ) -> None:
+        """_generate_patient_summary passes transcript text as user content."""
+        from dental_notes.clinical.prompts import PATIENT_SUMMARY_PROMPT
+
+        ollama = FakeOllamaService(
+            response_data=[
+                FakeOllamaService.DEFAULT_RESPONSE,
+                SAMPLE_PATIENT_SUMMARY_RESPONSE,
+            ],
+        )
+        whisper = FakeWhisperServiceGpu()
+        ext = ClinicalExtractor(ollama, settings)
+        ext.extract_with_gpu_handoff(
+            sample_transcript, whisper, template_type="general"
+        )
+        # Second call should have PATIENT_SUMMARY_PROMPT as system prompt
+        assert len(ollama.system_prompts) == 2
+        assert PATIENT_SUMMARY_PROMPT in ollama.system_prompts[1]
+        # User content should be the transcript, not SOAP data
+        assert "sensitive to cold" in ollama.user_contents[1]
+
+    def test_patient_summary_uses_lower_num_ctx(
+        self, settings: Settings, sample_transcript: str
+    ) -> None:
+        """_generate_patient_summary uses num_ctx=4096 for faster generation."""
+        captured_kwargs: list[dict] = []
+
+        class TrackingOllama(FakeOllamaService):
+            def __init__(self):
+                super().__init__(
+                    response_data=[
+                        FakeOllamaService.DEFAULT_RESPONSE,
+                        SAMPLE_PATIENT_SUMMARY_RESPONSE,
+                    ],
+                )
+
+            def generate_structured(
+                self, system_prompt, user_content, schema, **kwargs
+            ):
+                captured_kwargs.append(dict(kwargs))
+                return super().generate_structured(
+                    system_prompt, user_content, schema, **kwargs
+                )
+
+        ollama = TrackingOllama()
+        whisper = FakeWhisperServiceGpu()
+        ext = ClinicalExtractor(ollama, settings)
+        ext.extract_with_gpu_handoff(
+            sample_transcript, whisper, template_type="general"
+        )
+        # Second structured call (summary) should have num_ctx=4096
+        assert len(captured_kwargs) == 2
+        assert captured_kwargs[1].get("num_ctx") == 4096
+
+    def test_summary_failure_does_not_block_extraction(
+        self, settings: Settings, sample_transcript: str
+    ) -> None:
+        """Summary generation failure leaves patient_summary as None, extraction succeeds."""
+
+        call_idx = 0
+
+        class FailOnSecondCall(FakeOllamaService):
+            def generate_structured(self, *args, **kwargs):
+                nonlocal call_idx
+                call_idx += 1
+                if call_idx == 2:
+                    raise RuntimeError("Summary generation failed")
+                return super().generate_structured(*args, **kwargs)
+
+        ollama = FailOnSecondCall()
+        whisper = FakeWhisperServiceGpu()
+        ext = ClinicalExtractor(ollama, settings)
+        result = ext.extract_with_gpu_handoff(
+            sample_transcript, whisper, template_type="general"
+        )
+        assert isinstance(result, ExtractionResult)
+        assert result.patient_summary is None
+        assert result.soap_note.subjective  # SOAP extraction still worked
+
+    def test_whisper_reloads_even_if_summary_fails(
+        self, settings: Settings, sample_transcript: str
+    ) -> None:
+        """GPU handoff still ensures Whisper reload in finally block even if summary fails."""
+
+        call_idx = 0
+
+        class FailOnSecondCall(FakeOllamaService):
+            def generate_structured(self, *args, **kwargs):
+                nonlocal call_idx
+                call_idx += 1
+                if call_idx == 2:
+                    raise RuntimeError("Summary generation failed")
+                return super().generate_structured(*args, **kwargs)
+
+        ollama = FailOnSecondCall()
+        whisper = FakeWhisperServiceGpu()
+        ext = ClinicalExtractor(ollama, settings)
+        ext.extract_with_gpu_handoff(
+            sample_transcript, whisper, template_type="general"
+        )
+        assert whisper.load_model_count == 1
+        assert whisper.is_loaded is True

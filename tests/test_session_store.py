@@ -317,6 +317,97 @@ class TestAtomicWrite:
         assert len(tmp_files) == 0
 
 
+class TestSavedSessionNewFields:
+    """SavedSession has appointment_type and patient_summary fields."""
+
+    def test_appointment_type_defaults_to_general(self):
+        from dental_notes.session.store import SavedSession
+
+        session = SavedSession(
+            session_id="test-new-1",
+            transcript_path="/tmp/test.txt",
+            chunks=[("Doctor", "Hello")],
+        )
+        assert session.appointment_type == "general"
+
+    def test_appointment_type_accepts_custom_value(self):
+        from dental_notes.session.store import SavedSession
+
+        session = SavedSession(
+            session_id="test-new-2",
+            transcript_path="/tmp/test.txt",
+            chunks=[("Doctor", "Hello")],
+            appointment_type="restorative",
+        )
+        assert session.appointment_type == "restorative"
+
+    def test_patient_summary_defaults_to_none(self):
+        from dental_notes.session.store import SavedSession
+
+        session = SavedSession(
+            session_id="test-new-3",
+            transcript_path="/tmp/test.txt",
+            chunks=[("Doctor", "Hello")],
+        )
+        assert session.patient_summary is None
+
+    def test_patient_summary_accepts_dict(self):
+        from dental_notes.session.store import SavedSession
+
+        summary = {
+            "what_we_did": "Fixed a cavity.",
+            "whats_next": "Come back in two weeks.",
+            "home_care": "Brush gently.",
+        }
+        session = SavedSession(
+            session_id="test-new-4",
+            transcript_path="/tmp/test.txt",
+            chunks=[("Doctor", "Hello")],
+            patient_summary=summary,
+        )
+        assert session.patient_summary == summary
+
+    def test_json_roundtrip_with_new_fields(self):
+        from dental_notes.session.store import SavedSession
+
+        summary = {
+            "what_we_did": "Cleaned your teeth.",
+            "whats_next": "See you in six months.",
+            "home_care": "Floss daily.",
+        }
+        session = SavedSession(
+            session_id="test-new-5",
+            transcript_path="/tmp/test.txt",
+            chunks=[("Doctor", "Hello")],
+            appointment_type="hygiene_recall",
+            patient_summary=summary,
+        )
+        data = json.loads(session.model_dump_json())
+        restored = SavedSession.model_validate(data)
+        assert restored.appointment_type == "hygiene_recall"
+        assert restored.patient_summary == summary
+
+    def test_backward_compat_old_sessions_load(self):
+        """Old sessions without new fields should still load correctly."""
+        from dental_notes.session.store import SavedSession
+
+        # Simulate old session JSON without new fields
+        old_data = {
+            "session_id": "old-session-1",
+            "created_at": "2026-03-28T12:00:00Z",
+            "updated_at": "2026-03-28T12:00:00Z",
+            "status": "recorded",
+            "transcript_path": "/tmp/old.txt",
+            "chunks": [["Doctor", "Hello"]],
+            "extraction_result": None,
+            "edited_note": None,
+            "transcript_dirty": False,
+        }
+        session = SavedSession.model_validate(old_data)
+        assert session.appointment_type == "general"
+        assert session.patient_summary is None
+
+
 class TestEnrichedSoapNote:
     """SoapNote includes medications and va_narrative fields."""
 
