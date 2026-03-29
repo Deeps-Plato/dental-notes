@@ -239,3 +239,167 @@ class TestPrompts:
 
         codes = re.findall(r"D\d{4}", CDT_REFERENCE)
         assert len(codes) >= 30, f"Only found {len(codes)} CDT codes, need >= 30"
+
+
+class TestAppointmentType:
+    """AppointmentType enum has all 6 appointment type values."""
+
+    def test_general_value(self):
+        from dental_notes.clinical.models import AppointmentType
+
+        assert AppointmentType.GENERAL.value == "general"
+
+    def test_comprehensive_exam_value(self):
+        from dental_notes.clinical.models import AppointmentType
+
+        assert AppointmentType.COMPREHENSIVE_EXAM.value == "comprehensive_exam"
+
+    def test_restorative_value(self):
+        from dental_notes.clinical.models import AppointmentType
+
+        assert AppointmentType.RESTORATIVE.value == "restorative"
+
+    def test_hygiene_recall_value(self):
+        from dental_notes.clinical.models import AppointmentType
+
+        assert AppointmentType.HYGIENE_RECALL.value == "hygiene_recall"
+
+    def test_endodontic_value(self):
+        from dental_notes.clinical.models import AppointmentType
+
+        assert AppointmentType.ENDODONTIC.value == "endodontic"
+
+    def test_oral_surgery_value(self):
+        from dental_notes.clinical.models import AppointmentType
+
+        assert AppointmentType.ORAL_SURGERY.value == "oral_surgery"
+
+    def test_general_is_str_enum(self):
+        from dental_notes.clinical.models import AppointmentType
+
+        assert isinstance(AppointmentType.GENERAL, str)
+        assert AppointmentType.GENERAL == "general"
+
+    def test_has_six_members(self):
+        from dental_notes.clinical.models import AppointmentType
+
+        assert len(AppointmentType) == 6
+
+
+class TestPatientSummary:
+    """PatientSummary model has what_we_did, whats_next, home_care fields."""
+
+    def test_construction_with_valid_data(self):
+        from dental_notes.clinical.models import PatientSummary
+
+        summary = PatientSummary(
+            what_we_did="We fixed a cavity in your upper right tooth.",
+            whats_next="Come back in two weeks for a follow-up check.",
+            home_care="Brush gently around the new filling for 24 hours.",
+        )
+        assert summary.what_we_did == "We fixed a cavity in your upper right tooth."
+        assert summary.whats_next == "Come back in two weeks for a follow-up check."
+        assert summary.home_care == "Brush gently around the new filling for 24 hours."
+
+    def test_model_validates_with_sample_data(self):
+        from dental_notes.clinical.models import PatientSummary
+
+        data = {
+            "what_we_did": "Cleaned your teeth and checked for problems.",
+            "whats_next": "See you in six months.",
+            "home_care": "Floss daily and brush twice a day.",
+        }
+        summary = PatientSummary.model_validate(data)
+        assert summary.what_we_did == data["what_we_did"]
+
+    def test_rejects_missing_fields(self):
+        from dental_notes.clinical.models import PatientSummary
+
+        with pytest.raises(ValidationError):
+            PatientSummary(what_we_did="Done.")
+
+
+class TestExtractionResultPatientSummary:
+    """ExtractionResult has optional patient_summary field."""
+
+    def test_patient_summary_defaults_to_none(self):
+        from dental_notes.clinical.models import (
+            CdtCode,
+            ExtractionResult,
+            SoapNote,
+            SpeakerChunk,
+        )
+
+        result = ExtractionResult(
+            soap_note=SoapNote(
+                subjective="s",
+                objective="o",
+                assessment="a",
+                plan="p",
+                cdt_codes=[],
+                clinical_discussion=[],
+            ),
+            speaker_chunks=[
+                SpeakerChunk(chunk_id=0, speaker="Doctor", text="Hello"),
+            ],
+            clinical_summary="Summary.",
+        )
+        assert result.patient_summary is None
+
+    def test_patient_summary_accepts_value(self):
+        from dental_notes.clinical.models import (
+            ExtractionResult,
+            PatientSummary,
+            SoapNote,
+            SpeakerChunk,
+        )
+
+        summary = PatientSummary(
+            what_we_did="Fixed a cavity.",
+            whats_next="Come back in two weeks.",
+            home_care="Brush gently.",
+        )
+        result = ExtractionResult(
+            soap_note=SoapNote(
+                subjective="s",
+                objective="o",
+                assessment="a",
+                plan="p",
+                cdt_codes=[],
+                clinical_discussion=[],
+            ),
+            speaker_chunks=[
+                SpeakerChunk(chunk_id=0, speaker="Doctor", text="Hello"),
+            ],
+            clinical_summary="Summary.",
+            patient_summary=summary,
+        )
+        assert result.patient_summary is not None
+        assert result.patient_summary.what_we_did == "Fixed a cavity."
+
+    def test_backward_compatible_json_roundtrip(self):
+        """ExtractionResult without patient_summary serializes/deserializes correctly."""
+        from dental_notes.clinical.models import (
+            ExtractionResult,
+            SoapNote,
+            SpeakerChunk,
+        )
+
+        result = ExtractionResult(
+            soap_note=SoapNote(
+                subjective="s",
+                objective="o",
+                assessment="a",
+                plan="p",
+                cdt_codes=[],
+                clinical_discussion=[],
+            ),
+            speaker_chunks=[
+                SpeakerChunk(chunk_id=0, speaker="Doctor", text="Hello"),
+            ],
+            clinical_summary="Summary.",
+        )
+        json_str = result.model_dump_json()
+        restored = ExtractionResult.model_validate_json(json_str)
+        assert restored.patient_summary is None
+        assert restored.soap_note.subjective == "s"
