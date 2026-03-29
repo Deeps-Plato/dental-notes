@@ -99,10 +99,10 @@ class TestReattribute:
     def test_reattribute_assigns_valid_speakers(
         self, reattributor: SpeakerReattributor
     ) -> None:
-        """Each chunk.speaker is 'Doctor' or 'Patient'."""
+        """Each chunk.speaker is 'Doctor', 'Patient', or 'Assistant'."""
         result = reattributor.reattribute(SAMPLE_CHUNKS)
         for chunk in result:
-            assert chunk.speaker in ("Doctor", "Patient"), (
+            assert chunk.speaker in ("Doctor", "Patient", "Assistant"), (
                 f"Invalid speaker: {chunk.speaker}"
             )
 
@@ -166,3 +166,27 @@ class TestReattribute:
         reattr = SpeakerReattributor(short_ollama, settings)
         with pytest.raises(ValueError, match="chunk count"):
             reattr.reattribute(SAMPLE_CHUNKS)
+
+
+class TestSpeakerSystemPrompt:
+    """SPEAKER_SYSTEM_PROMPT describes 3 roles for LLM re-attribution."""
+
+    def test_prompt_mentions_assistant_role(self) -> None:
+        from dental_notes.clinical.speaker import SPEAKER_SYSTEM_PROMPT
+
+        assert "Assistant" in SPEAKER_SYSTEM_PROMPT
+
+    def test_prompt_contains_all_three_roles(self) -> None:
+        from dental_notes.clinical.speaker import SPEAKER_SYSTEM_PROMPT
+
+        assert "DOCTOR" in SPEAKER_SYSTEM_PROMPT or "Doctor" in SPEAKER_SYSTEM_PROMPT
+        assert "PATIENT" in SPEAKER_SYSTEM_PROMPT or "Patient" in SPEAKER_SYSTEM_PROMPT
+        assert "ASSISTANT" in SPEAKER_SYSTEM_PROMPT or "Assistant" in SPEAKER_SYSTEM_PROMPT
+
+    def test_prompt_describes_assistant_behavior(self) -> None:
+        from dental_notes.clinical.speaker import SPEAKER_SYSTEM_PROMPT
+
+        # Should describe what makes someone an assistant
+        prompt_lower = SPEAKER_SYSTEM_PROMPT.lower()
+        assert "instrument" in prompt_lower or "supply" in prompt_lower
+        assert "comfort" in prompt_lower or "charting" in prompt_lower

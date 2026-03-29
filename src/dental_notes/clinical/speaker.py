@@ -2,7 +2,7 @@
 
 SpeakerReattributor takes transcript chunks with potentially incorrect
 keyword-based speaker labels and uses the LLM to correct them based on
-conversational context (clinical terminology -> Doctor, symptom reports -> Patient).
+conversational context. Supports 3 roles: Doctor, Patient, Assistant.
 """
 
 import json
@@ -16,18 +16,23 @@ from dental_notes.config import Settings
 logger = logging.getLogger(__name__)
 
 SPEAKER_SYSTEM_PROMPT = """You are a dental appointment transcript analyst. \
-Your task is to correct speaker labels (Doctor or Patient) for each chunk \
+Your task is to correct speaker labels for each chunk \
 of a dental appointment transcript.
 
 ## Speaker Attribution Rules
-- DOCTOR: leads conversation, uses clinical terminology, gives diagnoses, \
-instructs patient, directs procedures
+- DOCTOR: leads the conversation, uses clinical terminology, gives diagnoses, \
+makes treatment decisions, instructs patient, directs procedures
 - PATIENT: responds to questions, reports symptoms in lay language, asks \
-personal questions, acknowledges instructions
+personal questions about treatment, acknowledges instructions
+- ASSISTANT: relays instruments and supplies (suction, cotton roll, explorer), \
+provides patient comfort phrases (you're doing great, almost done, rinse and spit), \
+confirms procedural steps (isolation complete, cement mixed, ready), \
+handles charting and admin tasks (noted, which tooth, what shade)
 - Maintain speaker continuity across pauses -- same speaker unless clear \
 turn-taking signal
 - A speaker who was mid-thought and paused is still the same speaker in \
 the next chunk
+- When uncertain between Doctor and Assistant, prefer Doctor
 
 ## Input Format
 You receive numbered transcript chunks with current speaker labels \
@@ -35,7 +40,8 @@ You receive numbered transcript chunks with current speaker labels \
 
 ## Output Format
 Return a JSON object with a "chunks" array of objects, each with \
-chunk_id, speaker, and text fields. You MUST return exactly the same \
+chunk_id, speaker, and text fields. Valid speaker values are \
+"Doctor", "Patient", or "Assistant". You MUST return exactly the same \
 number of chunks as the input. Do NOT change the text content -- only \
 correct the speaker labels."""
 
@@ -51,7 +57,7 @@ class SpeakerReattributor:
 
     Takes (speaker, text) chunk tuples with potentially incorrect
     keyword-based labels and returns SpeakerChunk objects with
-    corrected Doctor/Patient attribution.
+    corrected Doctor/Patient/Assistant attribution.
     """
 
     def __init__(self, ollama_service, settings: Settings) -> None:

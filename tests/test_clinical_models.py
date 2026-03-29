@@ -121,6 +121,14 @@ class TestSpeakerChunk:
         assert chunk.speaker == "Doctor"
         assert chunk.text == "Open wide please."
 
+    def test_accepts_assistant_speaker(self):
+        from dental_notes.clinical.models import SpeakerChunk
+
+        chunk = SpeakerChunk(
+            chunk_id=2, speaker="Assistant", text="Suction ready."
+        )
+        assert chunk.speaker == "Assistant"
+
 
 class TestExtractionResult:
     """ExtractionResult wraps SoapNote, speaker_chunks, and clinical_summary."""

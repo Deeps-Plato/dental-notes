@@ -55,7 +55,7 @@ class SpeakerChunk(BaseModel):
     """A re-attributed transcript chunk with speaker label."""
 
     chunk_id: int
-    speaker: str = Field(description="Doctor or Patient")
+    speaker: str = Field(description="Doctor, Patient, or Assistant")
     text: str
 
 
