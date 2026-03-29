@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Production & Clinical
 status: executing
-stopped_at: Completed 04-02-PLAN.md
-last_updated: "2026-03-29T18:20:00Z"
-last_activity: 2026-03-29 -- Phase 4 Plan 02 complete (templates, auto-detect, patient summary)
+stopped_at: Completed 04-03-PLAN.md (Phase 4 complete)
+last_updated: "2026-03-29T21:27:31.538Z"
+last_activity: 2026-03-29 -- Completed 04-03 (template UI, patient summary tab/print, human-verified)
 progress:
   total_phases: 7
-  completed_phases: 3
-  total_plans: 12
-  completed_plans: 11
-  percent: 0
+  completed_phases: 4
+  total_plans: 15
+  completed_plans: 14
+  percent: 93
 ---
 
 # Project State
@@ -22,21 +22,21 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Reliably record, transcribe, and produce a usable clinical note from a real dental appointment -- every time, with no data leaving the building.
 **Methodology:** Pragmatic TDD -- test file before implementation, integration tests mandatory, human verification gates are blocking
-**Current focus:** v2.0 Phase 4 -- Clinical Intelligence (expanded vocab, templates, 3-way speaker ID, patient summary)
+**Current focus:** v2.0 Phase 5 -- Workflow and Recovery (batch multi-patient, auto-pause, error recovery, health monitoring)
 
 ## Current Position
 
-Phase: 4 of 6 (Clinical Intelligence)
-Plan: 2 of 4 complete
-Status: Executing
-Last activity: 2026-03-29 -- Completed 04-02 (templates, auto-detect, patient summary)
+Phase: 4 of 6 (Clinical Intelligence) -- COMPLETE
+Plan: 3 of 3 complete
+Status: Phase 4 complete, ready for Phase 5
+Last activity: 2026-03-29 -- Completed 04-03 (template UI, patient summary tab/print, human-verified)
 
-Progress: [██████░░░░░░░░░░░░░░] 30%
+Progress: [█████████░░░░░░░░░░░] 93%
 
 ## What Works Now
 
 - **v1.0 complete and human-verified** -- full pipeline: record -> transcribe -> extract SOAP -> review -> copy -> finalize
-- **348 tests passing** across all modules
+- **363 tests passing** across all modules
 - **Server runs on Windows Python** with Yeti Classic mic, NVIDIA GPU (faster-whisper int8/CUDA)
 - **Ollama + Qwen3 8B** for clinical extraction (SOAP + CDT codes + speaker re-attribution)
 - **Review UI**: 50/50 split, full editing, dictation, clipboard copy, session list, finalize + cleanup
@@ -57,6 +57,7 @@ Progress: [██████░░░░░░░░░░░░░░] 30%
 | 1.1 Test Hardening | 3 | 14min | 4.7min |
 | 2. Clinical Extraction | 3 | 33min | 11min |
 | 3. Review and Export | 3 | 29min | 9.7min |
+| 4. Clinical Intelligence | 3 | 28min | 9.3min |
 
 ## Accumulated Context
 
@@ -77,6 +78,9 @@ Recent decisions affecting current work:
 - [04-02]: Auto-detection uses plain-text generate() for lightweight classification, falls back to "general"
 - [04-02]: Patient summary uses transcript as input (not SOAP) to avoid jargon bleed
 - [04-02]: Summary failure is graceful -- logs warning, extraction still succeeds
+- [04-03]: Template selection moved from pre-recording dropdown to review page -- auto-detect is primary, manual override on review
+- [04-03]: Tab state preserved via data-active-tab attribute restored in htmx:afterSwap handler
+- [04-03]: Print summary is standalone HTML page (not partial) with own @media print CSS
 
 ### Pending Todos
 
@@ -90,6 +94,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T18:20:00Z
-Stopped at: Completed 04-02-PLAN.md
-Resume action: `/gsd:execute-phase 04-03` to continue Clinical Intelligence phase
+Last session: 2026-03-29T21:27:31.525Z
+Stopped at: Completed 04-03-PLAN.md (Phase 4 complete)
+Resume action: `/gsd:plan-phase 05` to plan Workflow and Recovery phase

@@ -92,7 +92,7 @@ Plans:
 
 **Milestone Goal:** Transform the working v1 prototype into a production-ready office tool with richer clinical intelligence, batch workflows, and one-click deployment across operatory PCs.
 
-- [ ] **Phase 4: Clinical Intelligence** - Expanded Whisper vocabulary, appointment-type templates, 3-way speaker ID, and patient summary
+- [x] **Phase 4: Clinical Intelligence** - Expanded Whisper vocabulary, appointment-type templates, 3-way speaker ID, and patient summary
 - [ ] **Phase 5: Workflow and Recovery** - Batch multi-patient day mode, auto-pause/resume, error recovery, and health monitoring
 - [ ] **Phase 6: Deployment Infrastructure** - Windows installer, auto-start, split-architecture multi-machine, and deployment docs
 
@@ -112,7 +112,7 @@ Plans:
 Plans:
 - [x] 04-01-PLAN.md — Expanded Whisper vocabulary + hotwords + custom vocab file + 3-way speaker classification (CLI-05, CLI-07)
 - [x] 04-02-PLAN.md — Appointment-type templates + patient summary backend (models, prompts, extraction pipeline, session persistence) (CLI-06, REV-04)
-- [ ] 04-03-PLAN.md — Template dropdown UI + patient summary tab/print UI + human verification checkpoint (CLI-06, REV-04)
+- [x] 04-03-PLAN.md — Template dropdown UI + patient summary tab/print UI + human verification checkpoint (CLI-06, REV-04)
 
 ### Phase 5: Workflow and Recovery
 **Goal**: The tool supports a full clinic day — multiple patients recorded in sequence, automatic silence management between patients, graceful recovery from hardware/software failures, and system health visibility
@@ -155,6 +155,6 @@ Phases execute in numeric order: 1 -> 1.1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 1.1. Phase 1 Test Hardening *(INSERTED)* | v1.0 | 3/3 | Complete | 2026-03-09 |
 | 2. Clinical Extraction | v1.0 | 3/3 | Complete | 2026-03-09 |
 | 3. Review and Export | v1.0 | 3/3 | Complete | 2026-03-28 |
-| 4. Clinical Intelligence | v2.0 | 2/3 | Executing | - |
+| 4. Clinical Intelligence | v2.0 | 3/3 | Complete | 2026-03-29 |
 | 5. Workflow and Recovery | v2.0 | 0/? | Not started | - |
 | 6. Deployment Infrastructure | v2.0 | 0/? | Not started | - |
