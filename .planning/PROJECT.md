@@ -8,26 +8,49 @@ A privacy-first ambient clinical note-taking tool for dental practices. Records 
 
 The tool must reliably record, transcribe, and produce a usable clinical note from a real dental appointment — every time, with no data leaving the building.
 
+## Current Milestone: v2.0 Production & Clinical
+
+**Goal:** Transform the working v1 prototype into a production-ready office tool with richer clinical intelligence, batch workflows, and one-click deployment across operatory PCs.
+
+**Target features:**
+- Batch recording workflow with auto-pause/resume between patients
+- Appointment-type templates (exam, restorative, hygiene, endo, extraction)
+- 3-way speaker identification (doctor/patient/assistant)
+- Expanded Whisper dental vocabulary (procedures, materials, surfaces, pathology, anatomy, findings, diagnoses)
+- Plain-language patient summary alongside clinical SOAP note
+- Windows installer with auto-start on boot
+- Error recovery (GPU crashes, mic disconnects, Ollama failures)
+- Multi-machine deployment across operatory PCs
+
 ## Requirements
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] **AUD-01**: Streaming capture session — records, transcribes chunks, discards audio (v1.0)
+- [x] **AUD-02**: Transcript auto-deleted after note finalization (v1.0)
+- [x] **TRX-01**: Local faster-whisper transcription on NVIDIA GPU, GTX 1050 compatible (v1.0)
+- [x] **TRX-02**: Dental terminology vocabulary prompting (v1.0)
+- [x] **CLI-01**: LLM filters clinical content from social conversation (v1.0)
+- [x] **CLI-02**: Structured dental SOAP note generation (v1.0)
+- [x] **CLI-03**: CDT procedure code suggestions (v1.0)
+- [x] **CLI-04**: LLM speaker re-attribution (Doctor/Patient) (v1.0)
+- [x] **REV-01**: Side-by-side transcript + SOAP note view (v1.0)
+- [x] **REV-02**: Editable SOAP note draft (v1.0)
+- [x] **REV-03**: One-click clipboard copy, Dentrix-ready (v1.0)
+- [x] **PRV-01**: All processing local — no patient data leaves the machine (v1.0)
 
 ### Active
 
-- [ ] Ambient audio recording of dental appointments via inconspicuous microphone
-- [ ] Local speech-to-text transcription (faster-whisper on NVIDIA GPU)
-- [ ] AI filtering of clinical content from social conversation/chitchat
-- [ ] Structured SOAP note generation from filtered clinical content
-- [ ] CDT procedure code extraction/suggestion from appointment context
-- [ ] Full transcript view (temporarily available for review)
-- [ ] Side-by-side view: full transcript vs. structured SOAP note draft
-- [ ] Editable draft mode — dentist can review and tweak before finalizing
-- [ ] One-click copy of finalized note for paste into Dentrix
-- [ ] Automatic cleanup — recording and transcript discarded after note is finalized
-- [ ] Local-only processing — no patient data transmitted over the internet
-- [ ] State-by-state recording consent reference (Florida priority)
+- [ ] Batch recording workflow — record multiple patients, complete notes at end of day
+- [ ] Auto-pause/resume — detect silence gaps between patients, auto-manage sessions
+- [ ] Appointment-type templates — different note formats per procedure type
+- [ ] 3-way speaker identification — doctor vs patient vs assistant
+- [ ] Expanded Whisper dental vocabulary — procedures, materials, surfaces, pathology, anatomy, findings, diagnoses
+- [ ] Plain-language patient summary for patient handout
+- [ ] Windows installer — one-click setup, no manual pip install
+- [ ] Auto-start on boot — server starts when Windows machine boots
+- [ ] Error recovery — graceful handling of GPU crashes, mic disconnects, Ollama failures
+- [ ] Multi-machine deployment — easy replication across operatory PCs
 
 ### Out of Scope
 
@@ -117,4 +140,4 @@ v1 delivered 128 passing tests and zero working product. The tests verified mock
 | API route behavior with realistic fakes | Exact log messages |
 
 ---
-*Last updated: 2026-03-07 — added TDD methodology*
+*Last updated: 2026-03-28 — started v2.0 milestone*

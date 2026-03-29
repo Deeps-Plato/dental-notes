@@ -1,38 +1,38 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-current_plan: All plans complete
-status: completed
-stopped_at: All v1 plans complete. Phase 3 human verification approved.
-last_updated: "2026-03-28T22:57:51.207Z"
-last_activity: 2026-03-28 -- Phase 3 Plan 03 human verification approved. All v1 requirements complete.
+milestone: v2.0
+milestone_name: Production & Clinical
+current_plan: —
+status: defining_requirements
+stopped_at: Defining v2.0 requirements
+last_updated: "2026-03-28T23:00:00.000Z"
+last_activity: 2026-03-28 -- Milestone v2.0 started
 progress:
-  total_phases: 4
-  completed_phases: 3
-  total_plans: 12
-  completed_plans: 11
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-05)
+See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Reliably record, transcribe, and produce a usable clinical note from a real dental appointment -- every time, with no data leaving the building.
 **Methodology:** Pragmatic TDD — test file before implementation, integration tests mandatory, human verification gates are blocking
-**Current focus:** All v1 phases complete. 249 tests passing. All 3 human verification gates passed. REV-04 (patient summary) deferred to v2.
+**Current focus:** v2.0 — production hardening + clinical enhancements. Defining requirements.
 
 ## Current Position
 
-Phase: All complete (v1 milestone done)
-Current Plan: All plans complete
-Status: COMPLETE
-Last activity: 2026-03-28 -- Phase 3 Plan 03 human verification approved. All v1 requirements complete.
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-28 — Milestone v2.0 started
 
-Progress: [██████████] 100% (All 4 phases complete, all 12 plans complete, all 3 human verification gates passed)
+Progress: [░░░░░░░░░░] 0%
 
 ## What Works Now
 
