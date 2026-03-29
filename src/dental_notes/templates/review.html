@@ -49,11 +49,23 @@
                     </div>
                 </div>
 
-                <!-- Right panel: Clinical Note -->
-                <div class="review-panel note-panel">
+                <!-- Right panel: Clinical Note + Patient Summary (tabbed) -->
+                <div class="review-panel note-panel" data-active-tab="tab-clinical-note">
                     <div class="panel-header">
-                        <h2>Clinical Note</h2>
+                        <div class="tab-buttons">
+                            <button type="button" class="tab-btn active" data-tab="tab-clinical-note">Clinical Note</button>
+                            <button type="button" class="tab-btn" data-tab="tab-patient-summary">Patient Summary</button>
+                        </div>
                         <div class="panel-header-actions">
+                            <!-- Re-extract with template type -->
+                            <select name="template_type" id="template-type-select" class="template-select">
+                                <option value="" {% if not appointment_type or appointment_type == 'general' %}selected{% endif %}>Auto-detect</option>
+                                <option value="comprehensive_exam" {% if appointment_type == 'comprehensive_exam' %}selected{% endif %}>Comprehensive Exam</option>
+                                <option value="restorative" {% if appointment_type == 'restorative' %}selected{% endif %}>Restorative</option>
+                                <option value="hygiene_recall" {% if appointment_type == 'hygiene_recall' %}selected{% endif %}>Hygiene/Recall</option>
+                                <option value="endodontic" {% if appointment_type == 'endodontic' %}selected{% endif %}>Endodontic</option>
+                                <option value="oral_surgery" {% if appointment_type == 'oral_surgery' %}selected{% endif %}>Oral Surgery</option>
+                            </select>
                             <button type="button" class="btn btn-copy" onclick="copyAll('{{ session_id }}')">
                                 Copy All
                             </button>
@@ -61,14 +73,24 @@
                                     hx-post="/session/{{ session_id }}/extract"
                                     hx-target="#note-panel"
                                     hx-swap="innerHTML"
+                                    hx-include="#template-type-select"
                                     hx-indicator="#extraction-spinner">
-                                Regenerate
+                                Re-extract
                             </button>
                             <span id="extraction-spinner" class="htmx-indicator spinner">Extracting...</span>
                         </div>
                     </div>
-                    <div class="panel-content" id="note-panel">
-                        {% include "_review_note.html" %}
+                    <!-- Tab: Clinical Note -->
+                    <div class="tab-content active" id="tab-clinical-note">
+                        <div class="panel-content" id="note-panel">
+                            {% include "_review_note.html" %}
+                        </div>
+                    </div>
+                    <!-- Tab: Patient Summary -->
+                    <div class="tab-content" id="tab-patient-summary">
+                        <div class="panel-content" id="summary-panel">
+                            {% include "_review_summary.html" %}
+                        </div>
                     </div>
                 </div>
             </div>

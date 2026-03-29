@@ -1,19 +1,40 @@
+{% if error is defined and error %}
+<div class="error-banner">{{ error }}</div>
+{% endif %}
 {% if state == "idle" %}
 <div class="controls idle">
-    <button class="btn btn-start"
-            hx-post="/session/start"
-            hx-target="#session-controls"
-            hx-swap="innerHTML">
-        Start Recording
-    </button>
+    <form hx-post="/session/start"
+          hx-target="#session-controls"
+          hx-swap="innerHTML">
+        <input type="hidden" name="device" id="device-input" value="">
+        <input type="hidden" name="appointment_type" id="appt-type-input" value="general">
+        <button type="submit" class="btn btn-start">
+            Start Recording
+        </button>
+    </form>
     {% if transcript_path is defined and transcript_path %}
     <p class="transcript-saved">Transcript saved: {{ transcript_path }}</p>
     {% endif %}
 </div>
 <script>
-    // Disconnect SSE when idle
-    var area = document.getElementById("transcript-area");
-    if (area) { area.removeAttribute("hx-ext"); area.removeAttribute("sse-connect"); htmx.process(area); }
+    (function() {
+        var mic = document.getElementById("mic-select");
+        var hidden = document.getElementById("device-input");
+        if (mic && hidden) {
+            hidden.value = mic.value;
+            mic.addEventListener("change", function() { hidden.value = mic.value; });
+        }
+        var apptType = document.getElementById("appt-type-select");
+        var apptHidden = document.getElementById("appt-type-input");
+        if (apptType && apptHidden) {
+            apptHidden.value = apptType.value;
+            apptType.addEventListener("change", function() { apptHidden.value = apptType.value; });
+        }
+        var micSec = document.getElementById("mic-section");
+        if (micSec) micSec.style.display = "";
+        var apptSec = document.getElementById("appt-type-section");
+        if (apptSec) apptSec.style.display = "";
+    })();
 </script>
 {% elif state == "recording" %}
 <div class="controls recording">
@@ -32,20 +53,12 @@
     </button>
 </div>
 <script>
-    // Connect SSE when recording starts
-    var area = document.getElementById("transcript-area");
-    if (area && !area.getAttribute("sse-connect")) {
-        // Clear placeholder text
-        var t = document.getElementById("transcript");
-        var ph = t ? t.querySelector(".placeholder") : null;
-        if (ph) ph.remove();
-        // Wire up SSE
-        area.setAttribute("hx-ext", "sse");
-        area.setAttribute("sse-connect", "/session/stream");
-        var inner = document.getElementById("transcript");
-        if (inner) { inner.setAttribute("sse-swap", "transcript"); inner.setAttribute("hx-swap", "beforeend"); }
-        htmx.process(area);
-    }
+    (function() {
+        var micSec = document.getElementById("mic-section");
+        if (micSec) micSec.style.display = "none";
+        var apptSec = document.getElementById("appt-type-section");
+        if (apptSec) apptSec.style.display = "none";
+    })();
 </script>
 {% elif state == "paused" %}
 <div class="controls paused">

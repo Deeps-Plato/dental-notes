@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Summary</title>
+    <style>
+        body {
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 12pt;
+            line-height: 1.6;
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 2rem;
+            color: #212529;
+        }
+        .practice-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #dee2e6;
+        }
+        .practice-header h1 {
+            font-size: 1.4em;
+            margin: 0 0 0.25rem 0;
+        }
+        .visit-date {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+        .summary-section {
+            margin-bottom: 1.5rem;
+        }
+        .summary-section h2 {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: #2d7a4f;
+        }
+        .summary-section p {
+            margin: 0;
+            text-align: justify;
+        }
+        .print-btn {
+            display: block;
+            margin: 2rem auto;
+            padding: 0.75rem 2rem;
+            font-size: 1rem;
+            background: #2d7a4f;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .print-btn:hover {
+            background: #236340;
+        }
+        @media print {
+            body {
+                margin: 0.75in;
+                padding: 0;
+            }
+            .print-btn {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="practice-header">
+        <h1>Patient Visit Summary</h1>
+        <div class="visit-date">
+            Date: {{ created_at.strftime('%B %d, %Y') if created_at else 'N/A' }}
+        </div>
+    </div>
+
+    {% if patient_summary %}
+    <div class="summary-section">
+        <h2>What We Did Today</h2>
+        <p>{{ patient_summary.get('what_we_did', '') if patient_summary is mapping else '' }}</p>
+    </div>
+
+    <div class="summary-section">
+        <h2>What Comes Next</h2>
+        <p>{{ patient_summary.get('whats_next', '') if patient_summary is mapping else '' }}</p>
+    </div>
+
+    <div class="summary-section">
+        <h2>Home Care Instructions</h2>
+        <p>{{ patient_summary.get('home_care', '') if patient_summary is mapping else '' }}</p>
+    </div>
+    {% else %}
+    <p>No patient summary available for this session.</p>
+    {% endif %}
+
+    <button class="print-btn" onclick="window.print()">Print This Summary</button>
+</body>
+</html>

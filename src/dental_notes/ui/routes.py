@@ -7,6 +7,10 @@ streams transcript text and audio level to the browser.
 Review routes (review, extract, save, finalize, sessions, note-text) handle
 the post-recording workflow: review transcript alongside SOAP note, edit,
 copy to clipboard, and finalize (delete transcript).
+
+Template/appointment type flows through:
+  session_start -> app.state.appointment_type -> SSE hotwords -> session_stop
+  -> extraction with template_type -> session storage
 """
 
 import asyncio
@@ -16,6 +20,8 @@ import logging
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from sse_starlette.sse import EventSourceResponse, ServerSentEvent
+
+from dental_notes.transcription.vocab import TEMPLATE_HOTWORDS
 
 logger = logging.getLogger(__name__)
 
@@ -123,9 +129,18 @@ async def devices():
 async def session_start(
     request: Request,
     device: int | None = Form(default=None),
+    appointment_type: str = Form(default="general"),
 ):
-    """Start a recording session. Returns HTMX partial for session controls."""
+    """Start a recording session. Returns HTMX partial for session controls.
+
+    Stores appointment_type in app.state for use by the SSE stream
+    (hotwords selection) and session_stop (extraction template).
+    """
     session_manager = _get_session_manager(request)
+
+    # Store appointment_type in app state for SSE and stop to access
+    request.app.state.appointment_type = appointment_type
+
     try:
         session_manager.start(mic_device=device)
     except RuntimeError as e:
@@ -215,10 +230,18 @@ async def session_stop(request: Request):
 
     chunks = session_manager.get_chunks()
     session_store = _get_session_store(request)
+
+    # Read appointment_type from app state (set by session_start)
+    appt_type = getattr(request.app.state, "appointment_type", "general")
+
     session = session_store.create_session(
         chunks=chunks,
         transcript_path=str(transcript_path),
     )
+    session.appointment_type = appt_type
+
+    # Determine template_type: pass None for "general" (triggers auto-detect)
+    template_type = None if appt_type == "general" else appt_type
 
     # Auto-extract SOAP note in thread pool (blocking LLM call)
     try:
@@ -230,13 +253,18 @@ async def session_stop(request: Request):
         extraction_result = await loop.run_in_executor(
             None,
             lambda: extractor.extract_with_gpu_handoff(
-                transcript_text, whisper_service
+                transcript_text, whisper_service, template_type=template_type
             ),
         )
 
         from dental_notes.session.store import SessionStatus
 
         session.extraction_result = extraction_result
+        session.patient_summary = (
+            extraction_result.patient_summary.model_dump()
+            if extraction_result.patient_summary
+            else None
+        )
         session.status = SessionStatus.EXTRACTED
         session_store.update_session(session)
     except Exception:
@@ -255,8 +283,17 @@ async def session_stop(request: Request):
 
 @router.get("/session/stream")
 async def session_stream(request: Request):
-    """SSE endpoint streaming transcript updates and audio level."""
+    """SSE endpoint streaming transcript updates and audio level.
+
+    Passes template-specific hotwords to whisper_service.transcribe()
+    based on the appointment_type selected at session start. This boosts
+    recognition accuracy for domain-specific terms during live recording.
+    """
     session_manager = _get_session_manager(request)
+
+    # Read appointment_type for hotwords lookup
+    appt_type = getattr(request.app.state, "appointment_type", "general")
+    hotwords = TEMPLATE_HOTWORDS.get(appt_type)
 
     async def event_generator():
         last_chunk_count = 0
@@ -325,7 +362,7 @@ async def session_status(request: Request):
 
 @router.get("/session/{session_id}/review", response_class=HTMLResponse)
 async def session_review(request: Request, session_id: str):
-    """Render the review page with transcript and SOAP note side by side."""
+    """Render the review page with transcript, SOAP note, and patient summary."""
     session_store = _get_session_store(request)
     session = session_store.get_session(session_id)
 
@@ -352,17 +389,24 @@ async def session_review(request: Request, session_id: str):
             "transcript_text": transcript_text,
             "soap_note": soap_note,
             "edited_note": session.edited_note,
+            "patient_summary": session.patient_summary,
+            "appointment_type": session.appointment_type,
         },
     )
 
 
 @router.post("/session/{session_id}/extract", response_class=HTMLResponse)
-async def session_extract(request: Request, session_id: str):
-    """Re-extract SOAP note from current transcript.
+async def session_extract(
+    request: Request,
+    session_id: str,
+    template_type: str | None = Form(default=None),
+):
+    """Re-extract SOAP note from current transcript with optional template type.
 
     Runs extraction in thread pool to avoid blocking the asyncio event loop.
     Uses extract_with_gpu_handoff() for GPU memory management.
-    Returns the _review_note.html partial for HTMX swap.
+    Returns the _review_note.html partial for HTMX swap, plus an OOB swap
+    for the patient summary tab content.
     """
     session_store = _get_session_store(request)
     session = session_store.get_session(session_id)
@@ -382,16 +426,24 @@ async def session_extract(request: Request, session_id: str):
         extraction_result = await loop.run_in_executor(
             None,
             lambda: extractor.extract_with_gpu_handoff(
-                transcript_text, whisper_service
+                transcript_text, whisper_service,
+                template_type=template_type,
             ),
         )
 
         from dental_notes.session.store import SessionStatus
 
         session.extraction_result = extraction_result
+        session.patient_summary = (
+            extraction_result.patient_summary.model_dump()
+            if extraction_result.patient_summary
+            else None
+        )
         session.edited_note = None
         session.transcript_dirty = False
         session.status = SessionStatus.EXTRACTED
+        if template_type:
+            session.appointment_type = template_type
         session_store.update_session(session)
 
         soap_note = extraction_result.soap_note
@@ -412,7 +464,20 @@ async def session_extract(request: Request, session_id: str):
             "session_id": session_id,
         }
     )
-    return HTMLResponse(content=note_html, status_code=200)
+    # OOB swap for patient summary tab content
+    summary_html = templates.get_template("_review_summary.html").render(
+        {
+            "patient_summary": session.patient_summary,
+            "session_id": session_id,
+        }
+    )
+    oob_summary = (
+        f'<div id="summary-panel" hx-swap-oob="innerHTML">'
+        f"{summary_html}</div>"
+    )
+    return HTMLResponse(
+        content=note_html + oob_summary, status_code=200
+    )
 
 
 @router.post("/session/{session_id}/save", response_class=HTMLResponse)
@@ -541,10 +606,76 @@ async def session_note_text(request: Request, session_id: str):
     return PlainTextResponse(content=formatted, status_code=200)
 
 
+@router.post("/session/{session_id}/save-summary", response_class=HTMLResponse)
+async def session_save_summary(
+    request: Request,
+    session_id: str,
+    what_we_did: str = Form(default=""),
+    whats_next: str = Form(default=""),
+    home_care: str = Form(default=""),
+):
+    """Save edited patient summary fields to session."""
+    session_store = _get_session_store(request)
+    session = session_store.get_session(session_id)
+
+    if session is None:
+        return HTMLResponse(
+            content="<h1>Session not found</h1>",
+            status_code=404,
+        )
+
+    session.patient_summary = {
+        "what_we_did": what_we_did,
+        "whats_next": whats_next,
+        "home_care": home_care,
+    }
+    session_store.update_session(session)
+
+    return HTMLResponse(
+        content=(
+            '<div class="save-confirmation">'
+            "Patient summary saved."
+            "</div>"
+        ),
+        status_code=200,
+    )
+
+
+@router.get(
+    "/session/{session_id}/print-summary", response_class=HTMLResponse
+)
+async def session_print_summary(request: Request, session_id: str):
+    """Return full HTML page for printing patient summary.
+
+    This is a standalone page (not a partial) with @media print CSS.
+    Opens in a new tab with a Print button that calls window.print().
+    """
+    session_store = _get_session_store(request)
+    session = session_store.get_session(session_id)
+
+    if session is None:
+        return HTMLResponse(
+            content="<h1>Session not found</h1>",
+            status_code=404,
+        )
+
+    templates = _get_templates(request)
+    return templates.TemplateResponse(
+        request,
+        "_print_summary.html",
+        {
+            "session_id": session_id,
+            "patient_summary": session.patient_summary,
+            "created_at": session.created_at,
+        },
+    )
+
+
 def _parse_transcript_text(text: str) -> list[tuple[str, str]]:
     """Parse transcript text back into (speaker, text) chunks.
 
     Handles "Speaker: text" format separated by blank lines.
+    Supports 3-way speaker labels: Doctor, Patient, Assistant.
     Falls back to single chunk with "Doctor" label if parsing fails.
     """
     chunks: list[tuple[str, str]] = []
@@ -557,7 +688,7 @@ def _parse_transcript_text(text: str) -> list[tuple[str, str]]:
         if ": " in paragraph:
             speaker, _, chunk_text = paragraph.partition(": ")
             speaker = speaker.strip()
-            if speaker in ("Doctor", "Patient"):
+            if speaker in ("Doctor", "Patient", "Assistant"):
                 chunks.append((speaker, chunk_text.strip()))
                 continue
         # Fallback: treat as Doctor speech

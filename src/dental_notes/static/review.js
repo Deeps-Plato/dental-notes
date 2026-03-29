@@ -436,6 +436,86 @@ function setDictationProcessing(textareaId, isProcessing) {
     }
 }
 
+// --- Tab switching ---
+
+/**
+ * Switch active tab in the right panel.
+ * Toggles .active class on tab buttons and corresponding .tab-content divs.
+ * Stores active tab in data-active-tab attribute for restoration after HTMX swaps.
+ */
+function switchTab(tabId) {
+    var panel = document.querySelector(".note-panel");
+    if (!panel) return;
+
+    // Update buttons
+    var buttons = panel.querySelectorAll(".tab-btn");
+    buttons.forEach(function (btn) {
+        if (btn.getAttribute("data-tab") === tabId) {
+            btn.classList.add("active");
+        } else {
+            btn.classList.remove("active");
+        }
+    });
+
+    // Update content
+    var contents = panel.querySelectorAll(".tab-content");
+    contents.forEach(function (content) {
+        if (content.id === tabId) {
+            content.classList.add("active");
+        } else {
+            content.classList.remove("active");
+        }
+    });
+
+    // Store active tab for restoration after HTMX swaps
+    panel.setAttribute("data-active-tab", tabId);
+}
+
+/**
+ * Restore active tab from data-active-tab attribute.
+ * Called after HTMX swaps to preserve tab state.
+ */
+function restoreActiveTab() {
+    var panel = document.querySelector(".note-panel");
+    if (!panel) return;
+
+    var activeTab = panel.getAttribute("data-active-tab");
+    if (activeTab) {
+        switchTab(activeTab);
+    }
+}
+
+// --- Copy summary ---
+
+/**
+ * Copy patient summary to clipboard as formatted plain text.
+ */
+function copySummary() {
+    var whatWeDid = document.getElementById("what_we_did");
+    var whatsNext = document.getElementById("whats_next");
+    var homeCare = document.getElementById("home_care");
+
+    var parts = [];
+    if (whatWeDid && whatWeDid.value.trim()) {
+        parts.push("WHAT WE DID TODAY\n" + whatWeDid.value.trim());
+    }
+    if (whatsNext && whatsNext.value.trim()) {
+        parts.push("WHAT COMES NEXT\n" + whatsNext.value.trim());
+    }
+    if (homeCare && homeCare.value.trim()) {
+        parts.push("HOME CARE INSTRUCTIONS\n" + homeCare.value.trim());
+    }
+
+    var text = parts.join("\n\n");
+    var btn = event.currentTarget || event.target;
+
+    copyToClipboard(text).then(function () {
+        showCopyFeedback(btn, "Copied!");
+    }).catch(function () {
+        showCopyFeedback(btn, "Copy failed");
+    });
+}
+
 // --- Initialization ---
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -448,8 +528,18 @@ document.addEventListener("DOMContentLoaded", function () {
     // Auto-resize all textareas on load
     autoResizeAll();
 
-    // Re-auto-resize after HTMX swaps (e.g., after extraction)
+    // Set up tab click handlers
+    var tabButtons = document.querySelectorAll(".tab-btn");
+    tabButtons.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            var tabId = btn.getAttribute("data-tab");
+            switchTab(tabId);
+        });
+    });
+
+    // Re-auto-resize and restore tab state after HTMX swaps
     document.body.addEventListener("htmx:afterSwap", function () {
         autoResizeAll();
+        restoreActiveTab();
     });
 });

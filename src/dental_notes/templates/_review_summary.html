@@ -1,0 +1,46 @@
+{% if patient_summary %}
+<div class="summary-sections">
+    <div class="note-section">
+        <div class="note-section-header">
+            <label for="what_we_did">What We Did Today</label>
+        </div>
+        <textarea id="what_we_did" name="what_we_did" class="note-textarea" oninput="autoResize(this)">{{ patient_summary.get('what_we_did', '') if patient_summary is mapping else patient_summary.what_we_did }}</textarea>
+    </div>
+
+    <div class="note-section">
+        <div class="note-section-header">
+            <label for="whats_next">What Comes Next</label>
+        </div>
+        <textarea id="whats_next" name="whats_next" class="note-textarea" oninput="autoResize(this)">{{ patient_summary.get('whats_next', '') if patient_summary is mapping else patient_summary.whats_next }}</textarea>
+    </div>
+
+    <div class="note-section">
+        <div class="note-section-header">
+            <label for="home_care">Home Care Instructions</label>
+        </div>
+        <textarea id="home_care" name="home_care" class="note-textarea" oninput="autoResize(this)">{{ patient_summary.get('home_care', '') if patient_summary is mapping else patient_summary.home_care }}</textarea>
+    </div>
+
+    <div class="summary-actions">
+        <button type="button" class="btn btn-start"
+                hx-post="/session/{{ session_id }}/save-summary"
+                hx-include="#what_we_did, #whats_next, #home_care"
+                hx-target="#summary-feedback"
+                hx-swap="innerHTML">
+            Save Summary
+        </button>
+        <button type="button" class="btn btn-copy" onclick="copySummary()">
+            Copy Summary
+        </button>
+        <a href="/session/{{ session_id }}/print-summary" target="_blank" class="btn btn-copy">
+            Print Summary
+        </a>
+        <span id="summary-feedback"></span>
+    </div>
+</div>
+{% else %}
+<div class="no-summary">
+    <p>Patient summary not yet generated.</p>
+    <p>Re-extract the note to generate a patient summary.</p>
+</div>
+{% endif %}
