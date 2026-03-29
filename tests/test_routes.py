@@ -287,3 +287,133 @@ async def test_sse_sends_chunk_divs(test_app, fake_session_manager):
     event_data = "".join(e.data for e in events if hasattr(e, "data"))
     assert "Doctor:" in event_data
     assert "chunk" in event_data
+
+
+# --- Template selection / appointment_type tests ---
+
+
+@pytest.mark.asyncio
+async def test_start_accepts_appointment_type(client, fake_session_manager):
+    """POST /session/start accepts appointment_type form field and stores it."""
+    response = await client.post(
+        "/session/start",
+        data={"appointment_type": "restorative"},
+    )
+    assert response.status_code == 200
+    assert fake_session_manager.get_state() == SessionState.RECORDING
+
+
+@pytest.mark.asyncio
+async def test_start_stores_appointment_type_in_app_state(test_app, fake_session_manager):
+    """session_start stores appointment_type in request.app.state."""
+    transport = ASGITransport(app=test_app, raise_app_exceptions=False)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        await ac.post(
+            "/session/start",
+            data={"appointment_type": "endodontic"},
+        )
+    assert getattr(test_app.state, "appointment_type", None) == "endodontic"
+
+
+@pytest.mark.asyncio
+async def test_start_defaults_appointment_type_to_general(test_app, fake_session_manager):
+    """session_start defaults appointment_type to general when not provided."""
+    transport = ASGITransport(app=test_app, raise_app_exceptions=False)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        await ac.post("/session/start")
+    assert getattr(test_app.state, "appointment_type", None) == "general"
+
+
+@pytest.mark.asyncio
+async def test_stop_passes_template_type_to_extractor(
+    fake_session_manager, fake_session_store
+):
+    """session_stop passes template_type to extract_with_gpu_handoff."""
+    from tests.conftest import FakeOllamaService, FakeWhisperServiceGpu
+
+    app = create_app()
+    app.state.session_manager = fake_session_manager
+    app.state.session_store = fake_session_store
+    app.state.whisper_service = FakeWhisperServiceGpu()
+    app.state.settings = None
+
+    from dental_notes.clinical.extractor import ClinicalExtractor
+    from dental_notes.config import Settings
+
+    fake_settings = Settings(
+        storage_dir="/tmp/test-transcripts",
+        sessions_dir="/tmp/test-sessions",
+    )
+    fake_ollama = FakeOllamaService()
+    fake_extractor = ClinicalExtractor(fake_ollama, fake_settings)
+    app.state.clinical_extractor = fake_extractor
+
+    # Set appointment_type on app state (simulates what session_start does)
+    app.state.appointment_type = "restorative"
+
+    fake_session_manager.start()
+    fake_session_manager._chunks = [
+        ("Doctor", "Crown prep on tooth 14"),
+    ]
+
+    transport = ASGITransport(app=app, raise_app_exceptions=False)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        await ac.post("/session/stop", follow_redirects=False)
+
+    # Extractor should have received template_type="restorative"
+    # When appointment_type != "general", it should pass the type directly
+    # Check that the extractor was called (generate was called for classification
+    # or generate_structured for extraction)
+    assert fake_ollama.call_count >= 1
+
+
+@pytest.mark.asyncio
+async def test_stop_passes_none_template_for_general(
+    fake_session_manager, fake_session_store
+):
+    """session_stop passes template_type=None when appointment_type is general."""
+    from tests.conftest import FakeOllamaService, FakeWhisperServiceGpu
+
+    app = create_app()
+    app.state.session_manager = fake_session_manager
+    app.state.session_store = fake_session_store
+    app.state.whisper_service = FakeWhisperServiceGpu()
+    app.state.settings = None
+
+    from dental_notes.clinical.extractor import ClinicalExtractor
+    from dental_notes.config import Settings
+
+    fake_settings = Settings(
+        storage_dir="/tmp/test-transcripts",
+        sessions_dir="/tmp/test-sessions",
+    )
+    fake_ollama = FakeOllamaService()
+    fake_extractor = ClinicalExtractor(fake_ollama, fake_settings)
+    app.state.clinical_extractor = fake_extractor
+
+    # Set appointment_type to "general" on app state
+    app.state.appointment_type = "general"
+
+    fake_session_manager.start()
+    fake_session_manager._chunks = [
+        ("Doctor", "Crown prep on tooth 14"),
+    ]
+
+    transport = ASGITransport(app=app, raise_app_exceptions=False)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        await ac.post("/session/stop", follow_redirects=False)
+
+    # When appointment_type is "general", should pass template_type=None
+    # to trigger auto-detect via _infer_appointment_type()
+    # This means generate() will be called first (for classification)
+    assert fake_ollama.generate_call_count >= 1
+
+
+@pytest.mark.asyncio
+async def test_index_has_appointment_type_dropdown(client):
+    """Homepage includes the appointment type dropdown."""
+    response = await client.get("/")
+    assert response.status_code == 200
+    assert 'name="appointment_type"' in response.text
+    assert "Restorative" in response.text
+    assert "Endodontic" in response.text

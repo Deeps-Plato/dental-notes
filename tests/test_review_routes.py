@@ -331,3 +331,181 @@ async def test_index_includes_session_list(
     assert response.status_code == 200
     # Should show session info on the homepage
     assert "session" in response.text.lower()
+
+
+# --- Patient summary tab and template UI tests ---
+
+
+@pytest.mark.asyncio
+async def test_review_page_has_patient_summary_tab(
+    review_client, sample_saved_session, fake_session_store
+):
+    """Review page has Clinical Note and Patient Summary tab buttons."""
+    # Add patient_summary data to the session
+    sample_saved_session.patient_summary = {
+        "what_we_did": "We fixed a cavity today.",
+        "whats_next": "Come back in 6 months.",
+        "home_care": "Brush and floss daily.",
+    }
+    fake_session_store.update_session(sample_saved_session)
+
+    response = await review_client.get(
+        f"/session/{sample_saved_session.session_id}/review"
+    )
+    assert response.status_code == 200
+    assert "Clinical Note" in response.text
+    assert "Patient Summary" in response.text
+    assert "tab-btn" in response.text
+
+
+@pytest.mark.asyncio
+async def test_review_page_renders_patient_summary_content(
+    review_client, sample_saved_session, fake_session_store
+):
+    """Review page renders patient summary content in the summary tab."""
+    sample_saved_session.patient_summary = {
+        "what_we_did": "We fixed a cavity on tooth 14.",
+        "whats_next": "Return in 6 months for checkup.",
+        "home_care": "Brush twice daily, floss once daily.",
+    }
+    fake_session_store.update_session(sample_saved_session)
+
+    response = await review_client.get(
+        f"/session/{sample_saved_session.session_id}/review"
+    )
+    assert response.status_code == 200
+    assert "We fixed a cavity on tooth 14" in response.text
+
+
+@pytest.mark.asyncio
+async def test_review_page_without_patient_summary(
+    review_client, sample_saved_session
+):
+    """Review page works when patient_summary is None (backward compat)."""
+    # sample_saved_session has no patient_summary by default
+    response = await review_client.get(
+        f"/session/{sample_saved_session.session_id}/review"
+    )
+    assert response.status_code == 200
+    assert "Patient Summary" in response.text
+    assert "not yet generated" in response.text.lower()
+
+
+@pytest.mark.asyncio
+async def test_extract_accepts_template_type(
+    review_client, sample_saved_session
+):
+    """POST /session/{id}/extract accepts optional template_type field."""
+    response = await review_client.post(
+        f"/session/{sample_saved_session.session_id}/extract",
+        data={"template_type": "restorative"},
+    )
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+
+
+@pytest.mark.asyncio
+async def test_extract_passes_template_type_to_extractor(
+    review_client, review_app, sample_saved_session
+):
+    """Extract route passes template_type to extractor."""
+    from tests.conftest import FakeOllamaService, FakeWhisperServiceGpu
+
+    from dental_notes.clinical.extractor import ClinicalExtractor
+    from dental_notes.config import Settings
+
+    fake_settings = Settings(
+        storage_dir="/tmp/test-transcripts",
+        sessions_dir="/tmp/test-sessions",
+    )
+    fake_ollama = FakeOllamaService()
+    fake_extractor = ClinicalExtractor(fake_ollama, fake_settings)
+    review_app.state.clinical_extractor = fake_extractor
+    review_app.state.whisper_service = FakeWhisperServiceGpu()
+
+    response = await review_client.post(
+        f"/session/{sample_saved_session.session_id}/extract",
+        data={"template_type": "endodontic"},
+    )
+    assert response.status_code == 200
+    # When template_type is provided, extractor should NOT call generate()
+    # for auto-detection -- it should use the type directly.
+    # So generate_call_count should be 0 (no classification call)
+    assert fake_ollama.generate_call_count == 0
+
+
+@pytest.mark.asyncio
+async def test_save_summary_route(
+    review_client, sample_saved_session, fake_session_store
+):
+    """POST /session/{id}/save-summary saves edited patient summary."""
+    response = await review_client.post(
+        f"/session/{sample_saved_session.session_id}/save-summary",
+        data={
+            "what_we_did": "Updated: We repaired tooth 14.",
+            "whats_next": "Updated: Return in 3 months.",
+            "home_care": "Updated: Use sensitivity toothpaste.",
+        },
+    )
+    assert response.status_code == 200
+
+    session = fake_session_store.get_session(sample_saved_session.session_id)
+    assert session is not None
+    assert session.patient_summary is not None
+    assert session.patient_summary["what_we_did"] == "Updated: We repaired tooth 14."
+
+
+@pytest.mark.asyncio
+async def test_print_summary_route(
+    review_client, sample_saved_session, fake_session_store
+):
+    """GET /session/{id}/print-summary returns full HTML page for printing."""
+    sample_saved_session.patient_summary = {
+        "what_we_did": "We fixed tooth 14.",
+        "whats_next": "Return in 6 months.",
+        "home_care": "Brush and floss daily.",
+    }
+    fake_session_store.update_session(sample_saved_session)
+
+    response = await review_client.get(
+        f"/session/{sample_saved_session.session_id}/print-summary"
+    )
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+    # Should be a full HTML page (not a partial)
+    assert "<!DOCTYPE html>" in response.text or "<!doctype html>" in response.text.lower()
+    assert "We fixed tooth 14" in response.text
+    assert "window.print" in response.text
+
+
+@pytest.mark.asyncio
+async def test_parse_transcript_text_handles_assistant(review_client):
+    """_parse_transcript_text handles 'Assistant:' speaker labels."""
+    from dental_notes.ui.routes import _parse_transcript_text
+
+    text = (
+        "Doctor: Crown prep on tooth 14\n\n"
+        "Patient: Is that going to hurt?\n\n"
+        "Assistant: I'll prepare the anesthetic"
+    )
+    chunks = _parse_transcript_text(text)
+    assert len(chunks) == 3
+    speakers = [c[0] for c in chunks]
+    assert "Doctor" in speakers
+    assert "Patient" in speakers
+    assert "Assistant" in speakers
+
+
+@pytest.mark.asyncio
+async def test_review_page_has_template_selector(
+    review_client, sample_saved_session, fake_session_store
+):
+    """Review page has appointment type selector for re-extraction."""
+    sample_saved_session.appointment_type = "restorative"
+    fake_session_store.update_session(sample_saved_session)
+
+    response = await review_client.get(
+        f"/session/{sample_saved_session.session_id}/review"
+    )
+    assert response.status_code == 200
+    assert "appointment_type" in response.text or "template_type" in response.text
