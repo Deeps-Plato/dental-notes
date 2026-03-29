@@ -304,15 +304,12 @@ async def test_start_accepts_appointment_type(client, fake_session_manager):
 
 
 @pytest.mark.asyncio
-async def test_start_stores_appointment_type_in_app_state(test_app, fake_session_manager):
-    """session_start stores appointment_type in request.app.state."""
+async def test_start_defaults_appointment_type_in_app_state(test_app, fake_session_manager):
+    """session_start always sets appointment_type to general (auto-detect at extraction)."""
     transport = ASGITransport(app=test_app, raise_app_exceptions=False)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        await ac.post(
-            "/session/start",
-            data={"appointment_type": "endodontic"},
-        )
-    assert getattr(test_app.state, "appointment_type", None) == "endodontic"
+        await ac.post("/session/start")
+    assert getattr(test_app.state, "appointment_type", None) == "general"
 
 
 @pytest.mark.asyncio
@@ -410,10 +407,8 @@ async def test_stop_passes_none_template_for_general(
 
 
 @pytest.mark.asyncio
-async def test_index_has_appointment_type_dropdown(client):
-    """Homepage includes the appointment type dropdown."""
+async def test_index_has_no_appointment_type_dropdown(client):
+    """Homepage does NOT include appointment type dropdown (auto-detect at extraction)."""
     response = await client.get("/")
     assert response.status_code == 200
-    assert 'name="appointment_type"' in response.text
-    assert "Restorative" in response.text
-    assert "Endodontic" in response.text
+    assert 'id="appt-type-select"' not in response.text

@@ -7,7 +7,6 @@
           hx-target="#session-controls"
           hx-swap="innerHTML">
         <input type="hidden" name="device" id="device-input" value="">
-        <input type="hidden" name="appointment_type" id="appt-type-input" value="general">
         <button type="submit" class="btn btn-start">
             Start Recording
         </button>
@@ -24,16 +23,8 @@
             hidden.value = mic.value;
             mic.addEventListener("change", function() { hidden.value = mic.value; });
         }
-        var apptType = document.getElementById("appt-type-select");
-        var apptHidden = document.getElementById("appt-type-input");
-        if (apptType && apptHidden) {
-            apptHidden.value = apptType.value;
-            apptType.addEventListener("change", function() { apptHidden.value = apptType.value; });
-        }
         var micSec = document.getElementById("mic-section");
         if (micSec) micSec.style.display = "";
-        var apptSec = document.getElementById("appt-type-section");
-        if (apptSec) apptSec.style.display = "";
     })();
 </script>
 {% elif state == "recording" %}
@@ -56,8 +47,6 @@
     (function() {
         var micSec = document.getElementById("mic-section");
         if (micSec) micSec.style.display = "none";
-        var apptSec = document.getElementById("appt-type-section");
-        if (apptSec) apptSec.style.display = "none";
     })();
 </script>
 {% elif state == "paused" %}

@@ -129,17 +129,16 @@ async def devices():
 async def session_start(
     request: Request,
     device: int | None = Form(default=None),
-    appointment_type: str = Form(default="general"),
 ):
     """Start a recording session. Returns HTMX partial for session controls.
 
-    Stores appointment_type in app.state for use by the SSE stream
-    (hotwords selection) and session_stop (extraction template).
+    Auto-detection infers appointment type from transcript during extraction.
+    General hotwords used during recording; template applied at review time.
     """
     session_manager = _get_session_manager(request)
 
-    # Store appointment_type in app state for SSE and stop to access
-    request.app.state.appointment_type = appointment_type
+    # Default to general — auto-detect determines template during extraction
+    request.app.state.appointment_type = "general"
 
     try:
         session_manager.start(mic_device=device)

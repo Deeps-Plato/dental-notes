@@ -33,19 +33,6 @@
             </select>
         </section>
 
-        <!-- Appointment Type Selector -->
-        <section class="mic-section" id="appt-type-section">
-            <label for="appt-type-select">Appointment Type:</label>
-            <select id="appt-type-select" name="appointment_type">
-                <option value="general" selected>General</option>
-                <option value="comprehensive_exam">Comprehensive Exam</option>
-                <option value="restorative">Restorative</option>
-                <option value="hygiene_recall">Hygiene/Recall</option>
-                <option value="endodontic">Endodontic</option>
-                <option value="oral_surgery">Oral Surgery</option>
-            </select>
-        </section>
-
         <!-- Session Controls -->
         <section class="controls-section" id="session-controls">
             {% include "_session.html" %}
@@ -102,17 +89,12 @@
             if (bar) { bar.style.width = "0%"; }
         });
 
-        // After any HTMX swap, re-sync the mic and appointment type hidden inputs
+        // After any HTMX swap, re-sync the mic hidden input
         document.body.addEventListener("htmx:afterSwap", function(event) {
             var hidden = document.getElementById("device-input");
             var mic = document.getElementById("mic-select");
             if (hidden && mic) {
                 hidden.value = mic.value;
-            }
-            var apptHidden = document.getElementById("appt-type-input");
-            var apptType = document.getElementById("appt-type-select");
-            if (apptHidden && apptType) {
-                apptHidden.value = apptType.value;
             }
         });
     </script>
