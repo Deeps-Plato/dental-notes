@@ -5,6 +5,7 @@ Uses a FakeWhisperModel to avoid importing real faster_whisper
 """
 
 from collections import namedtuple
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -100,18 +101,23 @@ class TestWhisperServiceTranscription:
         audio = np.zeros(16000, dtype=np.float32)
         service.transcribe(audio)
 
-        # Verify prompt was passed to transcribe
-        assert service._model.last_transcribe_kwargs["initial_prompt"] == DENTAL_INITIAL_PROMPT
+        # Verify prompt was passed to transcribe (uses _initial_prompt which
+        # equals DENTAL_INITIAL_PROMPT when no custom vocab file exists)
+        assert (
+            service._model.last_transcribe_kwargs["initial_prompt"]
+            == DENTAL_INITIAL_PROMPT
+        )
 
         # Verify prompt contains required vocabulary categories
-        assert "tooth" in DENTAL_INITIAL_PROMPT.lower()
+        assert "teeth" in DENTAL_INITIAL_PROMPT.lower()
         assert "MOD" in DENTAL_INITIAL_PROMPT
         assert "composite" in DENTAL_INITIAL_PROMPT.lower()
         assert "SRP" in DENTAL_INITIAL_PROMPT
-        assert "pulpectomy" in DENTAL_INITIAL_PROMPT.lower()
         assert "Shofu" in DENTAL_INITIAL_PROMPT
-        assert "D2740" in DENTAL_INITIAL_PROMPT
-        assert "Invisalign" in DENTAL_INITIAL_PROMPT
+        assert "Lidocaine" in DENTAL_INITIAL_PROMPT
+        assert "Herculite" in DENTAL_INITIAL_PROMPT
+        assert "radiolucency" in DENTAL_INITIAL_PROMPT
+        assert "CEJ" in DENTAL_INITIAL_PROMPT
 
     def test_transcribe_returns_text(self, settings):
         service = self._make_service_with_fake(settings)
@@ -137,3 +143,31 @@ class TestWhisperServiceTranscription:
 
         kwargs = service._model.last_transcribe_kwargs
         assert kwargs["language"] == "en"
+
+    def test_transcribe_accepts_hotwords_parameter(self, settings):
+        """transcribe() forwards hotwords to model.transcribe() when provided."""
+        service = self._make_service_with_fake(settings)
+        audio = np.zeros(16000, dtype=np.float32)
+        service.transcribe(audio, hotwords="Lidocaine Septocaine")
+
+        kwargs = service._model.last_transcribe_kwargs
+        assert kwargs["hotwords"] == "Lidocaine Septocaine"
+
+    def test_transcribe_without_hotwords_backward_compatible(self, settings):
+        """transcribe() works without hotwords parameter (no hotwords key)."""
+        service = self._make_service_with_fake(settings)
+        audio = np.zeros(16000, dtype=np.float32)
+        service.transcribe(audio)
+
+        kwargs = service._model.last_transcribe_kwargs
+        assert "hotwords" not in kwargs
+
+
+class TestSettingsCustomVocabPath:
+    """Settings has custom_vocab_path field."""
+
+    def test_custom_vocab_path_default(self):
+        from dental_notes.config import Settings
+
+        s = Settings()
+        assert s.custom_vocab_path == Path("vocab.txt")

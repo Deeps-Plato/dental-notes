@@ -14,43 +14,12 @@ import logging
 import numpy as np
 
 from dental_notes.config import Settings
+from dental_notes.transcription.vocab import (
+    DENTAL_INITIAL_PROMPT,
+    build_initial_prompt,
+)
 
 logger = logging.getLogger(__name__)
-
-# Comprehensive dental vocabulary prompt for Whisper initial_prompt.
-# Source: CONTEXT.md locked decisions + 01-RESEARCH.md code examples.
-# Covers: tooth numbering, surfaces, restorative, perio, endo, oral surgery,
-#   implants, prosthetics, materials/brands, CDT codes, sleep apnea, clinical terms.
-DENTAL_INITIAL_PROMPT = (
-    "Dental clinical appointment transcription. "
-    # Tooth numbering
-    "Universal tooth numbering: teeth 1 through 32, tooth 1, tooth 14, tooth 19, tooth 30. "
-    # Surface names and abbreviations
-    "Mesial, occlusal, distal, buccal, lingual, facial, incisal. "
-    "MOD, DO, BL, MO, OL, MODBL, MI, DI. "
-    # Restorative
-    "Composite, amalgam, crown, bridge, onlay, inlay, veneer, bonding, bleaching. "
-    "E.max, zirconia, PFM, porcelain-fused-to-metal, lithium disilicate. "
-    # Perio
-    "Prophy, prophylaxis, SRP, scaling and root planing, pocket depth, bleeding on probing, BOP. "
-    "Probing depths, gingival margin, recession, furcation, mobility. "
-    # Endo
-    "Pulpectomy, pulpotomy, access opening, working length, obturation, root canal, "
-    "gutta-percha, endodontic. "
-    # Oral surgery
-    "Simple extraction, surgical extraction, bone grafting, socket preservation, sutures. "
-    # Implants and prosthetics
-    "Implant, implant crown, abutment, denture, partial denture, flipper, Invisalign. "
-    # Materials and brands
-    "Shofu, Ivoclar, Filtek, RelyX, Gluma, Dentsply, Kerr. "
-    # CDT codes
-    "CDT code D0120, D0150, D0220, D0330, D1110, D2391, D2740, D3330, D4341, D7210. "
-    # Sleep apnea
-    "Sleep apnea, mandibular advancement device, oral appliance. "
-    # Clinical terms
-    "Caries, cavity, abscess, periapical, radiolucency, calculus, plaque, gingivitis, "
-    "periodontitis, occlusion, malocclusion, TMJ, bruxism, fluoride, sealant."
-)
 
 
 class WhisperService:
@@ -64,6 +33,9 @@ class WhisperService:
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
         self._model = None
+        self._initial_prompt = build_initial_prompt(
+            settings.custom_vocab_path,
+        )
 
     def load_model(self) -> None:
         """Load the Whisper model onto GPU.
@@ -85,11 +57,17 @@ class WhisperService:
         )
         logger.info("Whisper model loaded successfully")
 
-    def transcribe(self, audio: np.ndarray) -> str:
+    def transcribe(
+        self,
+        audio: np.ndarray,
+        hotwords: str | None = None,
+    ) -> str:
         """Transcribe an audio chunk using Whisper with dental vocabulary.
 
         Args:
             audio: Float32 numpy array of audio samples at 16kHz.
+            hotwords: Optional space-separated hotwords string for
+                procedure-specific term boosting.
 
         Returns:
             Transcribed text with segments concatenated and stripped.
@@ -100,13 +78,16 @@ class WhisperService:
         if self._model is None:
             raise RuntimeError("Model not loaded. Call load_model() first.")
 
-        segments, _ = self._model.transcribe(
-            audio,
-            initial_prompt=DENTAL_INITIAL_PROMPT,
-            vad_filter=True,
-            no_speech_threshold=0.6,
-            language="en",
-        )
+        kwargs: dict = {
+            "initial_prompt": self._initial_prompt,
+            "vad_filter": True,
+            "no_speech_threshold": 0.6,
+            "language": "en",
+        }
+        if hotwords is not None:
+            kwargs["hotwords"] = hotwords
+
+        segments, _ = self._model.transcribe(audio, **kwargs)
 
         # Iterate segments, join text with spaces, strip whitespace
         text_parts = [segment.text for segment in segments]

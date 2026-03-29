@@ -2,9 +2,46 @@
 
 Defines the structured output schema used by Ollama's format parameter
 to constrain LLM output to valid dental SOAP notes with CDT codes.
+Includes appointment type classification and patient summary models.
 """
 
+from enum import Enum
+
 from pydantic import BaseModel, Field
+
+
+class AppointmentType(str, Enum):
+    """Dental appointment type for template-specific extraction.
+
+    Used to select prompt overlays that emphasize different clinical
+    details per appointment type. GENERAL is the default when no
+    specific type is selected or auto-detection is uncertain.
+    """
+
+    GENERAL = "general"
+    COMPREHENSIVE_EXAM = "comprehensive_exam"
+    RESTORATIVE = "restorative"
+    HYGIENE_RECALL = "hygiene_recall"
+    ENDODONTIC = "endodontic"
+    ORAL_SURGERY = "oral_surgery"
+
+
+class PatientSummary(BaseModel):
+    """Plain-language patient summary at ~6th-grade reading level.
+
+    Generated from the transcript (not the SOAP note) to avoid
+    clinical jargon bleed. Intended as a patient handout.
+    """
+
+    what_we_did: str = Field(
+        description="Plain-language summary of procedures and findings from today's visit"
+    )
+    whats_next: str = Field(
+        description="Upcoming appointments, follow-up instructions, what to expect"
+    )
+    home_care: str = Field(
+        description="Post-visit care instructions, medications, dietary restrictions"
+    )
 
 
 class CdtCode(BaseModel):
@@ -80,9 +117,13 @@ class ExtractionResult(BaseModel):
     """Complete output from clinical extraction pipeline.
 
     Contains the structured SOAP note, re-attributed speaker chunks,
-    and a one-sentence clinical summary.
+    a one-sentence clinical summary, and an optional patient summary.
     """
 
     soap_note: SoapNote
     speaker_chunks: list[SpeakerChunk]
     clinical_summary: str = Field(description="One-sentence summary of the visit")
+    patient_summary: PatientSummary | None = Field(
+        default=None,
+        description="Plain-language patient handout (generated separately)",
+    )

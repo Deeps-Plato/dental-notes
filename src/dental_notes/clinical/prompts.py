@@ -3,6 +3,10 @@
 Contains the system prompt instructing the LLM to filter chitchat, produce
 a SOAP note, suggest CDT codes, and re-attribute speaker labels. The CDT
 reference list is embedded inline for accurate code suggestions.
+
+Also provides appointment-type template overlays for focused extraction,
+a patient summary prompt for plain-language handouts, and an appointment
+type classification prompt for auto-detection.
 """
 
 CDT_REFERENCE = """D0120: Periodic oral evaluation
@@ -191,3 +195,115 @@ something, do not note that it was "not reported" or "denied"
 - Consolidation and summarization is allowed -- do not transcribe verbatim, but capture all \
 clinically relevant details that were actually stated, in a clear organized narrative
 - Omit social pleasantries, weather talk, scheduling logistics, and non-clinical conversation"""
+
+# --- Appointment-Type Template Overlays ---
+
+TEMPLATE_OVERLAYS: dict[str, str] = {
+    "comprehensive_exam": (
+        "\n\n## Template Emphasis: Comprehensive Exam\n"
+        "Pay special attention to: full-mouth findings for every tooth examined, "
+        "periodontal assessment (probing depths, BOP, recession), radiographic review "
+        "of all films, complete treatment plan with sequencing and priorities, "
+        "and existing restorations inventory."
+    ),
+    "restorative": (
+        "\n\n## Template Emphasis: Restorative\n"
+        "Pay special attention to: anesthetic type, amount in mg, epinephrine "
+        "concentration, and injection site; material selection and shade; step-by-step "
+        "procedure narrative; isolation method; liner/base if placed; occlusal "
+        "adjustment; and post-operative instructions given."
+    ),
+    "hygiene_recall": (
+        "\n\n## Template Emphasis: Hygiene / Recall\n"
+        "Pay special attention to: probing depths per tooth, bleeding on probing (BOP), "
+        "calculus distribution, gingival condition, oral hygiene assessment, "
+        "home care instructions given, fluoride application, and recall interval."
+    ),
+    "endodontic": (
+        "\n\n## Template Emphasis: Endodontic\n"
+        "Pay special attention to: vitality testing results (cold, EPT, percussion, "
+        "palpation), pulp diagnosis, working length determination, irrigation protocol, "
+        "obturation technique and material, canal count, and post-operative instructions."
+    ),
+    "oral_surgery": (
+        "\n\n## Template Emphasis: Oral Surgery\n"
+        "Pay special attention to: surgical approach described, anesthesia details "
+        "(type, amount, site), bone removal or grafting material, membrane placement, "
+        "suture type and count, hemostasis method, and post-surgical instructions "
+        "including medications prescribed."
+    ),
+}
+
+
+def compose_extraction_prompt(template_type: str | None = None) -> str:
+    """Compose the extraction system prompt with optional template overlay.
+
+    Returns the base EXTRACTION_SYSTEM_PROMPT unchanged when template_type
+    is None or "general". Otherwise appends the matching template overlay
+    to emphasize appointment-specific clinical details.
+    """
+    if template_type is None or template_type == "general":
+        return EXTRACTION_SYSTEM_PROMPT
+    overlay = TEMPLATE_OVERLAYS.get(template_type, "")
+    if not overlay:
+        return EXTRACTION_SYSTEM_PROMPT
+    return EXTRACTION_SYSTEM_PROMPT + overlay
+
+
+APPOINTMENT_TYPE_CLASSIFICATION_PROMPT = """\
+You are a dental appointment classifier. Analyze the transcript and determine \
+the appointment type.
+
+## Appointment Types
+- comprehensive_exam: Full-mouth exam, new patient evaluation, treatment planning, \
+radiographic series review, periodontal charting
+- restorative: Fillings, crowns, bridges, veneers, core buildups, \
+material/shade discussion
+- hygiene_recall: Cleaning, prophylaxis, periodontal maintenance, probing, \
+scaling, fluoride, home care review
+- endodontic: Root canal treatment, vitality testing, pulp diagnosis, \
+working length, obturation
+- oral_surgery: Extractions, implant placement, bone grafts, biopsies, \
+surgical flap procedures, suturing
+
+## Instructions
+Analyze the first ~500 words of the transcript to determine the appointment type.
+Return ONLY one of: comprehensive_exam, restorative, hygiene_recall, endodontic, \
+oral_surgery, or general.
+Return "general" if the transcript does not clearly match any specific type \
+or if you are uncertain.
+Do not explain your reasoning -- return only the single classification word."""
+
+PATIENT_SUMMARY_PROMPT = """\
+You are writing a visit summary for a dental patient. The patient should be able \
+to read this and understand exactly what happened today, what comes next, and how \
+to take care of themselves at home.
+
+## Reading Level
+Write at a 6th-grade reading level. Use short sentences. Use "you/your" voice. \
+Be warm and friendly.
+
+## Output Structure (JSON)
+Return a JSON object with exactly three fields:
+- "what_we_did": What happened during today's visit (1-3 sentences)
+- "whats_next": What comes next -- follow-up appointments, future treatment (1-2 sentences)
+- "home_care": How to take care of yourself at home (2-4 bullet-style sentences)
+
+## Rules
+- Maximum 250 words total across all three sections
+- Use the TRANSCRIPT provided as your source -- do not reference a SOAP note
+- Use plain language that any adult can understand
+- Forbidden terms -- do NOT use any of these:
+  - CDT codes (D0120, D2392, etc.)
+  - Latin terms (caries, periapical, occlusal, mesial, distal, buccal, lingual)
+  - Medical abbreviations (BOP, SRP, MO, DO, MOD, FMX, PA, BWX)
+  - Clinical jargon (Class II, furcation, obturation, debridement)
+- Instead use plain replacements:
+  - "caries" -> "cavity" or "decay"
+  - "periapical" -> "around the root"
+  - "prophylaxis" -> "cleaning"
+  - "composite restoration" -> "tooth-colored filling"
+  - "crown" -> "cap"
+  - "extraction" -> "removing the tooth"
+  - "scaling and root planing" -> "deep cleaning"
+- Do NOT invent details not in the transcript"""

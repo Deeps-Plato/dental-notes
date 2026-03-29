@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     # Whisper model
     whisper_model: str = "small"
     compute_type: str = "int8"
+    custom_vocab_path: Path = Path("vocab.txt")
 
     # Audio capture
     sample_rate: int = 16000
