@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Production & Clinical
-status: planning
-stopped_at: Phase 4 context gathered
-last_updated: "2026-03-29T06:04:35.900Z"
-last_activity: 2026-03-29 -- v2.0 roadmap created (Phases 4-6)
+status: executing
+stopped_at: Completed 04-02-PLAN.md
+last_updated: "2026-03-29T18:20:00Z"
+last_activity: 2026-03-29 -- Phase 4 Plan 02 complete (templates, auto-detect, patient summary)
 progress:
   total_phases: 7
   completed_phases: 3
@@ -27,16 +27,16 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 ## Current Position
 
 Phase: 4 of 6 (Clinical Intelligence)
-Plan: Not yet planned
-Status: Ready to plan
-Last activity: 2026-03-29 -- v2.0 roadmap created (Phases 4-6)
+Plan: 2 of 4 complete
+Status: Executing
+Last activity: 2026-03-29 -- Completed 04-02 (templates, auto-detect, patient summary)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██████░░░░░░░░░░░░░░] 30%
 
 ## What Works Now
 
 - **v1.0 complete and human-verified** -- full pipeline: record -> transcribe -> extract SOAP -> review -> copy -> finalize
-- **249 tests passing** across all modules
+- **348 tests passing** across all modules
 - **Server runs on Windows Python** with Yeti Classic mic, NVIDIA GPU (faster-whisper int8/CUDA)
 - **Ollama + Qwen3 8B** for clinical extraction (SOAP + CDT codes + speaker re-attribution)
 - **Review UI**: 50/50 split, full editing, dictation, clipboard copy, session list, finalize + cleanup
@@ -63,6 +63,9 @@ Progress: [░░░░░░░░░░] 0%
 ### Decisions
 
 Recent decisions affecting current work:
+- [04-01]: Doctor-wins-ties in 3-way speaker classification when assistant=doctor score
+- [04-01]: Custom vocab loaded at WhisperService init, not per-transcribe call
+- [04-01]: vocab.py owns all vocabulary constants; whisper_service.py imports from it
 - [v2.0]: 3-way speaker ID via text classifier + LLM re-attribution (pyannote ruled out -- 6-9GB VRAM)
 - [v2.0]: Auto-pause is safety net; manual "Next Patient" is primary batch mechanism
 - [v2.0]: Patient summary piggybacks on SOAP extraction (second LLM call in same GPU handoff window)
@@ -77,12 +80,12 @@ None yet.
 
 ### Blockers/Concerns
 
-- Whisper initial_prompt ~200/224 tokens used -- expanding vocabulary requires strategic rotation or template-specific prompts
+- Whisper initial_prompt expanded to cover all 4 categories within ~224 token budget (resolved by 04-01)
 - CUDA versions on operatory PCs not yet surveyed (needed before Phase 6)
 - Ollama bundling vs prerequisite decision deferred to Phase 6 planning
 
 ## Session Continuity
 
-Last session: 2026-03-29T06:04:35.867Z
-Stopped at: Phase 4 context gathered
-Resume action: `/gsd:plan-phase 4` to begin Clinical Intelligence phase
+Last session: 2026-03-29T18:19:19Z
+Stopped at: Completed 04-01-PLAN.md
+Resume action: `/gsd:execute-phase 04-02` to execute template prompts plan
