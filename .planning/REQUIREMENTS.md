@@ -37,9 +37,9 @@
 ### Clinical Intelligence
 
 - [x] **CLI-05**: Whisper vocabulary expanded with procedures, materials, surfaces, pathology, anatomy, findings, and diagnoses using initial_prompt + hotwords parameter
-- [ ] **CLI-06**: 5 appointment-type templates (comprehensive exam, restorative, hygiene/recall, endodontic, oral surgery) with template-specific extraction prompts and note structures
+- [x] **CLI-06**: 5 appointment-type templates (comprehensive exam, restorative, hygiene/recall, endodontic, oral surgery) with template-specific extraction prompts and note structures
 - [x] **CLI-07**: 3-way speaker classification (Doctor/Patient/Assistant) via extended text-based keyword classifier + LLM re-attribution with zero additional VRAM
-- [ ] **REV-04**: Plain-language patient summary generated at 6th-grade reading level alongside clinical SOAP note
+- [x] **REV-04**: Plain-language patient summary generated at 6th-grade reading level alongside clinical SOAP note
 
 ### Workflow
 
@@ -89,9 +89,9 @@
 | REV-03 | v1 Phase 3 | Complete |
 | PRV-01 | v1 Phase 1 | Complete |
 | CLI-05 | Phase 4 | Complete |
-| CLI-06 | Phase 4 | Pending |
+| CLI-06 | Phase 4 | Complete |
 | CLI-07 | Phase 4 | Complete |
-| REV-04 | Phase 4 | Pending |
+| REV-04 | Phase 4 | Complete |
 | WRK-01 | Phase 5 | Pending |
 | WRK-02 | Phase 5 | Pending |
 | WRK-03 | Phase 5 | Pending |

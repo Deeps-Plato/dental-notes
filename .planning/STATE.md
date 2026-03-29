@@ -73,6 +73,10 @@ Recent decisions affecting current work:
 - [v2.0]: Task Scheduler for auto-start, not Windows service (Session 0 blocks audio/GPU)
 - [v2.0]: Embedded Python + Inno Setup for installer (not PyInstaller -- CUDA DLL issues)
 - [v2.0]: Split architecture for multi-machine -- workstations record+transcribe, GPU machine runs Ollama + hosts review UI
+- [04-02]: Template overlays are short (3-5 lines) appended to base prompt, not full rewrites
+- [04-02]: Auto-detection uses plain-text generate() for lightweight classification, falls back to "general"
+- [04-02]: Patient summary uses transcript as input (not SOAP) to avoid jargon bleed
+- [04-02]: Summary failure is graceful -- logs warning, extraction still succeeds
 
 ### Pending Todos
 
@@ -86,6 +90,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T18:19:19Z
-Stopped at: Completed 04-01-PLAN.md
-Resume action: `/gsd:execute-phase 04-02` to execute template prompts plan
+Last session: 2026-03-29T18:20:00Z
+Stopped at: Completed 04-02-PLAN.md
+Resume action: `/gsd:execute-phase 04-03` to continue Clinical Intelligence phase

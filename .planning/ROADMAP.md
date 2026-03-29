@@ -110,8 +110,8 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Expanded Whisper vocabulary + hotwords + custom vocab file + 3-way speaker classification (CLI-05, CLI-07)
-- [ ] 04-02-PLAN.md — Appointment-type templates + patient summary backend (models, prompts, extraction pipeline, session persistence) (CLI-06, REV-04)
+- [x] 04-01-PLAN.md — Expanded Whisper vocabulary + hotwords + custom vocab file + 3-way speaker classification (CLI-05, CLI-07)
+- [x] 04-02-PLAN.md — Appointment-type templates + patient summary backend (models, prompts, extraction pipeline, session persistence) (CLI-06, REV-04)
 - [ ] 04-03-PLAN.md — Template dropdown UI + patient summary tab/print UI + human verification checkpoint (CLI-06, REV-04)
 
 ### Phase 5: Workflow and Recovery
@@ -155,6 +155,6 @@ Phases execute in numeric order: 1 -> 1.1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 1.1. Phase 1 Test Hardening *(INSERTED)* | v1.0 | 3/3 | Complete | 2026-03-09 |
 | 2. Clinical Extraction | v1.0 | 3/3 | Complete | 2026-03-09 |
 | 3. Review and Export | v1.0 | 3/3 | Complete | 2026-03-28 |
-| 4. Clinical Intelligence | v2.0 | 0/3 | Planning complete | - |
+| 4. Clinical Intelligence | v2.0 | 2/3 | Executing | - |
 | 5. Workflow and Recovery | v2.0 | 0/? | Not started | - |
 | 6. Deployment Infrastructure | v2.0 | 0/? | Not started | - |
