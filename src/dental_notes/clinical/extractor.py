@@ -8,11 +8,22 @@ hardware (Whisper unload -> LLM -> LLM unload -> Whisper reload).
 Supports template-aware extraction via appointment type overlays,
 auto-detection of appointment type from transcript, and patient
 summary generation as a second LLM call during GPU handoff.
+
+Includes create_retry_extract() for transient error resilience via
+tenacity retry with exponential backoff.
 """
 
 import logging
+from typing import Callable
 
 from pydantic import ValidationError
+from tenacity import (
+    before_sleep_log,
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 from dental_notes.clinical.models import (
     AppointmentType,
@@ -176,3 +187,53 @@ class ClinicalExtractor:
             raise ValueError(
                 f"LLM returned invalid patient summary: {e}"
             ) from e
+
+
+def _is_retryable_error(exc: BaseException) -> bool:
+    """Determine if an exception is transient and worth retrying.
+
+    Retries: ConnectionError, TimeoutError, RuntimeError with 'out of memory'.
+    Does NOT retry: ValueError (permanent LLM parse failure).
+    """
+    if isinstance(exc, (ConnectionError, TimeoutError)):
+        return True
+    if isinstance(exc, RuntimeError) and "out of memory" in str(exc).lower():
+        return True
+    return False
+
+
+def create_retry_extract(
+    extractor: ClinicalExtractor,
+    settings: "Settings",
+) -> Callable:
+    """Wrap extract_with_gpu_handoff with tenacity retry for transient errors.
+
+    Returns a callable with the same signature as extract_with_gpu_handoff
+    that retries on ConnectionError, TimeoutError, and CUDA OOM RuntimeError.
+    ValueError (bad JSON from LLM) is NOT retried -- it's a permanent failure.
+
+    Args:
+        extractor: ClinicalExtractor instance to wrap.
+        settings: Settings providing max_retries and base_delay.
+
+    Returns:
+        A callable wrapping extract_with_gpu_handoff with retry logic.
+    """
+
+    @retry(
+        stop=stop_after_attempt(settings.extraction_max_retries),
+        wait=wait_exponential(
+            multiplier=settings.extraction_retry_base_delay,
+            min=0.01,
+            max=30,
+        ),
+        retry=lambda retry_state: _is_retryable_error(retry_state.outcome.exception()),
+        before_sleep=before_sleep_log(logger, logging.WARNING),
+        reraise=True,
+    )
+    def _retry_extract(transcript: str, whisper_service, **kwargs):
+        return extractor.extract_with_gpu_handoff(
+            transcript, whisper_service, **kwargs
+        )
+
+    return _retry_extract

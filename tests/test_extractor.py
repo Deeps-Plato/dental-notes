@@ -605,3 +605,203 @@ class TestPatientSummaryGeneration:
         )
         assert whisper.load_model_count == 1
         assert whisper.is_loaded is True
+
+
+# --- Extraction retry wrapper tests ---
+
+
+class TestExtractionRetry:
+    """Tests for create_retry_extract() tenacity wrapper."""
+
+    def test_retry_on_connection_error_succeeds(
+        self, settings: Settings, sample_transcript: str
+    ) -> None:
+        """Retries on ConnectionError and succeeds on 2nd attempt."""
+        from dental_notes.clinical.extractor import create_retry_extract
+
+        handoff_call_count = 0
+
+        class FailOnceOllama(FakeOllamaService):
+            """Fails all generate_structured calls on first handoff, succeeds after."""
+
+            def generate_structured(self, *args, **kwargs):
+                if handoff_call_count <= 1:
+                    raise ConnectionError("Connection refused")
+                return super().generate_structured(*args, **kwargs)
+
+        ollama = FailOnceOllama()
+        whisper = FakeWhisperServiceGpu()
+        ext = ClinicalExtractor(ollama, settings)
+
+        original_handoff = ext.extract_with_gpu_handoff
+
+        def tracking_handoff(*a, **kw):
+            nonlocal handoff_call_count
+            handoff_call_count += 1
+            return original_handoff(*a, **kw)
+
+        ext.extract_with_gpu_handoff = tracking_handoff
+        retry_fn = create_retry_extract(ext, settings)
+        result = retry_fn(sample_transcript, whisper, template_type="general")
+
+        assert isinstance(result, ExtractionResult)
+        assert handoff_call_count == 2  # Failed once, succeeded on retry
+
+    def test_retry_on_timeout_error(
+        self, settings: Settings, sample_transcript: str
+    ) -> None:
+        """Retries on TimeoutError."""
+        from dental_notes.clinical.extractor import create_retry_extract
+
+        handoff_call_count = 0
+
+        class TimeoutOnceOllama(FakeOllamaService):
+            def generate_structured(self, *args, **kwargs):
+                if handoff_call_count <= 1:
+                    raise TimeoutError("Request timed out")
+                return super().generate_structured(*args, **kwargs)
+
+        ollama = TimeoutOnceOllama()
+        whisper = FakeWhisperServiceGpu()
+        ext = ClinicalExtractor(ollama, settings)
+
+        original_handoff = ext.extract_with_gpu_handoff
+
+        def tracking_handoff(*a, **kw):
+            nonlocal handoff_call_count
+            handoff_call_count += 1
+            return original_handoff(*a, **kw)
+
+        ext.extract_with_gpu_handoff = tracking_handoff
+        retry_fn = create_retry_extract(ext, settings)
+        result = retry_fn(sample_transcript, whisper, template_type="general")
+
+        assert isinstance(result, ExtractionResult)
+        assert handoff_call_count == 2
+
+    def test_retry_on_cuda_oom_runtime_error(
+        self, settings: Settings, sample_transcript: str
+    ) -> None:
+        """Retries on RuntimeError containing 'out of memory'."""
+        from dental_notes.clinical.extractor import create_retry_extract
+
+        handoff_call_count = 0
+
+        class OomOnceOllama(FakeOllamaService):
+            def generate_structured(self, *args, **kwargs):
+                if handoff_call_count <= 1:
+                    raise RuntimeError("CUDA out of memory. Tried to allocate 2GB")
+                return super().generate_structured(*args, **kwargs)
+
+        ollama = OomOnceOllama()
+        whisper = FakeWhisperServiceGpu()
+        ext = ClinicalExtractor(ollama, settings)
+
+        original_handoff = ext.extract_with_gpu_handoff
+
+        def tracking_handoff(*a, **kw):
+            nonlocal handoff_call_count
+            handoff_call_count += 1
+            return original_handoff(*a, **kw)
+
+        ext.extract_with_gpu_handoff = tracking_handoff
+        retry_fn = create_retry_extract(ext, settings)
+        result = retry_fn(sample_transcript, whisper, template_type="general")
+
+        assert isinstance(result, ExtractionResult)
+        assert handoff_call_count == 2
+
+    def test_no_retry_on_value_error(
+        self, settings: Settings, sample_transcript: str
+    ) -> None:
+        """ValueError (bad LLM JSON) is NOT retried -- permanent failure."""
+        from dental_notes.clinical.extractor import create_retry_extract
+
+        handoff_call_count = 0
+
+        class BadJsonOllama(FakeOllamaService):
+            def generate_structured(self, *args, **kwargs):
+                return "not valid json"
+
+        ollama = BadJsonOllama()
+        whisper = FakeWhisperServiceGpu()
+        ext = ClinicalExtractor(ollama, settings)
+
+        original_handoff = ext.extract_with_gpu_handoff
+
+        def tracking_handoff(*a, **kw):
+            nonlocal handoff_call_count
+            handoff_call_count += 1
+            return original_handoff(*a, **kw)
+
+        ext.extract_with_gpu_handoff = tracking_handoff
+        retry_fn = create_retry_extract(ext, settings)
+
+        with pytest.raises(ValueError, match="LLM returned invalid"):
+            retry_fn(sample_transcript, whisper, template_type="general")
+        assert handoff_call_count == 1  # No retry on ValueError
+
+    def test_exhausts_retries_and_reraises(
+        self, settings: Settings, sample_transcript: str
+    ) -> None:
+        """After 3 failed attempts, the original exception is re-raised."""
+        from dental_notes.clinical.extractor import create_retry_extract
+
+        handoff_call_count = 0
+
+        class AlwaysFailOllama(FakeOllamaService):
+            def generate_structured(self, *args, **kwargs):
+                raise ConnectionError("Connection always fails")
+
+        ollama = AlwaysFailOllama()
+        whisper = FakeWhisperServiceGpu()
+        ext = ClinicalExtractor(ollama, settings)
+
+        original_handoff = ext.extract_with_gpu_handoff
+
+        def tracking_handoff(*a, **kw):
+            nonlocal handoff_call_count
+            handoff_call_count += 1
+            return original_handoff(*a, **kw)
+
+        ext.extract_with_gpu_handoff = tracking_handoff
+        retry_fn = create_retry_extract(ext, settings)
+
+        with pytest.raises(ConnectionError, match="Connection always fails"):
+            retry_fn(sample_transcript, whisper, template_type="general")
+        assert handoff_call_count == settings.extraction_max_retries
+
+    def test_retry_uses_settings_max_retries(
+        self, sample_transcript: str, tmp_path
+    ) -> None:
+        """Max retry attempts comes from settings.extraction_max_retries."""
+        from dental_notes.clinical.extractor import create_retry_extract
+
+        custom_settings = Settings(
+            storage_dir=tmp_path / "t",
+            extraction_max_retries=2,
+            extraction_retry_base_delay=0.01,  # Fast for tests
+        )
+        handoff_call_count = 0
+
+        class AlwaysFailOllama(FakeOllamaService):
+            def generate_structured(self, *args, **kwargs):
+                raise ConnectionError("fail")
+
+        ollama = AlwaysFailOllama()
+        whisper = FakeWhisperServiceGpu()
+        ext = ClinicalExtractor(ollama, settings=custom_settings)
+
+        original_handoff = ext.extract_with_gpu_handoff
+
+        def tracking_handoff(*a, **kw):
+            nonlocal handoff_call_count
+            handoff_call_count += 1
+            return original_handoff(*a, **kw)
+
+        ext.extract_with_gpu_handoff = tracking_handoff
+        retry_fn = create_retry_extract(ext, custom_settings)
+
+        with pytest.raises(ConnectionError):
+            retry_fn(sample_transcript, whisper, template_type="general")
+        assert handoff_call_count == 2
