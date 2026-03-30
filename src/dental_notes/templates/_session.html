@@ -29,7 +29,7 @@
 </script>
 {% elif state == "recording" %}
 <div class="controls recording">
-    <span class="recording-indicator">Recording</span>
+    <span class="status-recording">Recording</span>
     <button class="btn btn-pause"
             hx-post="/session/pause"
             hx-target="#session-controls"
@@ -42,6 +42,21 @@
             hx-swap="innerHTML">
         Stop
     </button>
+    <button class="btn next-patient-btn"
+            hx-post="/session/next-patient"
+            hx-target="#session-controls"
+            hx-swap="innerHTML"
+            hx-confirm="Save current session and start recording next patient?">
+        Next Patient
+    </button>
+</div>
+<!-- Mic disconnect alert (shown via SSE status event) -->
+<div id="mic-alert" class="mic-alert" style="display:none;">
+    Microphone disconnected -- transcript saved. Reconnect mic and start a new session.
+</div>
+<!-- Transcription-behind alert (shown via SSE status event) -->
+<div id="transcription-behind-alert" class="transcription-behind-alert" style="display:none;">
+    Transcription falling behind (GPU memory issue). Audio is being saved. Recording continues.
 </div>
 <script>
     (function() {
@@ -49,9 +64,40 @@
         if (micSec) micSec.style.display = "none";
     })();
 </script>
+{% elif state == "auto_paused" %}
+<div class="controls auto-paused">
+    <span class="status-auto-paused">Listening...</span>
+    <button class="btn btn-pause"
+            hx-post="/session/pause"
+            hx-target="#session-controls"
+            hx-swap="innerHTML">
+        Pause
+    </button>
+    <button class="btn btn-stop"
+            hx-post="/session/stop"
+            hx-target="#session-controls"
+            hx-swap="innerHTML">
+        Stop
+    </button>
+    <button class="btn next-patient-btn"
+            hx-post="/session/next-patient"
+            hx-target="#session-controls"
+            hx-swap="innerHTML"
+            hx-confirm="Save current session and start recording next patient?">
+        Next Patient
+    </button>
+</div>
+<!-- Mic disconnect alert -->
+<div id="mic-alert" class="mic-alert" style="display:none;">
+    Microphone disconnected -- transcript saved. Reconnect mic and start a new session.
+</div>
+<!-- Transcription-behind alert -->
+<div id="transcription-behind-alert" class="transcription-behind-alert" style="display:none;">
+    Transcription falling behind (GPU memory issue). Audio is being saved. Recording continues.
+</div>
 {% elif state == "paused" %}
 <div class="controls paused">
-    <span class="paused-indicator">Paused</span>
+    <span class="status-paused">Paused</span>
     <button class="btn btn-resume"
             hx-post="/session/resume"
             hx-target="#session-controls"
@@ -63,6 +109,13 @@
             hx-target="#session-controls"
             hx-swap="innerHTML">
         Stop
+    </button>
+    <button class="btn next-patient-btn"
+            hx-post="/session/next-patient"
+            hx-target="#session-controls"
+            hx-swap="innerHTML"
+            hx-confirm="Save current session and start recording next patient?">
+        Next Patient
     </button>
 </div>
 {% elif state == "stopping" %}

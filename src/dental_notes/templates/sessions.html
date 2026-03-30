@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dental Notes - Sessions</title>
+    <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -16,6 +17,44 @@
 
     <main>
         <h2>Saved Sessions</h2>
+
+        {% if incomplete_count is defined and incomplete_count > 0 %}
+        <div class="incomplete-banner">
+            {{ incomplete_count }} incomplete session(s) found from previous run
+        </div>
+        {% endif %}
+
+        <!-- Session Filters -->
+        <div class="session-filters">
+            <div class="filter-group">
+                <label for="filter-date">Date:</label>
+                <input type="date" id="filter-date" name="date"
+                       value="{{ filter_date | default('') }}"
+                       hx-get="/sessions"
+                       hx-target="main"
+                       hx-select="main"
+                       hx-swap="outerHTML"
+                       hx-include="#filter-status">
+                {% if not show_all_dates %}
+                <a href="/sessions?date=all" class="btn-link filter-link">All dates</a>
+                {% endif %}
+            </div>
+            <div class="filter-group">
+                <label for="filter-status">Status:</label>
+                <select id="filter-status" name="status"
+                        hx-get="/sessions"
+                        hx-target="main"
+                        hx-select="main"
+                        hx-swap="outerHTML"
+                        hx-include="#filter-date">
+                    <option value="" {% if not filter_status %}selected{% endif %}>All</option>
+                    <option value="recorded" {% if filter_status == "recorded" %}selected{% endif %}>Needs Review</option>
+                    <option value="extracted" {% if filter_status == "extracted" %}selected{% endif %}>Extracted</option>
+                    <option value="reviewed" {% if filter_status == "reviewed" %}selected{% endif %}>Reviewed</option>
+                </select>
+            </div>
+        </div>
+
         {% include "_session_list.html" %}
     </main>
 </body>

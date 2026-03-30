@@ -113,6 +113,17 @@ async def index(request: Request):
     except Exception:
         sessions = []
 
+    # Initial health check data for the status bar
+    health = None
+    try:
+        health_checker = _get_health_checker(request)
+        loop = asyncio.get_event_loop()
+        health = await loop.run_in_executor(
+            None, health_checker.check_all
+        )
+    except Exception:
+        pass
+
     return _get_templates(request).TemplateResponse(
         request,
         "index.html",
@@ -121,6 +132,7 @@ async def index(request: Request):
             "devices": devices,
             "chunks": session_manager.get_chunks(),
             "sessions": sessions,
+            "health": health,
         },
     )
 

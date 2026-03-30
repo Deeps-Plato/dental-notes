@@ -846,6 +846,290 @@ kbd {
     }
 }
 
+/* --- Health Status Bar --- */
+
+.health-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.35rem 1rem;
+    background: #f8f9fa;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.8rem;
+}
+
+.health-components {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.health-component {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.health-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.health-dot-ok {
+    background: #22c55e;
+}
+
+.health-dot-bad {
+    background: #ef4444;
+}
+
+.health-label {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.health-overall {
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.health-ok {
+    color: #22c55e;
+}
+
+.health-degraded {
+    color: #f59e0b;
+}
+
+/* --- Recording Status Indicators --- */
+
+.status-recording {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: #22c55e;
+    font-size: 1.1rem;
+}
+
+.status-recording::before {
+    content: "";
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #22c55e;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.status-auto-paused {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: #f59e0b;
+    font-size: 1.1rem;
+}
+
+.status-auto-paused::before {
+    content: "";
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #f59e0b;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.status-paused {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: #9ca3af;
+    font-size: 1.1rem;
+}
+
+.status-paused::before {
+    content: "";
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #9ca3af;
+}
+
+/* --- Next Patient Button --- */
+
+.next-patient-btn {
+    background: #0ea5e9;
+    color: white;
+}
+
+.next-patient-btn:hover {
+    background: #0284c7;
+}
+
+/* --- Mic Disconnect Alert --- */
+
+.mic-alert {
+    background: #ef4444;
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    margin-top: 1rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+/* --- Transcription Behind Alert --- */
+
+.transcription-behind-alert {
+    background: #f59e0b;
+    color: #1a1a1a;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    margin-top: 0.5rem;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+/* --- Extraction Retry Banners --- */
+
+.extraction-retry-banner {
+    background: #f59e0b;
+    color: #1a1a1a;
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    margin: 0.5rem 0;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.extraction-failed-banner {
+    background: #ef4444;
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    margin: 0.5rem 0;
+    font-weight: 500;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.extraction-success-flash {
+    background: #22c55e;
+    color: white;
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    margin: 0.5rem 0;
+    font-weight: 500;
+    font-size: 0.9rem;
+    animation: fadeOut 3s ease-in forwards;
+}
+
+@keyframes fadeOut {
+    0% { opacity: 1; }
+    70% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+.retry-btn {
+    padding: 0.4rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    white-space: nowrap;
+}
+
+.retry-btn:hover {
+    background: rgba(255, 255, 255, 0.35);
+}
+
+/* --- Incomplete Sessions Banner --- */
+
+.incomplete-banner {
+    background: #f59e0b;
+    color: #1a1a1a;
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+/* --- Session Filters --- */
+
+.session-filters {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+    padding: 0.5rem 0;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-group label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.filter-group input[type="date"],
+.filter-group select {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.9rem;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: white;
+}
+
+.filter-link {
+    font-size: 0.85rem;
+}
+
+/* Session badge (appointment type pill) */
+.session-badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.badge-appt-type {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+.session-badges {
+    display: flex;
+    gap: 0.35rem;
+    align-items: center;
+}
+
+/* Incomplete status badge */
+.status-incomplete {
+    background: #fef3c7;
+    color: #92400e;
+}
+
 /* Responsive: works on 1080p-1440p monitors */
 @media (max-width: 768px) {
     body {

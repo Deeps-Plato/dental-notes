@@ -4,7 +4,12 @@
     <a href="/session/{{ session.session_id }}/review" class="session-card">
         <div class="session-card-header">
             <span class="session-timestamp">{{ session.created_at.strftime('%b %d, %I:%M %p') }}</span>
-            <span class="status-badge status-{{ session.status.value }}">{{ session.status.value | capitalize }}</span>
+            <div class="session-badges">
+                {% if session.appointment_type is defined and session.appointment_type != "general" %}
+                <span class="session-badge badge-appt-type">{{ session.appointment_type | capitalize }}</span>
+                {% endif %}
+                <span class="session-badge status-badge status-{{ session.status.value }}">{{ session.status.value | capitalize }}</span>
+            </div>
         </div>
         <div class="session-preview">
             {% if session.chunks %}

@@ -12,6 +12,11 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+    <!-- Health Status Bar (auto-refreshes every 30s via HTMX) -->
+    <div id="health-bar-container">
+        {% include "_health_bar.html" %}
+    </div>
+
     <header>
         <h1>Dental Notes</h1>
         <div class="status-bar">
@@ -52,6 +57,9 @@
             {% include "_transcript.html" %}
         </section>
 
+        <!-- Extraction Status (retry banners appear here) -->
+        <div id="extraction-status"></div>
+
         <!-- Transcript File Path (shown after stop) -->
         <section class="footer-info" id="footer-info">
             <p id="transcript-path"></p>
@@ -80,6 +88,25 @@
                 var level = parseFloat(event.detail.data || event.detail) || 0;
                 var width = Math.min(level * 5, 100);
                 bar.style.width = width + "%";
+            }
+        });
+
+        // Listen for SSE status events to update alerts
+        document.body.addEventListener("status", function(event) {
+            try {
+                var data = JSON.parse(event.detail.data || event.detail);
+                // Mic disconnect alert
+                var micAlert = document.getElementById("mic-alert");
+                if (micAlert) {
+                    micAlert.style.display = data.mic_disconnected ? "" : "none";
+                }
+                // Transcription behind alert
+                var behindAlert = document.getElementById("transcription-behind-alert");
+                if (behindAlert) {
+                    behindAlert.style.display = data.transcription_behind ? "" : "none";
+                }
+            } catch (e) {
+                // Ignore parse errors
             }
         });
 
