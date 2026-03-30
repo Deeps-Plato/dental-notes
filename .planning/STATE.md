@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Production & Clinical
-status: completed
-stopped_at: Phase 5 planned (3 plans, 3 waves, verified)
-last_updated: "2026-03-30T00:29:28.463Z"
-last_activity: 2026-03-29 -- Completed 04-03 (template UI, patient summary tab/print, human-verified)
+status: executing
+stopped_at: Completed 05-01-PLAN.md (workflow foundation contracts)
+last_updated: "2026-03-30T00:55:50Z"
+last_activity: 2026-03-30 -- Completed 05-01 (config extensions, HealthChecker, retry wrapper, incomplete sessions)
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 18
-  completed_plans: 14
-  percent: 93
+  completed_plans: 15
+  percent: 83
 ---
 
 # Project State
@@ -23,20 +23,21 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 **Core value:** Reliably record, transcribe, and produce a usable clinical note from a real dental appointment -- every time, with no data leaving the building.
 **Methodology:** Pragmatic TDD -- test file before implementation, integration tests mandatory, human verification gates are blocking
 **Current focus:** v2.0 Phase 5 -- Workflow and Recovery (batch multi-patient, auto-pause, error recovery, health monitoring)
+**Tests:** 411 passing (up from 363)
 
 ## Current Position
 
-Phase: 4 of 6 (Clinical Intelligence) -- COMPLETE
-Plan: 3 of 3 complete
-Status: Phase 4 complete, ready for Phase 5
-Last activity: 2026-03-29 -- Completed 04-03 (template UI, patient summary tab/print, human-verified)
+Phase: 5 of 6 (Workflow and Recovery) -- IN PROGRESS
+Plan: 1 of 3 complete
+Status: Plan 05-01 complete, ready for 05-02
+Last activity: 2026-03-30 -- Completed 05-01 (config extensions, HealthChecker, retry wrapper, incomplete sessions)
 
-Progress: [█████████░░░░░░░░░░░] 93%
+Progress: [████████████████░░░░] 83%
 
 ## What Works Now
 
 - **v1.0 complete and human-verified** -- full pipeline: record -> transcribe -> extract SOAP -> review -> copy -> finalize
-- **363 tests passing** across all modules
+- **411 tests passing** across all modules
 - **Server runs on Windows Python** with Yeti Classic mic, NVIDIA GPU (faster-whisper int8/CUDA)
 - **Ollama + Qwen3 8B** for clinical extraction (SOAP + CDT codes + speaker re-attribution)
 - **Review UI**: 50/50 split, full editing, dictation, clipboard copy, session list, finalize + cleanup
@@ -58,6 +59,7 @@ Progress: [█████████░░░░░░░░░░░] 93%
 | 2. Clinical Extraction | 3 | 33min | 11min |
 | 3. Review and Export | 3 | 29min | 9.7min |
 | 4. Clinical Intelligence | 3 | 28min | 9.3min |
+| 5. Workflow & Recovery | 1 | 11min | 11min |
 
 ## Accumulated Context
 
@@ -81,6 +83,10 @@ Recent decisions affecting current work:
 - [04-03]: Template selection moved from pre-recording dropdown to review page -- auto-detect is primary, manual override on review
 - [04-03]: Tab state preserved via data-active-tab attribute restored in htmx:afterSwap handler
 - [04-03]: Print summary is standalone HTML page (not partial) with own @media print CSS
+- [05-01]: Disk health check falls back to parent dir if storage_dir not yet created
+- [05-01]: Custom retry predicate for selective CUDA OOM RuntimeError retry
+- [05-01]: list_sessions() default excludes INCOMPLETE for backward compat
+- [05-01]: _incomplete_{id}.json naming separates crash recovery from completed sessions
 
 ### Pending Todos
 
@@ -94,6 +100,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T00:29:28.445Z
-Stopped at: Phase 5 planned (3 plans, 3 waves, verified)
-Resume action: `/gsd:plan-phase 05` to plan Workflow and Recovery phase
+Last session: 2026-03-30T00:55:50Z
+Stopped at: Completed 05-01-PLAN.md (workflow foundation contracts)
+Resume action: Execute 05-02-PLAN.md (auto-pause and multi-patient batch)
