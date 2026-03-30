@@ -123,11 +123,12 @@ Plans:
   2. System auto-pauses recording after configurable silence and auto-resumes when new speech is detected — the system always listens even when paused, so no speech is missed at patient transitions
   3. If Ollama crashes, the GPU errors out, or the microphone disconnects mid-session, the system retries automatically and no transcript data is lost
   4. A health check endpoint (/api/health) reports GPU status, Ollama reachability, and microphone availability so the user can verify system readiness before starting a clinic day
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 05-01: TBD
-- [ ] 05-02: TBD
+- [ ] 05-01-PLAN.md — Config extensions, INCOMPLETE status, HealthChecker class, extraction retry wrapper with tenacity (WRK-03, WRK-04)
+- [ ] 05-02-PLAN.md — SessionManager: AUTO_PAUSED state, rolling buffer, next patient flow, periodic auto-save, mic disconnect detection (WRK-01, WRK-02, WRK-03)
+- [ ] 05-03-PLAN.md — Routes + templates + styles: Next Patient button, health status bar, auto-pause visuals, session filters, human verification (WRK-01, WRK-02, WRK-03, WRK-04)
 
 ### Phase 6: Deployment Infrastructure
 **Goal**: Any operatory PC can run the tool via a one-click installer with auto-start, and the office can optionally run a split architecture where workstations handle recording/transcription while a central GPU machine handles LLM extraction and hosts the review UI
@@ -156,5 +157,5 @@ Phases execute in numeric order: 1 -> 1.1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 2. Clinical Extraction | v1.0 | 3/3 | Complete | 2026-03-09 |
 | 3. Review and Export | v1.0 | 3/3 | Complete | 2026-03-28 |
 | 4. Clinical Intelligence | v2.0 | 3/3 | Complete | 2026-03-29 |
-| 5. Workflow and Recovery | v2.0 | 0/? | Not started | - |
+| 5. Workflow and Recovery | v2.0 | 0/3 | Planned | - |
 | 6. Deployment Infrastructure | v2.0 | 0/? | Not started | - |
