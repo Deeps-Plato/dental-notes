@@ -48,7 +48,7 @@ class TestCheckGpu:
 
         mock_props = MagicMock()
         mock_props.name = "NVIDIA GeForce GTX 1070 Ti"
-        mock_props.total_mem = 8589934592  # 8GB in bytes
+        mock_props.total_memory = 8589934592  # 8GB in bytes
 
         with patch("dental_notes.health.torch") as mock_torch:
             mock_torch.cuda.is_available.return_value = True
@@ -228,7 +228,7 @@ class TestCheckAll:
         ):
             mock_props = MagicMock()
             mock_props.name = "GTX 1070 Ti"
-            mock_props.total_mem = 8589934592
+            mock_props.total_memory = 8589934592
             mock_torch.cuda.is_available.return_value = True
             mock_torch.cuda.get_device_properties.return_value = mock_props
             mock_torch.cuda.memory_allocated.return_value = 0
@@ -271,7 +271,7 @@ class TestCheckAll:
         ):
             mock_props = MagicMock()
             mock_props.name = "GTX 1070 Ti"
-            mock_props.total_mem = 8589934592
+            mock_props.total_memory = 8589934592
             mock_torch.cuda.is_available.return_value = True
             mock_torch.cuda.get_device_properties.return_value = mock_props
             mock_torch.cuda.memory_allocated.return_value = 0

@@ -91,7 +91,7 @@ class HealthChecker:
                 details={
                     "available": True,
                     "name": props.name,
-                    "total_memory_mb": round(props.total_mem / (1024 * 1024)),
+                    "total_memory_mb": round(props.total_memory / (1024 * 1024)),
                     "allocated_mb": round(allocated / (1024 * 1024)),
                 },
             )

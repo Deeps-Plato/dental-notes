@@ -11,10 +11,13 @@
 <body class="review-body">
     <header>
         <h1>Dental Notes</h1>
-        <div class="status-bar">
-            <a href="/sessions" class="btn-link">Sessions</a>
-        </div>
     </header>
+
+    <nav class="main-nav">
+        <a href="/" class="nav-link">New Session</a>
+        <a href="/sessions?status=recorded" class="nav-link">Saved / Incomplete</a>
+        <a href="/sessions?status=reviewed&amp;date=all" class="nav-link">Completed</a>
+    </nav>
 
     <main>
         <!-- Regeneration banner (hidden by default, shown by JS when transcript changes) -->

@@ -10,10 +10,13 @@
 <body>
     <header>
         <h1>Dental Notes</h1>
-        <div class="status-bar">
-            <a href="/" class="btn-link">New Session</a>
-        </div>
     </header>
+
+    <nav class="main-nav">
+        <a href="/" class="nav-link">New Session</a>
+        <a href="/sessions?status=recorded" class="nav-link {% if filter_status == 'recorded' %}nav-active{% endif %}">Saved / Incomplete</a>
+        <a href="/sessions?status=reviewed&amp;date=all" class="nav-link {% if filter_status == 'reviewed' %}nav-active{% endif %}">Completed</a>
+    </nav>
 
     <main>
         <h2>Saved Sessions</h2>
