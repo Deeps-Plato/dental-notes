@@ -34,20 +34,20 @@
         <textarea id="subjective" name="subjective" class="note-textarea" oninput="autoResize(this)">{{ note.get('subjective', sn.subjective if sn else '') }}</textarea>
     </div>
 
-    <!-- History -->
+    <!-- Patient Health History -->
     <div class="note-section">
         <div class="note-section-header">
-            <label for="history">History</label>
+            <label for="patient_health_history">Patient Health History</label>
             <div class="section-actions">
-                <button type="button" class="btn-icon btn-dictate" onclick="toggleDictation('history')" title="Dictate into section">
+                <button type="button" class="btn-icon btn-dictate" onclick="toggleDictation('patient_health_history')" title="Dictate into section">
                     <span class="mic-icon">&#127908;</span>
                 </button>
-                <button type="button" class="btn-icon" onclick="copySection('history')" title="Copy section">
+                <button type="button" class="btn-icon" onclick="copySection('patient_health_history')" title="Copy section">
                     <span class="copy-icon">&#128203;</span>
                 </button>
             </div>
         </div>
-        <textarea id="history" name="history" class="note-textarea" oninput="autoResize(this)">{{ note.get('history', sn.history if sn else '') }}</textarea>
+        <textarea id="patient_health_history" name="patient_health_history" class="note-textarea" oninput="autoResize(this)">{{ note.get('patient_health_history', sn.patient_health_history if sn else '') }}</textarea>
     </div>
 
     <!-- Objective -->

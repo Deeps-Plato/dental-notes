@@ -70,17 +70,17 @@ class SoapNote(BaseModel):
     )
     subjective: str = Field(
         description=(
-            "OLD CARTS assessment from patient interview: Onset, Location, "
-            "Duration, Characteristic, Aggravates, Relieves, Timeline, Severity. "
-            "Include only elements actually discussed."
+            "Patient's report including problem history and symptoms. "
+            "Note onset, location, duration, character, aggravating/relieving "
+            "factors, timeline, severity when discussed. Professional clinical language."
         )
     )
-    history: str = Field(
+    patient_health_history: str = Field(
         default="",
         description=(
-            "Relevant medical/dental history discussed: overall health changes, "
+            "Patient's general health background discussed: overall health changes, "
             "current medications, previous diagnoses, conditions, allergies. "
-            "Empty string if not discussed."
+            "Empty string if not discussed. NOT the history of the dental problem."
         ),
     )
     objective: str = Field(

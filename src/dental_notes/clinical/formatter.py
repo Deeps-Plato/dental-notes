@@ -66,7 +66,7 @@ def format_note_for_clipboard(
     if soap_note is not None:
         values["chief_complaint"] = soap_note.chief_complaint
         values["subjective"] = soap_note.subjective
-        values["history"] = soap_note.history
+        values["patient_health_history"] = soap_note.patient_health_history
         values["objective"] = soap_note.objective
         values["assessment"] = soap_note.assessment
         values["plan"] = soap_note.plan
@@ -83,7 +83,7 @@ def format_note_for_clipboard(
     sections = [
         ("chief_complaint", "Chief Complaint"),
         ("subjective", "Subjective"),
-        ("history", "History"),
+        ("patient_health_history", "Patient Health History"),
         ("objective", "Objective"),
         ("assessment", "Assessment"),
         ("plan", "Plan"),

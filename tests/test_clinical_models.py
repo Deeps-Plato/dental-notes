@@ -63,7 +63,7 @@ class TestSoapNote:
         note = SoapNote(
             chief_complaint="Patient here for sensitivity on upper left.",
             subjective="Patient reports cold sensitivity.",
-            history="No medication changes. Healthy.",
+            patient_health_history="No medication changes. Healthy.",
             objective="Tooth #14 discoloration. Probing 2-3mm.",
             assessment="Class II caries #14 MO.",
             plan="Two-surface composite restoration #14.",
@@ -76,7 +76,7 @@ class TestSoapNote:
         )
         assert note.chief_complaint == "Patient here for sensitivity on upper left."
         assert note.subjective == "Patient reports cold sensitivity."
-        assert note.history == "No medication changes. Healthy."
+        assert note.patient_health_history == "No medication changes. Healthy."
         assert note.objective == "Tooth #14 discoloration. Probing 2-3mm."
         assert note.assessment == "Class II caries #14 MO."
         assert note.plan == "Two-surface composite restoration #14."
