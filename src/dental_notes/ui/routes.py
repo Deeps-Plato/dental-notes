@@ -556,7 +556,9 @@ async def session_extract(
 async def session_save(
     request: Request,
     session_id: str,
+    chief_complaint: str = Form(default=""),
     subjective: str = Form(default=""),
+    patient_health_history: str = Form(default=""),
     objective: str = Form(default=""),
     assessment: str = Form(default=""),
     plan: str = Form(default=""),
@@ -577,7 +579,9 @@ async def session_save(
 
     # Store edited note as dict
     session.edited_note = {
+        "chief_complaint": chief_complaint,
         "subjective": subjective,
+        "patient_health_history": patient_health_history,
         "objective": objective,
         "assessment": assessment,
         "plan": plan,
