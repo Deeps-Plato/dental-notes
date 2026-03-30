@@ -113,7 +113,11 @@ class FakeTensor:
 
 
 class FakeAudioCapture:
-    """Fake AudioCapture that returns pre-loaded audio blocks."""
+    """Fake AudioCapture that returns pre-loaded audio blocks.
+
+    Supports dynamic block appending for simulating ongoing audio input
+    (e.g., silence followed by speech for auto-pause tests).
+    """
 
     def __init__(self, blocks: list[np.ndarray] | None = None):
         self._blocks = list(blocks or [])
@@ -138,10 +142,48 @@ class FakeAudioCapture:
             return block
         return None
 
+    def add_blocks(self, blocks: list[np.ndarray]) -> None:
+        """Dynamically append blocks (for simulating ongoing audio)."""
+        self._blocks.extend(blocks)
+
     def get_level(self) -> float:
         if self._last_block is None:
             return 0.0
         return float(np.sqrt(np.mean(self._last_block**2)))
+
+
+class FakeVadDetector:
+    """Controllable fake VadDetector for testing auto-pause silence detection.
+
+    Accepts a list of booleans -- one per call to is_speech().
+    When the list is exhausted, returns the default value.
+    """
+
+    def __init__(
+        self,
+        results: list[bool] | None = None,
+        default: bool = False,
+    ):
+        self._results = list(results or [])
+        self._call_index = 0
+        self._default = default
+
+    def is_speech(self, audio_block: np.ndarray) -> bool:
+        if self._call_index < len(self._results):
+            result = self._results[self._call_index]
+            self._call_index += 1
+            return result
+        return self._default
+
+    def get_speech_probability(self, audio_block: np.ndarray) -> float:
+        return 0.9 if self.is_speech(audio_block) else 0.1
+
+    def reset(self) -> None:
+        self._call_index = 0
+
+    def add_results(self, results: list[bool]) -> None:
+        """Dynamically append results for ongoing test scenarios."""
+        self._results.extend(results)
 
 
 class FakeWhisperService:
@@ -215,7 +257,7 @@ class FakeSessionManager:
         self._chunks = []
 
     def pause(self) -> None:
-        if self._state != SessionState.RECORDING:
+        if self._state not in (SessionState.RECORDING, SessionState.AUTO_PAUSED):
             raise RuntimeError(
                 f"Cannot pause: state is {self._state.value}"
             )
@@ -229,7 +271,11 @@ class FakeSessionManager:
         self._state = SessionState.RECORDING
 
     def stop(self) -> Path:
-        if self._state not in (SessionState.RECORDING, SessionState.PAUSED):
+        if self._state not in (
+            SessionState.RECORDING,
+            SessionState.PAUSED,
+            SessionState.AUTO_PAUSED,
+        ):
             raise RuntimeError(
                 f"Cannot stop: state is {self._state.value}"
             )
@@ -249,7 +295,11 @@ class FakeSessionManager:
         return self._state
 
     def is_active(self) -> bool:
-        return self._state in (SessionState.RECORDING, SessionState.PAUSED)
+        return self._state in (
+            SessionState.RECORDING,
+            SessionState.PAUSED,
+            SessionState.AUTO_PAUSED,
+        )
 
     def get_level(self) -> float:
         return self._level

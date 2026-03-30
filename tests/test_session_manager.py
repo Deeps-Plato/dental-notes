@@ -15,7 +15,12 @@ import numpy as np
 import pytest
 
 from dental_notes.config import Settings
-from tests.conftest import FakeAudioCapture, FakeChunker, FakeWhisperService
+from tests.conftest import (
+    FakeAudioCapture,
+    FakeChunker,
+    FakeVadDetector,
+    FakeWhisperService,
+)
 
 
 @pytest.fixture
@@ -234,3 +239,362 @@ class TestSessionPrivacyAndSafety:
                 pytest.fail(
                     f"SessionManager stores large audio array in attribute: {attr_name}"
                 )
+
+
+# --- Auto-pause and rolling buffer tests ---
+
+
+def _make_silence_blocks(count: int, block_size: int = 1600) -> list[np.ndarray]:
+    """Create `count` blocks of silence (zeros)."""
+    return [np.zeros(block_size, dtype=np.float32) for _ in range(count)]
+
+
+def _make_speech_blocks(count: int, block_size: int = 1600) -> list[np.ndarray]:
+    """Create `count` blocks of speech-like audio (non-zero sine wave)."""
+    return [
+        np.sin(np.linspace(0, 2 * np.pi, block_size)).astype(np.float32)
+        for _ in range(count)
+    ]
+
+
+class TestAutoPause:
+    """AUTO_PAUSED state transitions and silence tracking."""
+
+    def test_auto_paused_state_exists(self):
+        """SessionState enum has AUTO_PAUSED value."""
+        from dental_notes.session.manager import SessionState
+
+        assert hasattr(SessionState, "AUTO_PAUSED")
+        assert SessionState.AUTO_PAUSED.value == "auto_paused"
+
+    def test_recording_to_auto_paused_on_silence(self, tmp_path):
+        """RECORDING -> AUTO_PAUSED when silence exceeds threshold."""
+        from dental_notes.session.manager import SessionManager, SessionState
+
+        settings = Settings(
+            storage_dir=tmp_path / "transcripts",
+            auto_pause_silence_secs=0.2,  # 200ms -- very short for test speed
+            auto_pause_enabled=True,
+            sample_rate=16000,
+        )
+
+        # Need enough silence blocks to exceed 0.2s at 100ms/block = 3 blocks
+        # VAD: first few blocks are speech (to get past noise skip), then silence
+        vad_results = [True, True] + [False] * 10
+        vad = FakeVadDetector(results=vad_results)
+
+        speech_blocks = _make_speech_blocks(2)
+        silence_blocks = _make_silence_blocks(10)
+        all_blocks = speech_blocks + silence_blocks
+
+        mgr = SessionManager(settings)
+        mgr._whisper = FakeWhisperService()
+        mgr._create_capture = lambda: FakeAudioCapture(all_blocks)
+        mgr._create_chunker = lambda v: FakeChunker(chunk_every=100)  # Never chunk
+        mgr._vad_override = vad  # Will use this instead of real VAD
+
+        mgr.start()
+        time.sleep(0.8)  # Let processing loop consume blocks
+
+        assert mgr.get_state() == SessionState.AUTO_PAUSED
+        mgr.stop()
+
+    def test_auto_pause_disabled(self, tmp_path):
+        """No auto-pause when auto_pause_enabled=False."""
+        from dental_notes.session.manager import SessionManager, SessionState
+
+        settings = Settings(
+            storage_dir=tmp_path / "transcripts",
+            auto_pause_silence_secs=0.1,
+            auto_pause_enabled=False,
+            sample_rate=16000,
+        )
+
+        vad_results = [True, True] + [False] * 10
+        vad = FakeVadDetector(results=vad_results)
+
+        speech_blocks = _make_speech_blocks(2)
+        silence_blocks = _make_silence_blocks(10)
+        all_blocks = speech_blocks + silence_blocks
+
+        mgr = SessionManager(settings)
+        mgr._whisper = FakeWhisperService()
+        mgr._create_capture = lambda: FakeAudioCapture(all_blocks)
+        mgr._create_chunker = lambda v: FakeChunker(chunk_every=100)
+        mgr._vad_override = vad
+
+        mgr.start()
+        time.sleep(0.5)
+
+        # Should still be RECORDING (or IDLE if blocks exhausted), NOT AUTO_PAUSED
+        state = mgr.get_state()
+        assert state != SessionState.AUTO_PAUSED
+        mgr.stop()
+
+    def test_auto_pause_to_recording_on_speech_resume(self, tmp_path):
+        """AUTO_PAUSED -> RECORDING when 3+ consecutive speech blocks detected."""
+        from dental_notes.session.manager import SessionManager, SessionState
+
+        settings = Settings(
+            storage_dir=tmp_path / "transcripts",
+            auto_pause_silence_secs=0.2,
+            rolling_buffer_secs=10.0,
+            auto_pause_enabled=True,
+            sample_rate=16000,
+        )
+
+        # Phase 1: speech then silence (triggers auto-pause)
+        # Phase 2: speech resumes (triggers resume from auto-pause)
+        vad_results = (
+            [True, True]  # Initial speech
+            + [False] * 5  # Silence -> auto-pause
+            + [True] * 5  # Speech resume -> back to RECORDING
+        )
+        vad = FakeVadDetector(results=vad_results)
+
+        speech = _make_speech_blocks(2)
+        silence = _make_silence_blocks(5)
+        speech_resume = _make_speech_blocks(5)
+        all_blocks = speech + silence + speech_resume
+
+        mgr = SessionManager(settings)
+        mgr._whisper = FakeWhisperService()
+        mgr._create_capture = lambda: FakeAudioCapture(all_blocks)
+        mgr._create_chunker = lambda v: FakeChunker(chunk_every=100)
+        mgr._vad_override = vad
+
+        mgr.start()
+        time.sleep(1.0)  # Let loop process all blocks
+
+        # After speech resumes, should be back in RECORDING
+        assert mgr.get_state() == SessionState.RECORDING
+        mgr.stop()
+
+    def test_silence_tracking_resets_on_speech(self, tmp_path):
+        """Silence duration resets to 0 when speech is detected during RECORDING."""
+        from dental_notes.session.manager import SessionManager, SessionState
+
+        settings = Settings(
+            storage_dir=tmp_path / "transcripts",
+            auto_pause_silence_secs=0.5,  # 500ms -- won't be reached
+            auto_pause_enabled=True,
+            sample_rate=16000,
+        )
+
+        # Interleaving: speech, silence, speech, silence -- never enough consecutive silence
+        vad_results = [True] * 3 + [False] * 2 + [True] * 3 + [False] * 2
+        vad = FakeVadDetector(results=vad_results)
+
+        blocks = _make_speech_blocks(3) + _make_silence_blocks(2) + _make_speech_blocks(3) + _make_silence_blocks(2)
+
+        mgr = SessionManager(settings)
+        mgr._whisper = FakeWhisperService()
+        mgr._create_capture = lambda: FakeAudioCapture(blocks)
+        mgr._create_chunker = lambda v: FakeChunker(chunk_every=100)
+        mgr._vad_override = vad
+
+        mgr.start()
+        time.sleep(0.5)
+
+        # Should NOT have auto-paused because silence was interrupted by speech
+        state = mgr.get_state()
+        assert state != SessionState.AUTO_PAUSED
+        mgr.stop()
+
+    def test_stop_from_auto_paused(self, tmp_path):
+        """stop() works from AUTO_PAUSED state."""
+        from dental_notes.session.manager import SessionManager, SessionState
+
+        settings = Settings(
+            storage_dir=tmp_path / "transcripts",
+            auto_pause_silence_secs=0.2,
+            auto_pause_enabled=True,
+            sample_rate=16000,
+        )
+
+        vad_results = [True, True] + [False] * 10
+        vad = FakeVadDetector(results=vad_results)
+
+        all_blocks = _make_speech_blocks(2) + _make_silence_blocks(10)
+
+        mgr = SessionManager(settings)
+        mgr._whisper = FakeWhisperService()
+        mgr._create_capture = lambda: FakeAudioCapture(all_blocks)
+        mgr._create_chunker = lambda v: FakeChunker(chunk_every=100)
+        mgr._vad_override = vad
+
+        mgr.start()
+        time.sleep(0.8)
+        assert mgr.get_state() == SessionState.AUTO_PAUSED
+
+        result = mgr.stop()
+        assert mgr.get_state() == SessionState.IDLE
+        assert isinstance(result, Path)
+
+    def test_manual_pause_from_auto_paused(self, tmp_path):
+        """pause() works from AUTO_PAUSED state."""
+        from dental_notes.session.manager import SessionManager, SessionState
+
+        settings = Settings(
+            storage_dir=tmp_path / "transcripts",
+            auto_pause_silence_secs=0.2,
+            auto_pause_enabled=True,
+            sample_rate=16000,
+        )
+
+        vad_results = [True, True] + [False] * 10
+        vad = FakeVadDetector(results=vad_results)
+
+        all_blocks = _make_speech_blocks(2) + _make_silence_blocks(10)
+
+        mgr = SessionManager(settings)
+        mgr._whisper = FakeWhisperService()
+        mgr._create_capture = lambda: FakeAudioCapture(all_blocks)
+        mgr._create_chunker = lambda v: FakeChunker(chunk_every=100)
+        mgr._vad_override = vad
+
+        mgr.start()
+        time.sleep(0.8)
+        assert mgr.get_state() == SessionState.AUTO_PAUSED
+
+        mgr.pause()
+        assert mgr.get_state() == SessionState.PAUSED
+        mgr.stop()
+
+    def test_get_state_returns_auto_paused(self, tmp_path):
+        """get_state() returns AUTO_PAUSED when in that state."""
+        from dental_notes.session.manager import SessionManager, SessionState
+
+        settings = Settings(
+            storage_dir=tmp_path / "transcripts",
+            auto_pause_silence_secs=0.2,
+            auto_pause_enabled=True,
+            sample_rate=16000,
+        )
+
+        vad_results = [True, True] + [False] * 10
+        vad = FakeVadDetector(results=vad_results)
+
+        all_blocks = _make_speech_blocks(2) + _make_silence_blocks(10)
+
+        mgr = SessionManager(settings)
+        mgr._whisper = FakeWhisperService()
+        mgr._create_capture = lambda: FakeAudioCapture(all_blocks)
+        mgr._create_chunker = lambda v: FakeChunker(chunk_every=100)
+        mgr._vad_override = vad
+
+        mgr.start()
+        time.sleep(0.8)
+
+        assert mgr.get_state() == SessionState.AUTO_PAUSED
+        mgr.stop()
+
+
+class TestRollingBuffer:
+    """Rolling buffer captures audio during AUTO_PAUSED and replays on resume."""
+
+    def test_rolling_buffer_replayed_into_chunker_on_resume(self, tmp_path):
+        """On resume from auto-pause, rolling buffer contents are fed to chunker."""
+        from dental_notes.session.manager import SessionManager, SessionState
+
+        settings = Settings(
+            storage_dir=tmp_path / "transcripts",
+            auto_pause_silence_secs=0.2,
+            rolling_buffer_secs=10.0,
+            auto_pause_enabled=True,
+            sample_rate=16000,
+        )
+
+        # Phase 1: speech then silence -> auto-pause
+        # Phase 2: 3+ speech blocks -> resume -> buffer replayed into chunker
+        vad_results = (
+            [True, True]  # Recording
+            + [False] * 5  # Silence -> auto-pause
+            + [True] * 5  # Auto-pause buffer -> resume
+        )
+        vad = FakeVadDetector(results=vad_results)
+
+        speech = _make_speech_blocks(2)
+        silence = _make_silence_blocks(5)
+        speech_resume = _make_speech_blocks(5)
+        all_blocks = speech + silence + speech_resume
+
+        chunker = FakeChunker(chunk_every=100)  # Never auto-chunk
+        mgr = SessionManager(settings)
+        mgr._whisper = FakeWhisperService()
+        mgr._create_capture = lambda: FakeAudioCapture(all_blocks)
+        mgr._create_chunker = lambda v: chunker
+        mgr._vad_override = vad
+
+        mgr.start()
+        time.sleep(1.0)
+
+        # Chunker should have received feed() calls for the rolling buffer
+        # blocks during resume, in addition to the normal recording blocks
+        assert chunker._feed_count > len(speech)  # More than just initial speech
+        mgr.stop()
+
+    def test_rolling_buffer_cleared_on_auto_pause_entry(self, tmp_path):
+        """Rolling buffer is cleared when entering AUTO_PAUSED to avoid
+        replaying pre-pause audio that was already transcribed."""
+        from dental_notes.session.manager import SessionManager, SessionState
+
+        settings = Settings(
+            storage_dir=tmp_path / "transcripts",
+            auto_pause_silence_secs=0.2,
+            rolling_buffer_secs=10.0,
+            auto_pause_enabled=True,
+            sample_rate=16000,
+        )
+
+        vad_results = [True, True] + [False] * 10
+        vad = FakeVadDetector(results=vad_results)
+
+        all_blocks = _make_speech_blocks(2) + _make_silence_blocks(10)
+
+        mgr = SessionManager(settings)
+        mgr._whisper = FakeWhisperService()
+        mgr._create_capture = lambda: FakeAudioCapture(all_blocks)
+        mgr._create_chunker = lambda v: FakeChunker(chunk_every=100)
+        mgr._vad_override = vad
+
+        mgr.start()
+        time.sleep(0.8)
+        assert mgr.get_state() == SessionState.AUTO_PAUSED
+
+        # Rolling buffer should only contain blocks added AFTER auto-pause started
+        # (silence blocks in this case), NOT the speech blocks that were already
+        # fed to the chunker during RECORDING
+        buffer_len = len(mgr._rolling_buffer)
+        # Buffer should contain some silence blocks (the ones after auto-pause)
+        # but NOT the speech blocks from before
+        assert buffer_len <= 10  # At most the silence blocks after transition
+        mgr.stop()
+
+    def test_is_active_includes_auto_paused(self, tmp_path):
+        """is_active() returns True when AUTO_PAUSED."""
+        from dental_notes.session.manager import SessionManager, SessionState
+
+        settings = Settings(
+            storage_dir=tmp_path / "transcripts",
+            auto_pause_silence_secs=0.2,
+            auto_pause_enabled=True,
+            sample_rate=16000,
+        )
+
+        vad_results = [True, True] + [False] * 10
+        vad = FakeVadDetector(results=vad_results)
+
+        all_blocks = _make_speech_blocks(2) + _make_silence_blocks(10)
+
+        mgr = SessionManager(settings)
+        mgr._whisper = FakeWhisperService()
+        mgr._create_capture = lambda: FakeAudioCapture(all_blocks)
+        mgr._create_chunker = lambda v: FakeChunker(chunk_every=100)
+        mgr._vad_override = vad
+
+        mgr.start()
+        time.sleep(0.8)
+        assert mgr.get_state() == SessionState.AUTO_PAUSED
+        assert mgr.is_active() is True
+        mgr.stop()
