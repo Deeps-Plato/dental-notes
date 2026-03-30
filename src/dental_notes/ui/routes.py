@@ -605,10 +605,10 @@ async def session_save(
 
 @router.post("/session/{session_id}/finalize", response_class=HTMLResponse)
 async def session_finalize(request: Request, session_id: str):
-    """Finalize session: delete transcript file and session data.
+    """Mark session as COMPLETED, preserving all data.
 
-    Returns confirmation HTML with links to start a new session
-    or view the session list.
+    The practitioner can return later to copy or revise. Data is only
+    permanently deleted by the scrub endpoint.
     """
     session_store = _get_session_store(request)
     session_store.finalize_session(session_id)
@@ -616,12 +616,49 @@ async def session_finalize(request: Request, session_id: str):
     return HTMLResponse(
         content=(
             '<div class="finalize-confirmation">'
-            "<h2>Session Finalized</h2>"
-            "<p>Transcript has been permanently deleted.</p>"
+            "<h2>Note Completed</h2>"
+            "<p>Session moved to Completed. Transcript preserved for"
+            " later reference.</p>"
+            "<p>Use <strong>Clear Data</strong> in the Completed tab"
+            " when you are finished with all notes.</p>"
             '<div class="finalize-actions">'
             '<a href="/" class="btn btn-start">New Session</a>'
-            '<a href="/sessions" class="btn btn-resume">Session List</a>'
+            '<a href="/sessions?status=completed" class="btn btn-resume">'
+            "Completed</a>"
             "</div>"
+            "</div>"
+        ),
+        status_code=200,
+    )
+
+
+@router.post(
+    "/session/{session_id}/scrub", response_class=HTMLResponse
+)
+async def session_scrub(request: Request, session_id: str):
+    """Permanently delete all data for a single session."""
+    session_store = _get_session_store(request)
+    session_store.scrub_session(session_id)
+    return HTMLResponse(
+        content=(
+            '<div class="scrub-confirmation">'
+            "<p>Session data permanently deleted.</p>"
+            "</div>"
+        ),
+        status_code=200,
+    )
+
+
+@router.post("/sessions/scrub-all", response_class=HTMLResponse)
+async def scrub_all_completed(request: Request):
+    """Permanently delete all COMPLETED sessions from disk."""
+    session_store = _get_session_store(request)
+    count = session_store.scrub_all_completed()
+    return HTMLResponse(
+        content=(
+            '<div class="scrub-confirmation">'
+            f"<p>{count} completed session(s) permanently scrubbed.</p>"
+            '<a href="/sessions" class="btn btn-resume">Back to Sessions</a>'
             "</div>"
         ),
         status_code=200,

@@ -28,6 +28,7 @@ class SessionStatus(str, Enum):
     RECORDED = "recorded"
     EXTRACTED = "extracted"
     REVIEWED = "reviewed"
+    COMPLETED = "completed"
 
 
 class SavedSession(BaseModel):
@@ -131,16 +132,42 @@ class SessionStore:
         json_path = self._sessions_dir / f"{session_id}.json"
         json_path.unlink(missing_ok=True)
 
-    def finalize_session(self, session_id: str) -> None:
-        """Delete transcript file and session JSON (ephemeral cleanup).
+    def finalize_session(self, session_id: str) -> SavedSession | None:
+        """Mark session as COMPLETED, preserving all data.
 
-        Uses missing_ok=True so already-deleted transcripts don't raise.
-        Satisfies AUD-02: transcript deleted after note finalization.
+        The practitioner can return to copy or revise the note later.
+        Data is only permanently deleted by scrub_session().
+        """
+        session = self.get_session(session_id)
+        if session is None:
+            return None
+        session.status = SessionStatus.COMPLETED
+        self.update_session(session)
+        return session
+
+    def scrub_session(self, session_id: str) -> None:
+        """Permanently delete all session data from disk.
+
+        Removes transcript file, session JSON, and any incomplete files.
+        This is irreversible — satisfies AUD-02 when practitioner is
+        truly finished with the note.
         """
         session = self.get_session(session_id)
         if session is not None:
             Path(session.transcript_path).unlink(missing_ok=True)
         self.delete_session(session_id)
+        self.delete_incomplete(session_id)
+
+    def scrub_all_completed(self) -> int:
+        """Permanently delete all COMPLETED sessions from disk.
+
+        Returns the count of sessions scrubbed.
+        """
+        completed = self.list_sessions(filter_status=SessionStatus.COMPLETED)
+        for session in completed:
+            Path(session.transcript_path).unlink(missing_ok=True)
+            self.delete_session(session.session_id)
+        return len(completed)
 
     def scan_incomplete_sessions(self) -> list[SavedSession]:
         """Find all incomplete session files that don't have completed counterparts.

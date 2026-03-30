@@ -243,10 +243,10 @@ class TestDeleteSession:
 
 
 class TestFinalizeSession:
-    """finalize_session() deletes transcript file and session JSON."""
+    """finalize_session() marks session COMPLETED, preserving data."""
 
-    def test_deletes_transcript_file(self, tmp_path: Path):
-        from dental_notes.session.store import SessionStore
+    def test_marks_session_completed(self, tmp_path: Path):
+        from dental_notes.session.store import SessionStatus, SessionStore
 
         transcript_path = tmp_path / "transcript.txt"
         transcript_path.write_text("Doctor: Hello\nPatient: Hi")
@@ -255,37 +255,96 @@ class TestFinalizeSession:
             chunks=[("Doctor", "Hello")],
             transcript_path=str(transcript_path),
         )
-        store.finalize_session(session.session_id)
-        assert not transcript_path.exists()
+        result = store.finalize_session(session.session_id)
+        assert result is not None
+        assert result.status == SessionStatus.COMPLETED
 
-    def test_deletes_session_json_file(self, tmp_path: Path):
+    def test_preserves_transcript_file(self, tmp_path: Path):
         from dental_notes.session.store import SessionStore
 
-        sessions_dir = tmp_path / "sessions"
         transcript_path = tmp_path / "transcript.txt"
-        transcript_path.write_text("test")
-        store = SessionStore(sessions_dir=sessions_dir)
+        transcript_path.write_text("Doctor: Hello")
+        store = SessionStore(sessions_dir=tmp_path / "sessions")
         session = store.create_session(
             chunks=[("Doctor", "Hello")],
             transcript_path=str(transcript_path),
         )
-        session_id = session.session_id
-        store.finalize_session(session_id)
-        assert not (sessions_dir / f"{session_id}.json").exists()
+        store.finalize_session(session.session_id)
+        assert transcript_path.exists()
 
-    def test_finalize_with_already_deleted_transcript_succeeds(
-        self, tmp_path: Path
-    ):
+    def test_preserves_session_json(self, tmp_path: Path):
         from dental_notes.session.store import SessionStore
 
         sessions_dir = tmp_path / "sessions"
         store = SessionStore(sessions_dir=sessions_dir)
         session = store.create_session(
             chunks=[("Doctor", "Hello")],
-            transcript_path="/tmp/nonexistent-file.txt",
+            transcript_path="/tmp/test.txt",
         )
-        # Should not raise even though transcript doesn't exist
         store.finalize_session(session.session_id)
+        assert (sessions_dir / f"{session.session_id}.json").exists()
+
+    def test_finalize_nonexistent_returns_none(self, tmp_path: Path):
+        from dental_notes.session.store import SessionStore
+
+        store = SessionStore(sessions_dir=tmp_path / "sessions")
+        assert store.finalize_session("nonexistent") is None
+
+
+class TestScrubSession:
+    """scrub_session() permanently deletes all session data."""
+
+    def test_deletes_transcript_file(self, tmp_path: Path):
+        from dental_notes.session.store import SessionStore
+
+        transcript_path = tmp_path / "transcript.txt"
+        transcript_path.write_text("Doctor: Hello")
+        store = SessionStore(sessions_dir=tmp_path / "sessions")
+        session = store.create_session(
+            chunks=[("Doctor", "Hello")],
+            transcript_path=str(transcript_path),
+        )
+        store.scrub_session(session.session_id)
+        assert not transcript_path.exists()
+
+    def test_deletes_session_json(self, tmp_path: Path):
+        from dental_notes.session.store import SessionStore
+
+        sessions_dir = tmp_path / "sessions"
+        store = SessionStore(sessions_dir=sessions_dir)
+        session = store.create_session(
+            chunks=[("Doctor", "Hello")],
+            transcript_path="/tmp/test.txt",
+        )
+        store.scrub_session(session.session_id)
+        assert not (sessions_dir / f"{session.session_id}.json").exists()
+
+    def test_scrub_all_completed(self, tmp_path: Path):
+        from dental_notes.session.store import SessionStatus, SessionStore
+
+        sessions_dir = tmp_path / "sessions"
+        store = SessionStore(sessions_dir=sessions_dir)
+        s1 = store.create_session(
+            chunks=[("Doctor", "A")], transcript_path="/tmp/a.txt"
+        )
+        s2 = store.create_session(
+            chunks=[("Doctor", "B")], transcript_path="/tmp/b.txt"
+        )
+        s1.status = SessionStatus.COMPLETED
+        store.update_session(s1)
+        s2.status = SessionStatus.COMPLETED
+        store.update_session(s2)
+        # Also create one non-completed session
+        store.create_session(
+            chunks=[("Doctor", "C")], transcript_path="/tmp/c.txt"
+        )
+        count = store.scrub_all_completed()
+        assert count == 2
+        assert store.get_session(s1.session_id) is None
+        assert store.get_session(s2.session_id) is None
+        # Non-completed session still exists
+        all_sessions = store.list_sessions()
+        assert len(all_sessions) == 1
 
 
 class TestAtomicWrite:

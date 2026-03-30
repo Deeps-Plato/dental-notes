@@ -709,8 +709,90 @@ kbd {
 }
 
 .status-reviewed {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-completed {
     background: #d4edda;
     color: #155724;
+}
+
+/* Session card wrapper (holds card + scrub button) */
+.session-card-wrapper {
+    display: flex;
+    align-items: stretch;
+    gap: 0.5rem;
+}
+
+.session-card-wrapper .session-card {
+    flex: 1;
+}
+
+.btn-scrub {
+    padding: 0.5rem 0.75rem;
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid var(--danger);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 500;
+    white-space: nowrap;
+    align-self: center;
+}
+
+.btn-scrub:hover {
+    background: var(--danger);
+    color: white;
+}
+
+.btn-finalize {
+    padding: 0.5rem 1rem;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.btn-finalize:hover {
+    background: var(--primary-hover);
+}
+
+/* Scrub section on Completed tab */
+.scrub-section {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    text-align: center;
+}
+
+.scrub-hint {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+}
+
+.btn-danger {
+    padding: 0.6rem 1.2rem;
+    background: var(--danger);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.btn-danger:hover {
+    background: #c0392b;
+}
+
+.scrub-confirmation {
+    text-align: center;
+    padding: 1rem;
+    color: var(--text-muted);
 }
 
 .no-sessions {

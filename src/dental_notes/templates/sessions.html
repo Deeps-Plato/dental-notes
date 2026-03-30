@@ -14,8 +14,9 @@
 
     <nav class="main-nav">
         <a href="/" class="nav-link">New Session</a>
-        <a href="/sessions" class="nav-link {% if not filter_status or filter_status != 'reviewed' %}nav-active{% endif %}">Saved Sessions</a>
-        <a href="/sessions?status=reviewed&amp;date=all" class="nav-link {% if filter_status == 'reviewed' %}nav-active{% endif %}">Completed</a>
+        <a href="/sessions?status=recorded&amp;date=all" class="nav-link {% if filter_status == 'recorded' %}nav-active{% endif %}">Saved</a>
+        <a href="/sessions?status=reviewed&amp;date=all" class="nav-link {% if filter_status == 'reviewed' %}nav-active{% endif %}">In Review</a>
+        <a href="/sessions?status=completed&amp;date=all" class="nav-link {% if filter_status == 'completed' %}nav-active{% endif %}">Completed</a>
     </nav>
 
     <main>
@@ -51,14 +52,29 @@
                         hx-swap="outerHTML"
                         hx-include="#filter-date">
                     <option value="" {% if not filter_status %}selected{% endif %}>All</option>
-                    <option value="recorded" {% if filter_status == "recorded" %}selected{% endif %}>Needs Review</option>
+                    <option value="recorded" {% if filter_status == "recorded" %}selected{% endif %}>Saved</option>
                     <option value="extracted" {% if filter_status == "extracted" %}selected{% endif %}>Extracted</option>
-                    <option value="reviewed" {% if filter_status == "reviewed" %}selected{% endif %}>Reviewed</option>
+                    <option value="reviewed" {% if filter_status == "reviewed" %}selected{% endif %}>In Review</option>
+                    <option value="completed" {% if filter_status == "completed" %}selected{% endif %}>Completed</option>
                 </select>
             </div>
         </div>
 
         {% include "_session_list.html" %}
+
+        {% if filter_status == "completed" and sessions %}
+        <div class="scrub-section">
+            <button type="button" class="btn btn-danger"
+                    hx-post="/sessions/scrub-all"
+                    hx-confirm="PERMANENTLY delete all completed sessions? This cannot be undone. All transcripts and session data will be scrubbed from disk."
+                    hx-target="main"
+                    hx-select="main"
+                    hx-swap="outerHTML">
+                Clear All Completed Data
+            </button>
+            <p class="scrub-hint">Permanently removes all completed session data from this machine.</p>
+        </div>
+        {% endif %}
     </main>
 </body>
 </html>

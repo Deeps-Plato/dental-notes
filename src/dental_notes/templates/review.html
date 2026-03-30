@@ -15,8 +15,9 @@
 
     <nav class="main-nav">
         <a href="/" class="nav-link">New Session</a>
-        <a href="/sessions" class="nav-link">Saved Sessions</a>
-        <a href="/sessions?status=reviewed&amp;date=all" class="nav-link">Completed</a>
+        <a href="/sessions?status=recorded&amp;date=all" class="nav-link">Saved</a>
+        <a href="/sessions?status=reviewed&amp;date=all" class="nav-link">In Review</a>
+        <a href="/sessions?status=completed&amp;date=all" class="nav-link">Completed</a>
     </nav>
 
     <main>
@@ -107,12 +108,12 @@
                         hx-swap="innerHTML">
                     Save
                 </button>
-                <button type="button" class="btn btn-stop"
+                <button type="button" class="btn btn-finalize"
                         hx-post="/session/{{ session_id }}/finalize"
-                        hx-confirm="This will permanently delete the transcript. Are you sure?"
+                        hx-confirm="Mark this note as completed?"
                         hx-target="main"
                         hx-swap="innerHTML">
-                    Finalize &amp; Clear
+                    Complete Note
                 </button>
                 <a href="/sessions" class="btn btn-link">Back to Sessions</a>
                 <span id="save-feedback"></span>

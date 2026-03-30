@@ -1,24 +1,35 @@
 {% if sessions is defined and sessions %}
 <div class="session-list">
     {% for session in sessions %}
-    <a href="/session/{{ session.session_id }}/review" class="session-card">
-        <div class="session-card-header">
-            <span class="session-timestamp">{{ session.created_at.strftime('%b %d, %I:%M %p') }}</span>
-            <div class="session-badges">
-                {% if session.appointment_type is defined and session.appointment_type != "general" %}
-                <span class="session-badge badge-appt-type">{{ session.appointment_type | capitalize }}</span>
-                {% endif %}
-                <span class="session-badge status-badge status-{{ session.status.value }}">{{ session.status.value | capitalize }}</span>
+    <div class="session-card-wrapper">
+        <a href="/session/{{ session.session_id }}/review" class="session-card">
+            <div class="session-card-header">
+                <span class="session-timestamp">{{ session.created_at.strftime('%b %d, %I:%M %p') }}</span>
+                <div class="session-badges">
+                    {% if session.appointment_type is defined and session.appointment_type != "general" %}
+                    <span class="session-badge badge-appt-type">{{ session.appointment_type | capitalize }}</span>
+                    {% endif %}
+                    <span class="session-badge status-badge status-{{ session.status.value }}">{{ session.status.value | capitalize }}</span>
+                </div>
             </div>
-        </div>
-        <div class="session-preview">
-            {% if session.chunks %}
-                {{ session.chunks[0][1][:60] }}{% if session.chunks[0][1]|length > 60 %}...{% endif %}
-            {% else %}
-                No transcript
-            {% endif %}
-        </div>
-    </a>
+            <div class="session-preview">
+                {% if session.chunks %}
+                    {{ session.chunks[0][1][:60] }}{% if session.chunks[0][1]|length > 60 %}...{% endif %}
+                {% else %}
+                    No transcript
+                {% endif %}
+            </div>
+        </a>
+        {% if session.status.value == "completed" %}
+        <button type="button" class="btn btn-scrub"
+                hx-post="/session/{{ session.session_id }}/scrub"
+                hx-confirm="Permanently delete this session data?"
+                hx-target="closest .session-card-wrapper"
+                hx-swap="outerHTML">
+            Scrub
+        </button>
+        {% endif %}
+    </div>
     {% endfor %}
 </div>
 {% else %}
