@@ -247,6 +247,10 @@ class FakeSessionManager:
         self._chunks: list[tuple[str, str]] = []
         self._level = 0.0
         self._transcript_path = Path("/tmp/test-transcript.txt")
+        self._mic_disconnected: bool = False
+        self._transcription_behind: bool = False
+        self._oom_retry_count: int = 0
+        self._session_id: str | None = None
 
     def start(self, mic_device: int | None = None) -> None:
         if self._state != SessionState.IDLE:
@@ -282,6 +286,13 @@ class FakeSessionManager:
         self._state = SessionState.IDLE
         return self._transcript_path
 
+    def next_patient(self, session_store=None) -> SessionState:
+        if self._state == SessionState.IDLE:
+            raise RuntimeError("Cannot next_patient: state is IDLE")
+        self._state = SessionState.RECORDING
+        self._chunks = []
+        return self._state
+
     def get_transcript(self) -> str:
         return "\n\n".join(f"{s}: {t}" for s, t in self._chunks)
 
@@ -303,6 +314,18 @@ class FakeSessionManager:
 
     def get_level(self) -> float:
         return self._level
+
+    def get_session_id(self) -> str | None:
+        return self._session_id
+
+    def is_mic_disconnected(self) -> bool:
+        return self._mic_disconnected
+
+    def is_transcription_behind(self) -> bool:
+        return self._transcription_behind
+
+    def get_oom_retry_count(self) -> int:
+        return self._oom_retry_count
 
 
 # --- Shared fixtures ---
@@ -690,10 +713,34 @@ class FakeSessionStore:
     def get_session(self, session_id: str):
         return self._sessions.get(session_id)
 
-    def list_sessions(self) -> list:
+    def list_sessions(self, filter_date=None, filter_status=None) -> list:
+        from dental_notes.session.store import SessionStatus
+
         sessions = list(self._sessions.values())
+        if filter_status is not None:
+            sessions = [s for s in sessions if s.status == filter_status]
+        elif all(s.status != SessionStatus.INCOMPLETE for s in sessions):
+            pass  # Default: exclude INCOMPLETE
+        else:
+            sessions = [
+                s for s in sessions
+                if s.status != SessionStatus.INCOMPLETE
+            ]
+        if filter_date is not None:
+            sessions = [
+                s for s in sessions
+                if s.created_at.date() == filter_date
+            ]
         sessions.sort(key=lambda s: s.created_at, reverse=True)
         return sessions
+
+    def scan_incomplete_sessions(self) -> list:
+        from dental_notes.session.store import SessionStatus
+
+        return [
+            s for s in self._sessions.values()
+            if s.status == SessionStatus.INCOMPLETE
+        ]
 
     def update_session(self, session) -> None:
         from datetime import datetime, timezone

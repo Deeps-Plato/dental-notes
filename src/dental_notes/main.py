@@ -54,6 +54,7 @@ async def lifespan(app: FastAPI):
     session_store = SessionStore(settings.sessions_dir)
 
     # Clinical extraction pipeline (LLM inference via Ollama)
+    ollama_service = None
     try:
         from dental_notes.clinical.extractor import ClinicalExtractor
         from dental_notes.clinical.ollama_service import OllamaService
@@ -68,13 +69,21 @@ async def lifespan(app: FastAPI):
             "Clinical extractor not available (Ollama or dependencies missing). "
             "Extraction will fail at runtime."
         )
-        ollama_service = None
         clinical_extractor = None
+
+    # Health monitoring -- checks GPU, Ollama, mic, disk, network
+    from dental_notes.health import HealthChecker
+
+    health_checker = HealthChecker(
+        settings=settings,
+        ollama_service=ollama_service,
+    )
 
     app.state.session_manager = session_manager
     app.state.whisper_service = whisper_service
     app.state.session_store = session_store
     app.state.clinical_extractor = clinical_extractor
+    app.state.health_checker = health_checker
 
     # Start hotkey listener (graceful: if pynput fails on headless, web UI still works)
     hotkey_listener = None

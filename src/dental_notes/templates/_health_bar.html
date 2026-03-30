@@ -1,0 +1,20 @@
+<div class="health-bar"
+     hx-get="/health-bar"
+     hx-trigger="every 30s"
+     hx-swap="innerHTML">
+    {% if health is defined and health %}
+    <div class="health-components">
+        {% for name, check in health.checks.items() %}
+        <span class="health-component">
+            <span class="health-dot {% if check.healthy %}health-dot-ok{% else %}health-dot-bad{% endif %}"></span>
+            <span class="health-label">{{ name | capitalize }}</span>
+        </span>
+        {% endfor %}
+    </div>
+    <span class="health-overall {% if health.status == 'ok' %}health-ok{% else %}health-degraded{% endif %}">
+        {% if health.status == "ok" %}System Ready{% else %}Degraded{% endif %}
+    </span>
+    {% else %}
+    <span class="health-label">Loading health status...</span>
+    {% endif %}
+</div>

@@ -11,13 +11,24 @@ copy to clipboard, and finalize (delete transcript).
 Template/appointment type flows through:
   session_start -> app.state.appointment_type -> SSE hotwords -> session_stop
   -> extraction with template_type -> session storage
+
+Phase 5 additions:
+  - /session/next-patient: batch multi-patient transition
+  - /api/health: JSON health check endpoint
+  - /health-bar: HTMX-polled health status bar partial
+  - /sessions: date and status filtering with defaults
+  - SSE: auto_paused state, mic_disconnected, transcription_behind, oom_retry
+  - /session/{id}/retry-extract: manual extraction retry
+  - /session/{id}/extraction-status: extraction state partial
 """
 
 import asyncio
 import html
+import json
 import logging
+from datetime import date
 
-from fastapi import APIRouter, Form, Request
+from fastapi import APIRouter, Form, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from sse_starlette.sse import EventSourceResponse, ServerSentEvent
 
@@ -47,6 +58,11 @@ def _get_session_store(request: Request):
 def _get_extractor(request: Request):
     """Extract ClinicalExtractor from app state."""
     return request.app.state.clinical_extractor
+
+
+def _get_health_checker(request: Request):
+    """Extract HealthChecker from app state."""
+    return request.app.state.health_checker
 
 
 def _render_session_response(
@@ -279,6 +295,35 @@ async def session_stop(request: Request):
     )
 
 
+@router.post("/session/next-patient", response_class=HTMLResponse)
+async def session_next_patient(request: Request):
+    """Save current session and immediately start recording next patient.
+
+    Calls session_manager.next_patient() which stops the current session,
+    saves it via SessionStore, and starts a new recording. Does NOT trigger
+    extraction (deferred to review for fast transitions).
+    """
+    session_manager = _get_session_manager(request)
+    session_store = _get_session_store(request)
+    try:
+        session_manager.next_patient(session_store)
+    except RuntimeError as e:
+        return _render_session_response(
+            request, session_manager.get_state().value,
+            status_code=409, error=str(e),
+        )
+    except Exception as e:
+        logger.exception("Failed to transition to next patient")
+        return _render_session_response(
+            request, session_manager.get_state().value,
+            status_code=500, error=f"Could not switch patient: {e}",
+        )
+
+    return _render_session_response(
+        request, session_manager.get_state().value,
+    )
+
+
 @router.get("/session/stream")
 async def session_stream(request: Request):
     """SSE endpoint streaming transcript updates and audio level.
@@ -331,6 +376,22 @@ async def session_stream(request: Request):
             yield ServerSentEvent(
                 data=str(round(level * 100, 1)),
                 event="level",
+            )
+
+            # Send status event with state flags
+            status_data = {
+                "state": session_manager.get_state().value,
+            }
+            if session_manager.is_mic_disconnected():
+                status_data["mic_disconnected"] = True
+            if session_manager.is_transcription_behind():
+                status_data["transcription_behind"] = True
+            oom_count = session_manager.get_oom_retry_count()
+            if oom_count > 0:
+                status_data["oom_retry_count"] = oom_count
+            yield ServerSentEvent(
+                data=json.dumps(status_data),
+                event="status",
             )
 
             await asyncio.sleep(0.5)
@@ -556,16 +617,71 @@ async def session_finalize(request: Request, session_id: str):
 
 
 @router.get("/sessions", response_class=HTMLResponse)
-async def sessions_list(request: Request):
-    """Render the session list page showing all saved sessions."""
+async def sessions_list(
+    request: Request,
+    date: str | None = Query(default=None, alias="date"),
+    status: str | None = Query(default=None, alias="status"),
+):
+    """Render the session list page with date and status filters.
+
+    Defaults to today's date when no date param is provided.
+    Accepts status values matching SessionStatus enum (recorded, extracted, etc.).
+    """
+    from dental_notes.session.store import SessionStatus
+
     session_store = _get_session_store(request)
-    sessions = session_store.list_sessions()
+
+    # Parse date filter (default to today in UTC for consistency
+    # with session created_at which uses datetime.now(timezone.utc))
+    filter_date = None
+    show_all_dates = date == "all"
+    if not show_all_dates:
+        if date:
+            try:
+                from datetime import date as date_type
+
+                parts = date.split("-")
+                filter_date = date_type(
+                    int(parts[0]), int(parts[1]), int(parts[2])
+                )
+            except (ValueError, IndexError):
+                from datetime import datetime as dt_type, timezone as tz
+
+                filter_date = dt_type.now(tz.utc).date()
+        else:
+            from datetime import datetime as dt_type, timezone as tz
+
+            filter_date = dt_type.now(tz.utc).date()
+
+    # Parse status filter
+    filter_status = None
+    if status:
+        try:
+            filter_status = SessionStatus(status)
+        except ValueError:
+            pass
+
+    sessions = session_store.list_sessions(
+        filter_date=filter_date,
+        filter_status=filter_status,
+    )
+
+    # Count incomplete sessions for banner
+    try:
+        incomplete_sessions = session_store.scan_incomplete_sessions()
+        incomplete_count = len(incomplete_sessions)
+    except Exception:
+        incomplete_count = 0
 
     return _get_templates(request).TemplateResponse(
         request,
         "sessions.html",
         {
             "sessions": sessions,
+            "filter_date": str(filter_date) if filter_date else "",
+            "filter_status": status or "",
+            "show_all_dates": show_all_dates,
+            "incomplete_count": incomplete_count,
         },
     )
 
@@ -662,6 +778,155 @@ async def session_print_summary(request: Request, session_id: str):
             "patient_summary": session.patient_summary,
             "created_at": session.created_at,
         },
+    )
+
+
+# --- Health monitoring routes ---
+
+
+@router.get("/api/health")
+async def health_check(request: Request):
+    """Return JSON health status of all system components.
+
+    Runs HealthChecker.check_all() in a thread executor to avoid blocking
+    the asyncio event loop (Ollama check makes HTTP call).
+    """
+    health_checker = _get_health_checker(request)
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(None, health_checker.check_all)
+    return JSONResponse(content=result)
+
+
+@router.get("/health-bar", response_class=HTMLResponse)
+async def health_bar(request: Request):
+    """Return _health_bar.html partial with component health indicators.
+
+    HTMX polls this endpoint every 30 seconds for status updates.
+    """
+    health_checker = _get_health_checker(request)
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(None, health_checker.check_all)
+
+    templates = _get_templates(request)
+    return HTMLResponse(
+        content=templates.get_template("_health_bar.html").render(
+            {"health": result}
+        ),
+    )
+
+
+# --- Extraction retry routes ---
+
+
+@router.post(
+    "/session/{session_id}/retry-extract", response_class=HTMLResponse
+)
+async def session_retry_extract(request: Request, session_id: str):
+    """Trigger extraction retry for a session where extraction failed.
+
+    Uses create_retry_extract wrapper for transient error resilience.
+    Returns _extraction_status.html partial with result or error.
+    """
+    session_store = _get_session_store(request)
+    session = session_store.get_session(session_id)
+
+    if session is None:
+        return HTMLResponse(
+            content="<h1>Session not found</h1>",
+            status_code=404,
+        )
+
+    try:
+        from dental_notes.clinical.extractor import create_retry_extract
+
+        extractor = _get_extractor(request)
+        settings = request.app.state.settings
+        whisper_service = request.app.state.whisper_service
+
+        retry_fn = create_retry_extract(extractor, settings)
+        transcript_text = _format_transcript_text(session.chunks)
+
+        loop = asyncio.get_event_loop()
+        extraction_result = await loop.run_in_executor(
+            None,
+            lambda: retry_fn(transcript_text, whisper_service),
+        )
+
+        from dental_notes.session.store import SessionStatus
+
+        session.extraction_result = extraction_result
+        session.patient_summary = (
+            extraction_result.patient_summary.model_dump()
+            if extraction_result.patient_summary
+            else None
+        )
+        session.status = SessionStatus.EXTRACTED
+        session_store.update_session(session)
+
+        templates = _get_templates(request)
+        return HTMLResponse(
+            content=templates.get_template(
+                "_extraction_status.html"
+            ).render(
+                {
+                    "extraction_state": "success",
+                    "session_id": session_id,
+                }
+            ),
+        )
+    except Exception as e:
+        logger.exception(
+            "Extraction retry failed for session %s", session_id
+        )
+        templates = _get_templates(request)
+        return HTMLResponse(
+            content=templates.get_template(
+                "_extraction_status.html"
+            ).render(
+                {
+                    "extraction_state": "failed",
+                    "session_id": session_id,
+                    "error": str(e),
+                }
+            ),
+        )
+
+
+@router.get(
+    "/session/{session_id}/extraction-status",
+    response_class=HTMLResponse,
+)
+async def session_extraction_status(request: Request, session_id: str):
+    """Return _extraction_status.html partial with current extraction state.
+
+    States: idle (not yet extracted), extracted (success), failed (show retry).
+    """
+    session_store = _get_session_store(request)
+    session = session_store.get_session(session_id)
+
+    if session is None:
+        return HTMLResponse(
+            content="<h1>Session not found</h1>",
+            status_code=404,
+        )
+
+    from dental_notes.session.store import SessionStatus
+
+    if session.status == SessionStatus.EXTRACTED:
+        extraction_state = "success"
+    elif session.status == SessionStatus.REVIEWED:
+        extraction_state = "success"
+    else:
+        extraction_state = "idle"
+
+    templates = _get_templates(request)
+    return HTMLResponse(
+        content=templates.get_template("_extraction_status.html").render(
+            {
+                "extraction_state": extraction_state,
+                "session_id": session_id,
+            }
+        ),
     )
 
 

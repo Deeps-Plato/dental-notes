@@ -1,0 +1,21 @@
+{% if extraction_state is defined %}
+{% if extraction_state == "retrying" %}
+<div class="extraction-retry-banner">
+    Extraction failed, retrying... ({{ attempt | default(1) }}/{{ max_retries | default(3) }})
+</div>
+{% elif extraction_state == "failed" %}
+<div class="extraction-failed-banner">
+    <span>Extraction failed{% if error is defined %}: {{ error }}{% endif %}. Session data is safe.</span>
+    <button class="btn retry-btn"
+            hx-post="/session/{{ session_id }}/retry-extract"
+            hx-target="#extraction-status"
+            hx-swap="innerHTML">
+        Retry Extraction
+    </button>
+</div>
+{% elif extraction_state == "success" %}
+<div class="extraction-success-flash">
+    Extraction complete
+</div>
+{% endif %}
+{% endif %}
