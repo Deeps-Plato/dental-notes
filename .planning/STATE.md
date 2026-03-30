@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Production & Clinical
 status: executing
-stopped_at: Completed 05-01-PLAN.md (workflow foundation contracts)
-last_updated: "2026-03-30T00:55:50Z"
-last_activity: 2026-03-30 -- Completed 05-01 (config extensions, HealthChecker, retry wrapper, incomplete sessions)
+stopped_at: Completed 05-02-PLAN.md
+last_updated: "2026-03-30T01:14:31.566Z"
+last_activity: 2026-03-30 -- Completed 05-02 (auto-pause, next-patient, auto-save, mic disconnect, Whisper OOM retry)
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 18
-  completed_plans: 15
-  percent: 83
+  completed_plans: 16
+  percent: 89
 ---
 
 # Project State
@@ -23,21 +23,21 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 **Core value:** Reliably record, transcribe, and produce a usable clinical note from a real dental appointment -- every time, with no data leaving the building.
 **Methodology:** Pragmatic TDD -- test file before implementation, integration tests mandatory, human verification gates are blocking
 **Current focus:** v2.0 Phase 5 -- Workflow and Recovery (batch multi-patient, auto-pause, error recovery, health monitoring)
-**Tests:** 411 passing (up from 363)
+**Tests:** 436 passing (up from 411)
 
 ## Current Position
 
 Phase: 5 of 6 (Workflow and Recovery) -- IN PROGRESS
-Plan: 1 of 3 complete
-Status: Plan 05-01 complete, ready for 05-02
-Last activity: 2026-03-30 -- Completed 05-01 (config extensions, HealthChecker, retry wrapper, incomplete sessions)
+Plan: 2 of 3 complete
+Status: Plan 05-02 complete, ready for 05-03
+Last activity: 2026-03-30 -- Completed 05-02 (auto-pause, next-patient, auto-save, mic disconnect, Whisper OOM retry)
 
-Progress: [████████████████░░░░] 83%
+Progress: [█████████████████░░░] 89%
 
 ## What Works Now
 
 - **v1.0 complete and human-verified** -- full pipeline: record -> transcribe -> extract SOAP -> review -> copy -> finalize
-- **411 tests passing** across all modules
+- **436 tests passing** across all modules
 - **Server runs on Windows Python** with Yeti Classic mic, NVIDIA GPU (faster-whisper int8/CUDA)
 - **Ollama + Qwen3 8B** for clinical extraction (SOAP + CDT codes + speaker re-attribution)
 - **Review UI**: 50/50 split, full editing, dictation, clipboard copy, session list, finalize + cleanup
@@ -59,7 +59,7 @@ Progress: [████████████████░░░░] 83%
 | 2. Clinical Extraction | 3 | 33min | 11min |
 | 3. Review and Export | 3 | 29min | 9.7min |
 | 4. Clinical Intelligence | 3 | 28min | 9.3min |
-| 5. Workflow & Recovery | 1 | 11min | 11min |
+| 5. Workflow & Recovery | 2 | 23min | 11.5min |
 
 ## Accumulated Context
 
@@ -87,6 +87,12 @@ Recent decisions affecting current work:
 - [05-01]: Custom retry predicate for selective CUDA OOM RuntimeError retry
 - [05-01]: list_sessions() default excludes INCOMPLETE for backward compat
 - [05-01]: _incomplete_{id}.json naming separates crash recovery from completed sessions
+- [05-02]: Rolling buffer cleared at START of auto-pause entry to prevent replay of already-transcribed audio
+- [05-02]: 3 consecutive speech blocks (300ms) required to confirm resume from auto-pause
+- [05-02]: next_patient() does NOT trigger extraction -- deferred to review for fast transitions
+- [05-02]: Mic disconnect via block arrival timing, not PortAudioError (USB may not raise immediately)
+- [05-02]: Whisper OOM saves raw .npy audio to recovery_audio/ instead of crashing
+- [05-02]: Auto-save try/except prevents store failure from crashing processing loop
 
 ### Pending Todos
 
@@ -100,6 +106,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T00:55:50Z
-Stopped at: Completed 05-01-PLAN.md (workflow foundation contracts)
-Resume action: Execute 05-02-PLAN.md (auto-pause and multi-patient batch)
+Last session: 2026-03-30T01:14:31.550Z
+Stopped at: Completed 05-02-PLAN.md
+Resume action: Execute 05-03-PLAN.md (health dashboard and workflow routes)

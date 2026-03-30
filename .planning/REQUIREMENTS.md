@@ -43,8 +43,8 @@
 
 ### Workflow
 
-- [ ] **WRK-01**: Batch session management — multi-patient day mode with "Next Patient" flow and end-of-day review queue
-- [ ] **WRK-02**: Auto-pause on extended silence (configurable threshold) with auto-resume when new speech is detected — system always listens even when paused
+- [x] **WRK-01**: Batch session management — multi-patient day mode with "Next Patient" flow and end-of-day review queue
+- [x] **WRK-02**: Auto-pause on extended silence (configurable threshold) with auto-resume when new speech is detected — system always listens even when paused
 - [x] **WRK-03**: Error recovery — retry logic for Ollama/GPU/mic failures with graceful degradation; session data never lost on crash
 - [x] **WRK-04**: Health check endpoint (/api/health) reporting GPU status, Ollama reachability, mic availability
 
@@ -92,8 +92,8 @@
 | CLI-06 | Phase 4 | Complete |
 | CLI-07 | Phase 4 | Complete |
 | REV-04 | Phase 4 | Complete |
-| WRK-01 | Phase 5 | Pending |
-| WRK-02 | Phase 5 | Pending |
+| WRK-01 | Phase 5 | Complete |
+| WRK-02 | Phase 5 | Complete |
 | WRK-03 | Phase 5 | Complete |
 | WRK-04 | Phase 5 | Complete |
 | DPL-01 | Phase 6 | Pending |
