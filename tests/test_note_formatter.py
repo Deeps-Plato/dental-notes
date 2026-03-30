@@ -18,6 +18,7 @@ from dental_notes.clinical.models import CdtCode, SoapNote
 def _make_soap_note(**overrides) -> SoapNote:
     """Helper to build a SoapNote with defaults."""
     defaults = {
+        "chief_complaint": "Patient presents for evaluation.",
         "subjective": "Patient reports cold sensitivity on upper right.",
         "objective": "Tooth #14 MO discoloration. Probing 2-3mm.",
         "assessment": "Class II caries #14 MO.",

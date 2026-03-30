@@ -64,7 +64,9 @@ def format_note_for_clipboard(
     values: dict[str, str | list | None] = {}
 
     if soap_note is not None:
+        values["chief_complaint"] = soap_note.chief_complaint
         values["subjective"] = soap_note.subjective
+        values["history"] = soap_note.history
         values["objective"] = soap_note.objective
         values["assessment"] = soap_note.assessment
         values["plan"] = soap_note.plan
@@ -79,7 +81,9 @@ def format_note_for_clipboard(
 
     # Ordered sections: name -> (dict key, display name)
     sections = [
+        ("chief_complaint", "Chief Complaint"),
         ("subjective", "Subjective"),
+        ("history", "History"),
         ("objective", "Objective"),
         ("assessment", "Assessment"),
         ("plan", "Plan"),

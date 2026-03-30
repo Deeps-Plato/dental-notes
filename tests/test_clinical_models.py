@@ -61,7 +61,9 @@ class TestSoapNote:
         from dental_notes.clinical.models import CdtCode, SoapNote
 
         note = SoapNote(
+            chief_complaint="Patient here for sensitivity on upper left.",
             subjective="Patient reports cold sensitivity.",
+            history="No medication changes. Healthy.",
             objective="Tooth #14 discoloration. Probing 2-3mm.",
             assessment="Class II caries #14 MO.",
             plan="Two-surface composite restoration #14.",
@@ -72,7 +74,9 @@ class TestSoapNote:
                 "Composite chosen over amalgam for aesthetics",
             ],
         )
+        assert note.chief_complaint == "Patient here for sensitivity on upper left."
         assert note.subjective == "Patient reports cold sensitivity."
+        assert note.history == "No medication changes. Healthy."
         assert note.objective == "Tooth #14 discoloration. Probing 2-3mm."
         assert note.assessment == "Class II caries #14 MO."
         assert note.plan == "Two-surface composite restoration #14."
@@ -99,6 +103,7 @@ class TestSoapNote:
         from dental_notes.clinical.models import SoapNote
 
         note = SoapNote(
+            chief_complaint="cc",
             subjective="s",
             objective="o",
             assessment="a",
@@ -143,6 +148,7 @@ class TestExtractionResult:
 
         result = ExtractionResult(
             soap_note=SoapNote(
+                chief_complaint="Pain on lower right when chewing.",
                 subjective="Patient reports pain.",
                 objective="Cavity visible on #14.",
                 assessment="Caries #14.",
@@ -340,6 +346,7 @@ class TestExtractionResultPatientSummary:
 
         result = ExtractionResult(
             soap_note=SoapNote(
+                chief_complaint="Patient presents for evaluation.",
                 subjective="s",
                 objective="o",
                 assessment="a",
@@ -369,6 +376,7 @@ class TestExtractionResultPatientSummary:
         )
         result = ExtractionResult(
             soap_note=SoapNote(
+                chief_complaint="Patient presents for evaluation.",
                 subjective="s",
                 objective="o",
                 assessment="a",
@@ -395,6 +403,7 @@ class TestExtractionResultPatientSummary:
 
         result = ExtractionResult(
             soap_note=SoapNote(
+                chief_complaint="Patient presents for evaluation.",
                 subjective="s",
                 objective="o",
                 assessment="a",

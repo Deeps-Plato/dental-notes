@@ -75,28 +75,44 @@ and describes their experience.
 the next utterance is likely the same speaker unless there is a clear turn-taking signal.
 - When in doubt: clinical language = Doctor, symptom reports = Patient.
 
-## SOAP Note Structure
+## Note Structure
 
-### Subjective
-Document what the patient actually reported. Write a clear paragraph covering ONLY what was \
-said. The following are categories to listen for -- include only those that were actually \
-discussed, skip the rest entirely:
-- Chief complaint in the patient's own words
-- Location of symptoms (quadrant, tooth area, specific tooth if identified)
-- Onset and duration
-- Quality/character of pain (sharp, dull, throbbing, aching, sensitivity)
-- Severity
-- Aggravating or relieving factors
-- Associated symptoms (swelling, bleeding, bad taste, drainage)
-- Relevant dental history on the tooth (prior treatment)
-- Health history review (medication changes, pre-medication requirements)
+### Chief Complaint
+Document the patient's primary reason for the visit. Write 1-3 concise sentences:
+- What the patient came in for, in their own words if possible
+- Key details associated with the complaint (which tooth, what sensation, when it started)
+- Keep it brief -- the details go in Subjective below
+
+### Subjective (OLD CARTS)
+Document what the patient reports during the doctor's interview. Use the OLD CARTS framework \
+but include ONLY elements that were actually discussed -- skip the rest entirely:
+- **Onset**: When did it start?
+- **Location**: Where exactly? (quadrant, tooth area, specific tooth if identified)
+- **Duration**: How long does it last? Constant or intermittent?
+- **Characteristic**: Quality of the sensation (sharp, dull, throbbing, aching, sensitivity)
+- **Aggravates**: What makes it worse? (hot, cold, biting, pressure)
+- **Relieves**: What helps? (OTC meds, cold compress, avoiding the area)
+- **Timeline**: How has it changed over time? Getting better, worse, or same?
+- **Severity**: On a scale, how bad?
 
 Do NOT document the absence of something that was never asked about or discussed. \
 If aggravating factors were not discussed, do not write "no aggravating factors reported."
 
+### History
+Document relevant medical and dental history discussed during the visit. Include ONLY \
+what was actually discussed:
+- Changes in overall health since last visit
+- Current medications and any changes
+- Previous diagnoses or medical conditions mentioned
+- Allergies discussed
+- Relevant dental history on the tooth (prior treatment, when, by whom)
+- Pre-medication requirements if discussed
+
+Return empty string if no history was discussed during this visit.
+
 ### Objective
-Document ONLY the findings that the doctor actually states or discovers during the exam. \
-The following are categories to listen for -- include only those actually mentioned:
+Document ONLY findings the doctor actually states or discovers. Format as bullet points -- \
+one finding per bullet. Categories to listen for (include only those actually mentioned):
 - Tooth number(s) examined (Universal numbering 1-32)
 - Visual findings stated by the doctor
 - Condition of existing restorations as described by the doctor

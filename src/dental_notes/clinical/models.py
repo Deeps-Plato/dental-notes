@@ -62,17 +62,32 @@ class SpeakerChunk(BaseModel):
 class SoapNote(BaseModel):
     """Structured dental SOAP note with CDT code suggestions."""
 
+    chief_complaint: str = Field(
+        description=(
+            "Patient's primary reason for the visit and associated details: "
+            "what hurts, where, how it feels, what makes it better or worse"
+        )
+    )
     subjective: str = Field(
         description=(
-            "Narrative paragraph: chief complaint, location, onset/duration, "
-            "pain quality/severity, aggravating/relieving factors, dental history"
+            "OLD CARTS assessment from patient interview: Onset, Location, "
+            "Duration, Characteristic, Aggravates, Relieves, Timeline, Severity. "
+            "Include only elements actually discussed."
         )
+    )
+    history: str = Field(
+        default="",
+        description=(
+            "Relevant medical/dental history discussed: overall health changes, "
+            "current medications, previous diagnoses, conditions, allergies. "
+            "Empty string if not discussed."
+        ),
     )
     objective: str = Field(
         description=(
-            "Narrative of all clinical and radiographic findings: tooth numbers, "
-            "existing restorations and their condition, cracks, proximity to pulp, "
-            "periapical status, percussion/palpation results"
+            "Bullet-point list of clinical and radiographic findings: "
+            "tooth numbers, existing restorations, cracks, periapical status, "
+            "test results. Each finding is one bullet."
         )
     )
     assessment: str = Field(

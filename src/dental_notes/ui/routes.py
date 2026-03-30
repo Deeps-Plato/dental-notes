@@ -124,13 +124,18 @@ async def index(request: Request):
     except Exception:
         pass
 
+    state = session_manager.get_state().value
+    # Only show transcript if a session is active (recording/paused)
+    # New session page should always start clean
+    chunks = session_manager.get_chunks() if state != "idle" else []
+
     return _get_templates(request).TemplateResponse(
         request,
         "index.html",
         {
-            "state": session_manager.get_state().value,
+            "state": state,
             "devices": devices,
-            "chunks": session_manager.get_chunks(),
+            "chunks": chunks,
             "sessions": sessions,
             "health": health,
         },

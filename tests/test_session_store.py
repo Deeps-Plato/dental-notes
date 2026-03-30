@@ -749,6 +749,7 @@ class TestEnrichedSoapNote:
         from dental_notes.clinical.models import SoapNote
 
         note = SoapNote(
+            chief_complaint="Patient presents for evaluation.",
             subjective="s",
             objective="o",
             assessment="a",
@@ -762,6 +763,7 @@ class TestEnrichedSoapNote:
         from dental_notes.clinical.models import SoapNote
 
         note = SoapNote(
+            chief_complaint="Patient presents for evaluation.",
             subjective="s",
             objective="o",
             assessment="a",
@@ -777,6 +779,7 @@ class TestEnrichedSoapNote:
         from dental_notes.clinical.models import SoapNote
 
         note = SoapNote(
+            chief_complaint="Patient presents for evaluation.",
             subjective="s",
             objective="o",
             assessment="a",
@@ -790,6 +793,7 @@ class TestEnrichedSoapNote:
         from dental_notes.clinical.models import SoapNote
 
         note = SoapNote(
+            chief_complaint="Patient presents for evaluation.",
             subjective="s",
             objective="o",
             assessment="a",
@@ -809,6 +813,7 @@ class TestEnrichedSoapNote:
 
         result = ExtractionResult(
             soap_note=SoapNote(
+                chief_complaint="Patient presents for evaluation.",
                 subjective="s",
                 objective="o",
                 assessment="a",

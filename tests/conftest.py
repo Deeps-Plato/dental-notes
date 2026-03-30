@@ -373,6 +373,7 @@ class FakeOllamaService:
     # Default ExtractionResult response data for generate_structured()
     DEFAULT_RESPONSE: dict = {
         "soap_note": {
+            "chief_complaint": "Patient presents for evaluation.",
             "subjective": (
                 "Patient reports sensitivity to cold on upper right "
                 "tooth for one week."
@@ -782,6 +783,7 @@ def sample_saved_session():
         status=SessionStatus.EXTRACTED,
         extraction_result=ExtractionResult(
             soap_note=SoapNote(
+                chief_complaint="Patient presents for evaluation.",
                 subjective="Patient reports cold sensitivity on upper right.",
                 objective="Tooth #14 MO discoloration. Probing 2-3mm.",
                 assessment="Class II caries #14 MO.",
