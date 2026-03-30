@@ -49,3 +49,16 @@ class Settings(BaseSettings):
     ollama_fallback_model: str = "qwen3:4b"
     ollama_temperature: float = 0.0
     ollama_num_ctx: int = 8192
+
+    # Auto-pause — silence detection for between-patient gaps
+    auto_pause_silence_secs: float = 60.0
+    rolling_buffer_secs: float = 10.0
+    auto_pause_enabled: bool = True
+
+    # Auto-save — crash recovery persistence
+    auto_save_interval_secs: float = 30.0
+    auto_save_chunk_threshold: int = 5
+
+    # Extraction retry — transient error resilience
+    extraction_max_retries: int = 3
+    extraction_retry_base_delay: float = 2.0

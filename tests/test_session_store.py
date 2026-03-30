@@ -408,6 +408,281 @@ class TestSavedSessionNewFields:
         assert session.patient_summary is None
 
 
+# --- Phase 5: INCOMPLETE status + filtering + recovery ---
+
+
+class TestIncompleteStatus:
+    """SessionStatus.INCOMPLETE exists and works with SavedSession."""
+
+    def test_incomplete_status_value(self):
+        from dental_notes.session.store import SessionStatus
+
+        assert SessionStatus.INCOMPLETE.value == "incomplete"
+
+    def test_incomplete_status_ordering(self):
+        """INCOMPLETE comes before RECORDED in enum ordering."""
+        from dental_notes.session.store import SessionStatus
+
+        members = list(SessionStatus)
+        incomplete_idx = members.index(SessionStatus.INCOMPLETE)
+        recorded_idx = members.index(SessionStatus.RECORDED)
+        assert incomplete_idx < recorded_idx
+
+    def test_saved_session_accepts_incomplete_status(self):
+        from dental_notes.session.store import SavedSession, SessionStatus
+
+        session = SavedSession(
+            session_id="test-incomplete-1",
+            transcript_path="/tmp/test.txt",
+            chunks=[("Doctor", "Hello")],
+            status=SessionStatus.INCOMPLETE,
+        )
+        assert session.status == SessionStatus.INCOMPLETE
+
+    def test_incomplete_session_json_roundtrip(self):
+        import json
+
+        from dental_notes.session.store import SavedSession, SessionStatus
+
+        session = SavedSession(
+            session_id="test-incomplete-2",
+            transcript_path="/tmp/test.txt",
+            chunks=[("Doctor", "Hello")],
+            status=SessionStatus.INCOMPLETE,
+        )
+        data = json.loads(session.model_dump_json())
+        restored = SavedSession.model_validate(data)
+        assert restored.status == SessionStatus.INCOMPLETE
+
+
+class TestListSessionsFiltering:
+    """list_sessions() supports date and status filtering."""
+
+    def test_no_filters_excludes_incomplete(self, tmp_path: Path):
+        """list_sessions() without filters excludes INCOMPLETE sessions."""
+        from dental_notes.session.store import (
+            SavedSession,
+            SessionStatus,
+            SessionStore,
+        )
+
+        store = SessionStore(sessions_dir=tmp_path)
+        # Create a normal session
+        store.create_session(
+            chunks=[("Doctor", "Hello")],
+            transcript_path="/tmp/t1.txt",
+        )
+        # Create an incomplete session via save_incomplete
+        store.save_incomplete(
+            session_id="incomplete-1",
+            chunks=[("Doctor", "In progress")],
+            transcript_path="/tmp/t2.txt",
+        )
+        sessions = store.list_sessions()
+        assert len(sessions) == 1
+        assert sessions[0].status != SessionStatus.INCOMPLETE
+
+    def test_filter_by_status(self, tmp_path: Path):
+        """list_sessions(filter_status=...) returns only matching status."""
+        from dental_notes.session.store import SessionStatus, SessionStore
+
+        store = SessionStore(sessions_dir=tmp_path)
+        s1 = store.create_session(
+            chunks=[("Doctor", "First")],
+            transcript_path="/tmp/t1.txt",
+        )
+        s2 = store.create_session(
+            chunks=[("Doctor", "Second")],
+            transcript_path="/tmp/t2.txt",
+        )
+        # Update one to EXTRACTED
+        s2.status = SessionStatus.EXTRACTED
+        store.update_session(s2)
+        sessions = store.list_sessions(filter_status=SessionStatus.RECORDED)
+        assert len(sessions) == 1
+        assert sessions[0].session_id == s1.session_id
+
+    def test_filter_by_date(self, tmp_path: Path):
+        """list_sessions(filter_date=...) returns only sessions from that date."""
+        from datetime import date, datetime, timezone
+
+        from dental_notes.session.store import SavedSession, SessionStore
+
+        store = SessionStore(sessions_dir=tmp_path)
+        # Create today's session
+        today_session = store.create_session(
+            chunks=[("Doctor", "Today")],
+            transcript_path="/tmp/t1.txt",
+        )
+        # Use the UTC date from the created session for filtering
+        today_utc = today_session.created_at.date()
+
+        # Create an old session by writing directly
+        old_session = SavedSession(
+            session_id="old-session-1",
+            created_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
+            updated_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
+            transcript_path="/tmp/old.txt",
+            chunks=[("Doctor", "Old")],
+        )
+        store._write(old_session)
+
+        sessions = store.list_sessions(filter_date=today_utc)
+        assert len(sessions) == 1
+        assert sessions[0].chunks[0][1] == "Today"
+
+
+class TestSaveIncomplete:
+    """save_incomplete() writes _incomplete_{id}.json with INCOMPLETE status."""
+
+    def test_creates_incomplete_file(self, tmp_path: Path):
+        from dental_notes.session.store import SessionStore
+
+        store = SessionStore(sessions_dir=tmp_path)
+        store.save_incomplete(
+            session_id="inc-1",
+            chunks=[("Doctor", "Hello")],
+            transcript_path="/tmp/t.txt",
+        )
+        assert (tmp_path / "_incomplete_inc-1.json").exists()
+
+    def test_incomplete_file_has_incomplete_status(self, tmp_path: Path):
+        import json
+
+        from dental_notes.session.store import SessionStore
+
+        store = SessionStore(sessions_dir=tmp_path)
+        store.save_incomplete(
+            session_id="inc-2",
+            chunks=[("Doctor", "Hello")],
+            transcript_path="/tmp/t.txt",
+        )
+        data = json.loads(
+            (tmp_path / "_incomplete_inc-2.json").read_text()
+        )
+        assert data["status"] == "incomplete"
+
+
+class TestScanIncomplete:
+    """scan_incomplete_sessions() finds incomplete session files."""
+
+    def test_returns_incomplete_sessions(self, tmp_path: Path):
+        from dental_notes.session.store import SessionStore
+
+        store = SessionStore(sessions_dir=tmp_path)
+        store.save_incomplete(
+            session_id="inc-a",
+            chunks=[("Doctor", "Hello")],
+            transcript_path="/tmp/ta.txt",
+        )
+        store.save_incomplete(
+            session_id="inc-b",
+            chunks=[("Doctor", "World")],
+            transcript_path="/tmp/tb.txt",
+        )
+        results = store.scan_incomplete_sessions()
+        assert len(results) == 2
+
+    def test_skips_completed_sessions(self, tmp_path: Path):
+        """If a completed {id}.json exists alongside _incomplete_{id}.json, skip it."""
+        from dental_notes.session.store import SessionStore
+
+        store = SessionStore(sessions_dir=tmp_path)
+        store.save_incomplete(
+            session_id="inc-c",
+            chunks=[("Doctor", "Hello")],
+            transcript_path="/tmp/tc.txt",
+        )
+        # Also create a completed session with same ID
+        store.create_session.__func__  # just verify it exists
+        # Write a completed session file manually
+        completed = store.create_session(
+            chunks=[("Doctor", "Hello completed")],
+            transcript_path="/tmp/tc2.txt",
+        )
+        # Manually create an incomplete with same ID as the completed one
+        store.save_incomplete(
+            session_id=completed.session_id,
+            chunks=[("Doctor", "incomplete version")],
+            transcript_path="/tmp/tc3.txt",
+        )
+        results = store.scan_incomplete_sessions()
+        # Only inc-c should be returned, not the one with matching completed
+        ids = [s.session_id for s in results]
+        assert "inc-c" in ids
+        assert completed.session_id not in ids
+
+    def test_returns_empty_when_none(self, tmp_path: Path):
+        from dental_notes.session.store import SessionStore
+
+        store = SessionStore(sessions_dir=tmp_path)
+        assert store.scan_incomplete_sessions() == []
+
+
+class TestPromoteIncomplete:
+    """promote_incomplete() renames incomplete file to completed with RECORDED status."""
+
+    def test_promotes_to_recorded(self, tmp_path: Path):
+        from dental_notes.session.store import SessionStatus, SessionStore
+
+        store = SessionStore(sessions_dir=tmp_path)
+        store.save_incomplete(
+            session_id="promo-1",
+            chunks=[("Doctor", "Hello")],
+            transcript_path="/tmp/t.txt",
+        )
+        result = store.promote_incomplete("promo-1")
+        assert result.status == SessionStatus.RECORDED
+        assert result.session_id == "promo-1"
+
+    def test_removes_incomplete_file(self, tmp_path: Path):
+        from dental_notes.session.store import SessionStore
+
+        store = SessionStore(sessions_dir=tmp_path)
+        store.save_incomplete(
+            session_id="promo-2",
+            chunks=[("Doctor", "Hello")],
+            transcript_path="/tmp/t.txt",
+        )
+        store.promote_incomplete("promo-2")
+        assert not (tmp_path / "_incomplete_promo-2.json").exists()
+
+    def test_creates_completed_file(self, tmp_path: Path):
+        from dental_notes.session.store import SessionStore
+
+        store = SessionStore(sessions_dir=tmp_path)
+        store.save_incomplete(
+            session_id="promo-3",
+            chunks=[("Doctor", "Hello")],
+            transcript_path="/tmp/t.txt",
+        )
+        store.promote_incomplete("promo-3")
+        assert (tmp_path / "promo-3.json").exists()
+
+
+class TestDeleteIncomplete:
+    """delete_incomplete() removes the _incomplete_ file."""
+
+    def test_deletes_incomplete_file(self, tmp_path: Path):
+        from dental_notes.session.store import SessionStore
+
+        store = SessionStore(sessions_dir=tmp_path)
+        store.save_incomplete(
+            session_id="del-1",
+            chunks=[("Doctor", "Hello")],
+            transcript_path="/tmp/t.txt",
+        )
+        store.delete_incomplete("del-1")
+        assert not (tmp_path / "_incomplete_del-1.json").exists()
+
+    def test_delete_nonexistent_incomplete_succeeds(self, tmp_path: Path):
+        from dental_notes.session.store import SessionStore
+
+        store = SessionStore(sessions_dir=tmp_path)
+        # Should not raise
+        store.delete_incomplete("nonexistent-id")
+
+
 class TestEnrichedSoapNote:
     """SoapNote includes medications and va_narrative fields."""
 

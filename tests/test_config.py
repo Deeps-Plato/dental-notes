@@ -56,3 +56,73 @@ def test_settings_storage_dir_is_path():
 
     s = Settings()
     assert isinstance(s.storage_dir, Path)
+
+
+# --- Phase 5 config extensions ---
+
+
+class TestPhase5ConfigSettings:
+    """Phase 5 config fields: auto-pause, rolling buffer, auto-save, retry."""
+
+    def test_auto_pause_silence_secs_default(self):
+        from dental_notes.config import Settings
+
+        s = Settings()
+        assert s.auto_pause_silence_secs == 60.0
+
+    def test_rolling_buffer_secs_default(self):
+        from dental_notes.config import Settings
+
+        s = Settings()
+        assert s.rolling_buffer_secs == 10.0
+
+    def test_auto_pause_enabled_default(self):
+        from dental_notes.config import Settings
+
+        s = Settings()
+        assert s.auto_pause_enabled is True
+
+    def test_auto_save_interval_secs_default(self):
+        from dental_notes.config import Settings
+
+        s = Settings()
+        assert s.auto_save_interval_secs == 30.0
+
+    def test_auto_save_chunk_threshold_default(self):
+        from dental_notes.config import Settings
+
+        s = Settings()
+        assert s.auto_save_chunk_threshold == 5
+
+    def test_extraction_max_retries_default(self):
+        from dental_notes.config import Settings
+
+        s = Settings()
+        assert s.extraction_max_retries == 3
+
+    def test_extraction_retry_base_delay_default(self):
+        from dental_notes.config import Settings
+
+        s = Settings()
+        assert s.extraction_retry_base_delay == 2.0
+
+    def test_phase5_fields_env_override(self, monkeypatch: pytest.MonkeyPatch):
+        """Phase 5 fields can be overridden via DENTAL_ env vars."""
+        monkeypatch.setenv("DENTAL_AUTO_PAUSE_SILENCE_SECS", "120.0")
+        monkeypatch.setenv("DENTAL_ROLLING_BUFFER_SECS", "15.0")
+        monkeypatch.setenv("DENTAL_AUTO_PAUSE_ENABLED", "false")
+        monkeypatch.setenv("DENTAL_AUTO_SAVE_INTERVAL_SECS", "60.0")
+        monkeypatch.setenv("DENTAL_AUTO_SAVE_CHUNK_THRESHOLD", "10")
+        monkeypatch.setenv("DENTAL_EXTRACTION_MAX_RETRIES", "5")
+        monkeypatch.setenv("DENTAL_EXTRACTION_RETRY_BASE_DELAY", "3.0")
+
+        from dental_notes.config import Settings
+
+        s = Settings()
+        assert s.auto_pause_silence_secs == 120.0
+        assert s.rolling_buffer_secs == 15.0
+        assert s.auto_pause_enabled is False
+        assert s.auto_save_interval_secs == 60.0
+        assert s.auto_save_chunk_threshold == 10
+        assert s.extraction_max_retries == 5
+        assert s.extraction_retry_base_delay == 3.0
