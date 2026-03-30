@@ -14,7 +14,7 @@
 
     <nav class="main-nav">
         <a href="/" class="nav-link">New Session</a>
-        <a href="/sessions?status=recorded" class="nav-link {% if filter_status == 'recorded' %}nav-active{% endif %}">Saved / Incomplete</a>
+        <a href="/sessions" class="nav-link {% if not filter_status or filter_status != 'reviewed' %}nav-active{% endif %}">Saved Sessions</a>
         <a href="/sessions?status=reviewed&amp;date=all" class="nav-link {% if filter_status == 'reviewed' %}nav-active{% endif %}">Completed</a>
     </nav>
 
